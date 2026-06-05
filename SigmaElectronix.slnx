@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="sigmaelectronix.client/sigmaelectronix.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="SigmaElectronix.Server/SigmaElectronix.Server.csproj" />
+</Solution>
