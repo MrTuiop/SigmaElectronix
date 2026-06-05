@@ -1,52 +1,117 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-// Не забудьте поменять на ваш реальный namespace, где лежит ApplicationDbContext:
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using SigmaElectronix.Server.Data;
+using SigmaElectronix.Server.Entities.UserModels;
+using SigmaElectronix.Server.Services;
+using SigmaElectronix.Server.Services.Interfaces;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =========================================================================
-// 1. НАСТРОЙКА СЕРВИСОВ (КОНТЕЙНЕР DI)
-// =========================================================================
+builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Настройка сервисов
 builder.Services.AddControllers();
 
-// [ДОБАВЛЕНО] Регистрация контекста базы данных PostgreSQL
+// Регистрация контекста базы данных PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+    dataSourceBuilder.EnableDynamicJson();
+    options.UseNpgsql(dataSourceBuilder.Build());
+});
 
-// [ДОБАВЛЕНО] Настройка CORS для совместной разработки бэкенда и фронтенда
+// Настройка JWT
+var jwtKey = builder.Configuration["JwtSettings:JwtKey"];
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
+    };
+});
+
+// Настройка авторизации и токенов
+builder.Services.AddAuthorization();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequiredUniqueChars = 0;
+
+    options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+
+    options.SignIn.RequireConfirmedEmail = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+// Настройка CORS для Angular
 builder.Services.AddCors(options =>
-    options.AddPolicy("CorsPolicy", policy =>
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200") // Порты Angular
-              .AllowAnyMethod()
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https://localhost:64752", "https://127.0.0.1:64752")
               .AllowAnyHeader()
-              .AllowCredentials()));
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
-// =========================================================================
-// 2. НАСТРОЙКА КОНВЕЙЕРА HTTP-ЗАПРОСОВ (MIDDLEWARE)
-// =========================================================================
+// Иницаилизация ролей
+using (var scope = app.Services.CreateScope())
+{
+    await RoleInitializer.InitializeAsync(scope.ServiceProvider);
+}
 
-// [ДОБАВЛЕНО] Включаем CORS (должен стоять до маршрутизации и авторизации!)
-app.UseCors("CorsPolicy");
+app.UseCors("AllowAngular");
 
 // Обслуживание статических файлов Angular (index.html, js, css)
 app.UseDefaultFiles();
-app.UseStaticFiles(); // [ДОБАВЛЕНО] Без этого файлы из wwwroot могут не отдаваться
+app.UseStaticFiles();
 app.MapStaticAssets();
 
 app.UseHttpsRedirection();
 
-// Маршрутизация и авторизация
-app.UseRouting(); // [РЕКОМЕНДУЕТСЯ] Явно указать перед UseAuthorization
+var uploadsPath = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
+app.UseRouting();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Маппинг API-контроллеров ([Route("api/[controller]")])
 app.MapControllers();
 
-// [ВАЖНО] Если запрос не для API и не для статического файла, 
-// отдаем index.html, чтобы роутер Angular сам обработал страницу (например, /cart или /catalog)
 app.MapFallbackToFile("/index.html");
 
 app.Run();

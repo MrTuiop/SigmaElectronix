@@ -1,6 +1,50 @@
-@SigmaElectronix.Server_HostAddress = http://localhost:5087
+@HostAddress = https://localhost:7236
+# Примечание: если сервер перенаправляет вас на HTTPS, 
+# поменяйте адрес выше на https://localhost:<ваш_https_порт>
 
-GET {{SigmaElectronix.Server_HostAddress}}/weatherforecast/
-Accept: application/json
+### =========================================================
+### 1. ТЕСТ: Регистрация нового пользователя
+### =========================================================
+POST {{HostAddress}}/api/auth/register
+Content-Type: application/json
 
-###
+{
+  "userName": "CyberNinja",
+  "email": "ninja@sigma.com",
+  "password": "Password123!",
+  "firstName": "Алексей",
+  "lastName": "Смирнов"
+}
+
+### =========================================================
+### 2. ТЕСТ: Вход по Email
+### =========================================================
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "ninja@sigma.com",
+  "password": "Password123!"
+}
+
+### =========================================================
+### 3. ТЕСТ: Вход по UserName (Никнейму)
+### =========================================================
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "CyberNinja",
+  "password": "Password123!"
+}
+
+### =========================================================
+### 4. ТЕСТ: Вход Супер-Администратора (из RoleInitializer)
+### =========================================================
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin@sigma.com",
+  "password": "AdminPassword123!" 
+}
