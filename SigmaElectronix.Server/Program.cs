@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using SigmaElectronix.Server.Data;
 using SigmaElectronix.Server.Entities.UserModels;
+using SigmaElectronix.Server.Middleware;
 using SigmaElectronix.Server.Services;
 using SigmaElectronix.Server.Services.Interfaces;
 using System.Text;
@@ -15,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 // Настройка сервисов
 builder.Services.AddControllers();
@@ -97,6 +99,8 @@ using (var scope = app.Services.CreateScope())
 {
     await RoleInitializer.InitializeAsync(scope.ServiceProvider);
 }
+
+app.UseMiddleware<SessionIdMiddleware>();
 
 app.UseCors("AllowAngular");
 
