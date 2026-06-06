@@ -1,4 +1,5 @@
 @HostAddress = https://localhost:7236
+@AdminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImEzY2ZkOWYwLTZiYTUtNGI3My05YjQyLTkxNjUzODJjYmM5MyIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQHNpZ21hLmNvbSIsIlVzZXJOYW1lIjoiU2lnbWFBZG1pbiIsIkZpcnN0TmFtZSI6ItCT0LvQsNCy0L3Ri9C5IiwianRpIjoiMTBhMjFkYmItM2E0NS00NzhhLWE4M2YtMTQwZTM3YjViMDkxIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3ODA3NDc0MjksImlzcyI6IlNpZ21hRWxlY3Ryb25peEFQSSIsImF1ZCI6IlNpZ21hRWxlY3Ryb25peEFuZ3VsYXJBcHAifQ.eihmNzp7ueeZN6kz1mdsqhExBDn6PKA6vQXrt6QCIy8
 # Примечание: если сервер перенаправляет вас на HTTPS, 
 # поменяйте адрес выше на https://localhost:<ваш_https_порт>
 
@@ -48,3 +49,153 @@ Content-Type: application/json
   "usernameOrEmail": "admin@sigma.com",
   "password": "AdminPassword123!" 
 }
+
+### =========================================================
+### БРЕНДЫ (BRANDS) - ПУБЛИЧНЫЕ ЗАПРОСЫ
+### =========================================================
+
+### 1. Получить список всех брендов (с пагинацией)
+GET {{HostAddress}}/api/brands?pageNumber=1&pageSize=10
+Accept: application/json
+
+### 2. Получить популярные бренды (для карусели на главной)
+GET {{HostAddress}}/api/brands/featured?count=4
+Accept: application/json
+
+### 3. Получить витрину конкретного бренда по Slug
+# (Сработает после того, как вы создадите бренд "apple" в тесте ниже)
+GET {{HostAddress}}/api/brands/slug/apple
+Accept: application/json
+
+
+### =========================================================
+### БРЕНДЫ (BRANDS) - АДМИНИСТРАТИВНЫЕ ЗАПРОСЫ
+### =========================================================
+
+### 4. Создать новый бренд (ТРЕБУЕТ ПРАВ АДМИНА)
+POST {{HostAddress}}/api/brands
+Content-Type: application/json
+Authorization: Bearer {{AdminToken}}
+
+{
+  "name": "Apple",
+  "slug": "apple",
+  "description": "Американская корпорация, производитель персональных и планшетных компьютеров, аудиоплееров, смартфонов, программного обеспечения.",
+  "logoUrl": "https://example.com/logos/apple.png",
+  "heroTitle": "Think Different",
+  "heroSubtitle": "Откройте для себя новые iPhone",
+  "isFeatured": true,
+  "isActive": true,
+  "sortOrder": 1
+}
+
+### 5. Обновить существующий бренд (Замените ID '1' на реальный из базы)
+PUT {{HostAddress}}/api/brands/1
+Content-Type: application/json
+Authorization: Bearer {{AdminToken}}
+
+{
+  "name": "Apple Inc.",
+  "slug": "apple",
+  "description": "Обновленное описание компании...",
+  "isFeatured": true,
+  "isActive": true,
+  "sortOrder": 1
+}
+
+### 6. Удалить бренд (Замените ID '1' на реальный)
+DELETE {{HostAddress}}/api/brands/1
+Authorization: Bearer {{AdminToken}}
+
+
+### =========================================================
+### ТОВАРЫ (PRODUCTS) - ПУБЛИЧНЫЕ ЗАПРОСЫ
+### =========================================================
+
+### 7. Получить список товаров (с фильтрами и сортировкой)
+GET {{HostAddress}}/api/products?minPrice=500&sortBy=price_desc&pageNumber=1&pageSize=12
+Accept: application/json
+
+### 8. Получить популярные товары (Хиты продаж)
+GET {{HostAddress}}/api/products/featured?count=8
+Accept: application/json
+
+### 9. Получить товары со скидкой
+GET {{HostAddress}}/api/products/discounted?count=4
+Accept: application/json
+
+### 10. Получить товар по ID (Замените '1' на реальный ID)
+GET {{HostAddress}}/api/products/1
+Accept: application/json
+
+### 11. Получить товар по Slug (ЧПУ)
+# Сработает после создания товара из теста №13
+GET {{HostAddress}}/api/products/slug/iphone-15-pro-max
+Accept: application/json
+
+### 12. Получить похожие товары (Замените '1' на реальный ID)
+GET {{HostAddress}}/api/products/1/related?count=4
+Accept: application/json
+
+
+### =========================================================
+### ТОВАРЫ (PRODUCTS) - АДМИНИСТРАТИВНЫЕ ЗАПРОСЫ
+### =========================================================
+
+### 13. Создать новый товар (ТРЕБУЕТ ПРАВ АДМИНА)
+# Примечание: Убедитесь, что brandId и categoryId существуют в вашей БД!
+POST {{HostAddress}}/api/products
+Content-Type: application/json
+Authorization: Bearer {{AdminToken}}
+
+{
+  "name": "Apple iPhone 15 Pro Max 256GB Titanium",
+  "slug": "iphone-15-pro-max",
+  "shortDescription": "Флагманский смартфон от Apple с процессором A17 Pro и титановым корпусом.",
+  "fullDescription": "Очень длинное и подробное описание со всеми маркетинговыми текстами...",
+  "price": 145000.00,
+  "discountPrice": 139999.00,
+  "brandId": 1, 
+  "categoryId": 1,
+  "specifications": {
+    "Color": "Natural Titanium",
+    "Storage": "256GB",
+    "Screen Size": "6.7 inches",
+    "Processor": "A17 Pro"
+  },
+  "isPublished": true
+}
+
+### 14. Просмотр ВСЕХ товаров админом (включая скрытые и удаленные)
+GET {{HostAddress}}/api/products/admin?pageNumber=1&pageSize=50
+Authorization: Bearer {{AdminToken}}
+Accept: application/json
+
+### 15. Редактировать товар (Замените ID '1' на реальный)
+PUT {{HostAddress}}/api/products/1
+Content-Type: application/json
+Authorization: Bearer {{AdminToken}}
+
+{
+  "name": "Apple iPhone 15 Pro Max 256GB Titanium",
+  "slug": "iphone-15-pro-max",
+  "shortDescription": "Обновленное короткое описание...",
+  "fullDescription": "Обновленное полное описание...",
+  "price": 150000.00,
+  "discountPrice": null,
+  "brandId": 1,
+  "categoryId": 1,
+  "specifications": {
+    "Color": "Natural Titanium",
+    "Storage": "256GB"
+  },
+  "isPublished": false
+}
+
+### 16. Удалить товар (Soft Delete - пометит IsDeleted = true)
+DELETE {{HostAddress}}/api/products/1
+Authorization: Bearer {{AdminToken}}
+
+### 17. Восстановить удаленный товар (IsDeleted = false)
+POST {{HostAddress}}/api/products/1/restore
+Authorization: Bearer {{AdminToken}}

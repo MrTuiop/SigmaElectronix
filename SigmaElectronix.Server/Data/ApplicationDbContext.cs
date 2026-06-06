@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SigmaElectronix.Server.Entities.BrandModels;
 using SigmaElectronix.Server.Entities.CartModels;
 using SigmaElectronix.Server.Entities.OrderModels;
 using SigmaElectronix.Server.Entities.ProductModels;
@@ -23,6 +24,7 @@ namespace SigmaElectronix.Server.Data
         // Каталог товаров
         public DbSet<Category> Categories { get; set; }
         public DbSet<Brand> Brands { get; set; }
+        public DbSet<BrandImage> BrandImages { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
 
@@ -82,12 +84,33 @@ namespace SigmaElectronix.Server.Data
                     .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, string>>(
                         (c1, c2) => c1!.SequenceEqual(c2!),
                         c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Key.GetHashCode(), v.Value.GetHashCode())),
-        c => c.ToDictionary(k => k.Key, v => v.Value)));
+                        c => c.ToDictionary(k => k.Key, v => v.Value)));
+
+                // Связь с Категорией (Защита от удаления)
+                entity.HasOne(p => p.Category)
+                    .WithMany(c => c.Products)
+                    .HasForeignKey(p => p.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Связь с Брендом (Защита от удаления)
+                entity.HasOne(p => p.Brand)
+                    .WithMany(b => b.Products)
+                    .HasForeignKey(p => p.BrandId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
                 // Ограничения строк для индексов и SEO
                 entity.Property(p => p.Name).IsRequired().HasMaxLength(255);
                 entity.Property(p => p.Slug).IsRequired().HasMaxLength(255);
                 entity.HasIndex(p => p.Slug).IsUnique();
+            });
+
+            // Картинки товаров
+            modelBuilder.Entity<ProductImage>(entity =>
+            {
+                entity.HasOne(pi => pi.Product)
+                    .WithMany(p => p.Images)
+                    .HasForeignKey(pi => pi.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Категория
@@ -108,6 +131,16 @@ namespace SigmaElectronix.Server.Data
             modelBuilder.Entity<Brand>(entity =>
             {
                 entity.Property(b => b.Name).IsRequired().HasMaxLength(100);
+                entity.Property(b => b.Slug).IsRequired().HasMaxLength(150);
+                entity.HasIndex(b => b.Slug).IsUnique();
+            });
+
+            modelBuilder.Entity<BrandImage>(entity =>
+            {
+                entity.HasOne(bi => bi.Brand)
+                    .WithMany(b => b.Images)
+                    .HasForeignKey(bi => bi.BrandId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             #endregion

@@ -1,4 +1,4 @@
-﻿using SigmaElectronix.Server.DTOs;
+﻿using SigmaElectronix.Server.DTOs.AuthDTOs;
 
 namespace SigmaElectronix.Server.Services.Interfaces
 {

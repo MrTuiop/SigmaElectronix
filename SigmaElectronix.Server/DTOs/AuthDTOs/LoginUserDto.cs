@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SigmaElectronix.Server.DTOs
+namespace SigmaElectronix.Server.DTOs.AuthDTOs
 {
     public class LoginUserDto
     {

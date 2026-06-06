@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SigmaElectronix.Server.DTOs;
+using SigmaElectronix.Server.DTOs.AuthDTOs;
 using SigmaElectronix.Server.Services.Interfaces;
 
 namespace SigmaElectronix.Server.Controllers

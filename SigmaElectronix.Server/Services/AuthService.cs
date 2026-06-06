@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using SigmaElectronix.Server.DTOs;
+using SigmaElectronix.Server.DTOs.AuthDTOs;
 using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;

@@ -1,4 +1,5 @@
-﻿using SigmaElectronix.Server.Entities.UserModels;
+﻿using SigmaElectronix.Server.Entities.BrandModels;
+using SigmaElectronix.Server.Entities.UserModels;
 
 namespace SigmaElectronix.Server.Entities.ProductModels
 {

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SigmaElectronix.Server.Data;
@@ -11,9 +12,11 @@ using SigmaElectronix.Server.Data;
 namespace SigmaElectronix.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260605183040_UpdateProductImageModel")]
+    partial class UpdateProductImageModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -152,104 +155,6 @@ namespace SigmaElectronix.Server.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("SigmaElectronix.Server.Entities.BrandModels.Brand", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BannerButtonText")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("HeroImageUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HeroSubtitle")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HeroTitle")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsFeatured")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SeoDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SeoKeywords")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SeoTitle")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("Brands");
-                });
-
-            modelBuilder.Entity("SigmaElectronix.Server.Entities.BrandModels.BrandImage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AltText")
-                        .HasColumnType("text");
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Caption")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ImageType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BrandId");
-
-                    b.ToTable("BrandImages");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.CartModels.Cart", b =>
@@ -540,6 +445,31 @@ namespace SigmaElectronix.Server.Migrations
                         .IsUnique();
 
                     b.ToTable("Shipments");
+                });
+
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Brands");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Category", b =>
@@ -1111,17 +1041,6 @@ namespace SigmaElectronix.Server.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SigmaElectronix.Server.Entities.BrandModels.BrandImage", b =>
-                {
-                    b.HasOne("SigmaElectronix.Server.Entities.BrandModels.Brand", "Brand")
-                        .WithMany("Images")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-                });
-
             modelBuilder.Entity("SigmaElectronix.Server.Entities.CartModels.Cart", b =>
                 {
                     b.HasOne("SigmaElectronix.Server.Entities.UserModels.ApplicationUser", "User")
@@ -1206,16 +1125,16 @@ namespace SigmaElectronix.Server.Migrations
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Product", b =>
                 {
-                    b.HasOne("SigmaElectronix.Server.Entities.BrandModels.Brand", "Brand")
+                    b.HasOne("SigmaElectronix.Server.Entities.ProductModels.Brand", "Brand")
                         .WithMany("Products")
                         .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SigmaElectronix.Server.Entities.ProductModels.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Brand");
@@ -1341,13 +1260,6 @@ namespace SigmaElectronix.Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SigmaElectronix.Server.Entities.BrandModels.Brand", b =>
-                {
-                    b.Navigation("Images");
-
-                    b.Navigation("Products");
-                });
-
             modelBuilder.Entity("SigmaElectronix.Server.Entities.CartModels.Cart", b =>
                 {
                     b.Navigation("Items");
@@ -1360,6 +1272,11 @@ namespace SigmaElectronix.Server.Migrations
                     b.Navigation("Payment");
 
                     b.Navigation("Shipment");
+                });
+
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Brand", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Category", b =>
