@@ -1,4 +1,5 @@
-﻿using SigmaElectronix.Server.Entities.UserModels;
+﻿using SigmaElectronix.Server.Entities.StoreModels;
+using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Enums;
 
 namespace SigmaElectronix.Server.Entities.OrderModels
@@ -10,11 +11,21 @@ namespace SigmaElectronix.Server.Entities.OrderModels
         public string? UserId { get; set; }
         public ApplicationUser? User { get; set; }
 
+        public int? StoreId { get; set; }
+        public Store? Store { get; set; }
+
         public decimal TotalAmount { get; set; }
         public decimal ShippingCost { get; set; }
         public decimal DiscountAmount { get; set; }
 
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+        public PaymentMethod PaymentMethod { get; set; }
+        public DateTime? PaidAt { get; set; }
+        public string? PaymentReference { get; set; }
+
+        public DateTime? ReservationExpiresAt { get; set; }
 
         // Адреса на момент заказа (снапшоты, а не ссылки на Address, чтобы история не менялась)
         public string ShippingFullName { get; set; } = string.Empty;

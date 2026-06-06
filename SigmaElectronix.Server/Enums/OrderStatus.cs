@@ -8,6 +8,7 @@
         Shipped,       // Отправлен
         Delivered,     // Доставлен
         Cancelled,     // Отменен
-        Refunded       // Возврат средств
+        Refunded,       // Возврат средств
+        Confirmed
     }
 }

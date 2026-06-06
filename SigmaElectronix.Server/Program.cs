@@ -9,7 +9,9 @@ using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Middleware;
 using SigmaElectronix.Server.Services;
 using SigmaElectronix.Server.Services.Interfaces;
+using SigmaElectronix.Server.Workers;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +19,17 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.AddHostedService<OrderReservationWorker>();
 
 // Настройка сервисов
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Регистрация контекста базы данных PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
