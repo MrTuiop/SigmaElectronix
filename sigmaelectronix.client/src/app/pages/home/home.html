@@ -1,0 +1,287 @@
+<main class="home-page">
+  <!-- ===== HERO-БАННЕР (без изменений) ===== -->
+  <section class="hero-section">
+    <div class="container hero-inner">
+      <div class="hero-content">
+        <span class="hero-badge"><svg lucideZap size="16" strokeWidth="2.5"></svg> Специальное предложение</span>
+        <h1 class="hero-title">
+          Техника, которая <span class="highlight">вдохновляет</span>
+        </h1>
+        <p class="hero-subtitle">
+          Скидки до 30% на новинки сезона. Бесплатная доставка по всей России при заказе от 5 000 ₽.
+        </p>
+        <div class="hero-actions">
+          <a href="#" class="btn-primary btn-lg">Смотреть акции</a>
+          <a href="#" class="btn-outline">Все товары</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-image-placeholder">
+          <svg lucideSmartphone size="64" strokeWidth="1.5" class="hero-icon-main"></svg>
+          <div class="floating-badge price-badge">
+            <span class="old-price">99 990 ₽</span>
+            <span class="new-price">69 990 ₽</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== КАТЕГОРИИ (без изменений) ===== -->
+  <section class="categories-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Категории товаров</h2>
+        <a href="#" class="section-link">
+          Все категории
+          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+        </a>
+      </div>
+
+      <div class="categories-grid">
+        @for (cat of categories(); track cat.icon) {
+        <a href="#" class="category-card">
+          <div class="cat-icon-wrapper">
+            @switch(cat.icon) {
+            @case('smartphone') { <svg lucideSmartphone size="28" strokeWidth="1.8"></svg> }
+            @case('laptop') { <svg lucideLaptop size="28" strokeWidth="1.8"></svg> }
+            @case('headphones') { <svg lucideHeadphones size="28" strokeWidth="1.8"></svg> }
+            @case('watch') { <svg lucideWatch size="28" strokeWidth="1.8"></svg> }
+            @case('tv') { <svg lucideTv size="28" strokeWidth="1.8"></svg> }
+            @case('gamepad-2') { <svg lucideGamepad2 size="28" strokeWidth="1.8"></svg> }
+            @default { <svg lucideSmartphone size="28" strokeWidth="1.8"></svg> }
+            }
+          </div>
+          <span class="cat-label">{{ cat.name }}</span>
+          <span class="cat-count">{{ cat.count }} товаров</span>
+        </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== БРЕНДЫ (НОВАЯ СЕКЦИЯ) ===== -->
+  <section class="brands-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Популярные бренды</h2>
+        <a href="#" class="section-link">
+          Все бренды
+          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+        </a>
+      </div>
+
+      <div class="brands-grid">
+        @for (brand of brands(); track brand.name) {
+        <a href="#" class="brand-card">
+          <div class="brand-icon-wrapper">
+            @switch(brand.icon) {
+            @case('apple') { <svg lucideApple size="32" strokeWidth="1.8"></svg> }
+            @case('samsung') { <svg lucideSmartphone size="32" strokeWidth="1.8"></svg> }
+            @case('sony') { <svg lucideGamepad2 size="32" strokeWidth="1.8"></svg> }
+            @case('lg') { <svg lucideMonitor size="32" strokeWidth="1.8"></svg> }
+            @case('asus') { <svg lucideLaptop size="32" strokeWidth="1.8"></svg> }
+            @case('xiaomi') { <svg lucideCpu size="32" strokeWidth="1.8"></svg> }
+            @default { <svg lucideSmartphone size="32" strokeWidth="1.8"></svg> }
+            }
+          </div>
+          <span class="brand-name">{{ brand.name }}</span>
+        </a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ХИТЫ ПРОДАЖ (исправлены иконки избранного) ===== -->
+  <section class="products-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Хиты продаж</h2>
+        <a href="#" class="section-link">
+          Смотреть все
+          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+        </a>
+      </div>
+
+      <div class="products-grid">
+        @for (product of bestsellers(); track product.id) {
+        <div class="product-card">
+          <div class="product-badges">
+            @if (product.discount) {
+            <span class="discount-badge">–{{ product.discount }}%</span>
+            }
+          </div>
+          <button class="wishlist-btn" (click)="toggleWishlist(product)">
+            <svg lucideHeart
+                 size="18"
+                 strokeWidth="2.5"
+                 [class.filled]="product.inWishlist">
+            </svg>
+          </button>
+
+          <div class="product-image">
+            <div class="image-placeholder" [style.background]="product.gradient">
+              @switch(product.icon) {
+              @case('smartphone') { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('laptop') { <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('headphones') { <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('watch') { <svg lucideWatch size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('tv') { <svg lucideTv size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('gamepad-2') { <svg lucideGamepad2 size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              }
+            </div>
+          </div>
+
+          <div class="product-info">
+            <span class="product-brand">{{ product.brand }}</span>
+            <h3 class="product-name">{{ product.name }}</h3>
+            <div class="rating-row">
+              @for (star of [1,2,3,4,5]; track star) {
+              <svg lucideStar
+                   [size]="13"
+                   [strokeWidth]="0"
+                   [class.filled-star]="star <= product.rating"
+                   [class.empty-star]="star > product.rating">
+              </svg>
+              }
+              <span class="reviews-count">({{ product.reviews }})</span>
+            </div>
+            <div class="price-row">
+              <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
+              @if (product.oldPrice) {
+              <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+              }
+            </div>
+            <button class="add-to-cart-btn" (click)="addToCart(product)">
+              <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+              В корзину
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== БЛОК ПРЕИМУЩЕСТВ (без изменений) ===== -->
+  <section class="advantages-section">
+    <div class="container">
+      <div class="advantages-grid">
+        @for (adv of advantages(); track adv.icon) {
+        <div class="advantage-card">
+          <div class="adv-icon-wrapper">
+            @switch(adv.icon) {
+            @case('truck') { <svg lucideTruck size="28" strokeWidth="1.8"></svg> }
+            @case('shield-check') { <svg lucideShieldCheck size="28" strokeWidth="1.8"></svg> }
+            @case('refresh-cw') { <svg lucideRefreshCw size="28" strokeWidth="1.8"></svg> }
+            @case('headset') { <svg lucideHeadset size="28" strokeWidth="1.8"></svg> }
+            }
+          </div>
+          <div class="adv-text">
+            <h4 class="adv-title">{{ adv.title }}</h4>
+            <p class="adv-desc">{{ adv.description }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== НОВИНКИ (исправлены иконки избранного) ===== -->
+  <section class="products-section new-products-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Новинки</h2>
+        <a href="#" class="section-link">
+          Смотреть все
+          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+        </a>
+      </div>
+
+      <div class="products-grid">
+        @for (product of newProducts(); track product.id) {
+        <div class="product-card">
+          <div class="product-badges">
+            @if (product.isNew) {
+            <span class="new-badge">Новинка</span>
+            }
+            @if (product.discount) {
+            <span class="discount-badge">–{{ product.discount }}%</span>
+            }
+          </div>
+          <button class="wishlist-btn" (click)="toggleWishlist(product)">
+            <svg lucideHeart
+                 size="18"
+                 strokeWidth="2.5"
+                 [class.filled]="product.inWishlist">
+            </svg>
+          </button>
+
+          <div class="product-image">
+            <div class="image-placeholder" [style.background]="product.gradient">
+              @switch(product.icon) {
+              @case('smartphone') { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('laptop') { <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('headphones') { <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('watch') { <svg lucideWatch size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('tv') { <svg lucideTv size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              @case('gamepad-2') { <svg lucideGamepad2 size="40" strokeWidth="1.5" class="ph-icon"></svg> }
+              }
+            </div>
+          </div>
+
+          <div class="product-info">
+            <span class="product-brand">{{ product.brand }}</span>
+            <h3 class="product-name">{{ product.name }}</h3>
+            <div class="rating-row">
+              @for (star of [1,2,3,4,5]; track star) {
+              <svg lucideStar
+                   [size]="13"
+                   [strokeWidth]="0"
+                   [class.filled-star]="star <= product.rating"
+                   [class.empty-star]="star > product.rating">
+              </svg>
+              }
+              <span class="reviews-count">({{ product.reviews }})</span>
+            </div>
+            <div class="price-row">
+              <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
+              @if (product.oldPrice) {
+              <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+              }
+            </div>
+            <button class="add-to-cart-btn" (click)="addToCart(product)">
+              <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+              В корзину
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== РАССЫЛКА (без изменений) ===== -->
+  <section class="subscribe-section">
+    <div class="container">
+      <div class="subscribe-banner">
+        <div class="subscribe-content">
+          <h2 class="subscribe-title">Подпишитесь на рассылку</h2>
+          <p class="subscribe-desc">
+            Узнавайте первыми о новых поступлениях, акциях и эксклюзивных предложениях.
+          </p>
+          <form class="subscribe-form" (submit)="onSubscribe($event)">
+            <input type="email" placeholder="Введите ваш email" required class="subscribe-input">
+            <button type="submit" class="btn-primary subscribe-btn">
+              <svg lucideSend size="18" strokeWidth="2.5"></svg>
+              Подписаться
+            </button>
+          </form>
+        </div>
+        <div class="subscribe-visual">
+          <svg lucideMail size="80" strokeWidth="1" class="subscribe-icon"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

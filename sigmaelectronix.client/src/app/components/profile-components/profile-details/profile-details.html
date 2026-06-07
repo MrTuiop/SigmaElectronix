@@ -1,0 +1,132 @@
+<div class="content-card fade-in">
+  @if (data.user(); as user) {
+  <div class="profile-header">
+    <div class="avatar-circle">
+      <svg lucideUser size="36" strokeWidth="2"></svg>
+    </div>
+    <div class="profile-info">
+      <h2>{{ (user.firstName || user.lastName) ? user.fullName : user.userName }}</h2>
+      <span class="profile-meta">На сайте с {{ user.createdAt | date:'dd.MM.yyyy' }}</span>
+    </div>
+  </div>
+
+  <div class="details-grid">
+    <!-- Имя -->
+    <div class="detail-item">
+      <span class="detail-label">Имя</span>
+      @if (editingField === 'firstName') {
+      <div class="edit-row">
+        <input [(ngModel)]="editValue" type="text" class="edit-input" />
+        <button class="icon-btn save" (click)="saveEdit('firstName')" [disabled]="saving">
+          <svg lucideCheck size="16"></svg>
+        </button>
+        <button class="icon-btn cancel" (click)="cancelEdit()">
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      } @else {
+      <div class="value-row">
+        <span class="detail-value">{{ user.firstName }}</span>
+        <button class="icon-btn edit" (click)="startEdit('firstName', user.firstName)">
+          <svg lucidePencil size="14"></svg>
+        </button>
+      </div>
+      }
+    </div>
+
+    <!-- Фамилия -->
+    <div class="detail-item">
+      <span class="detail-label">Фамилия</span>
+      @if (editingField === 'lastName') {
+      <div class="edit-row">
+        <input [(ngModel)]="editValue" type="text" class="edit-input" />
+        <button class="icon-btn save" (click)="saveEdit('lastName')" [disabled]="saving">
+          <svg lucideCheck size="16"></svg>
+        </button>
+        <button class="icon-btn cancel" (click)="cancelEdit()">
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      } @else {
+      <div class="value-row">
+        <span class="detail-value">{{ user.lastName }}</span>
+        <button class="icon-btn edit" (click)="startEdit('lastName', user.lastName)">
+          <svg lucidePencil size="14"></svg>
+        </button>
+      </div>
+      }
+    </div>
+
+    <!-- Email -->
+    <div class="detail-item">
+      <span class="detail-label">Email</span>
+      @if (editingField === 'email') {
+      <div class="edit-row">
+        <input [(ngModel)]="editValue" type="email" class="edit-input" />
+        <button class="icon-btn save" (click)="saveEdit('email')" [disabled]="saving">
+          <svg lucideCheck size="16"></svg>
+        </button>
+        <button class="icon-btn cancel" (click)="cancelEdit()">
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      } @else {
+      <div class="value-row">
+        <span class="detail-value">{{ user.email }}</span>
+        <button class="icon-btn edit" (click)="startEdit('email', user.email)">
+          <svg lucidePencil size="14"></svg>
+        </button>
+      </div>
+      }
+    </div>
+
+    <!-- Телефон -->
+    <div class="detail-item">
+      <span class="detail-label">Телефон</span>
+      @if (editingField === 'phone') {
+      <div class="edit-row">
+        <input [(ngModel)]="editValue" type="tel" class="edit-input" />
+        <button class="icon-btn save" (click)="saveEdit('phone')" [disabled]="saving">
+          <svg lucideCheck size="16"></svg>
+        </button>
+        <button class="icon-btn cancel" (click)="cancelEdit()">
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      } @else {
+      <div class="value-row">
+        <span class="detail-value">{{ user.phoneNumber }}</span>
+        <button class="icon-btn edit" (click)="startEdit('phone', user.phoneNumber)">
+          <svg lucidePencil size="14"></svg>
+        </button>
+      </div>
+      }
+    </div>
+
+    <!-- Логин (username) -->
+    <div class="detail-item">
+      <span class="detail-label">Логин</span>
+      @if (editingField === 'userName') {
+      <div class="edit-row">
+        <input [(ngModel)]="editValue" type="text" class="edit-input" />
+        <button class="icon-btn save" (click)="saveEdit('userName')" [disabled]="saving">
+          <svg lucideCheck size="16"></svg>
+        </button>
+        <button class="icon-btn cancel" (click)="cancelEdit()">
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      } @else {
+      <div class="value-row">
+        <span class="detail-value">{{ user.userName }}</span>
+        <button class="icon-btn edit" (click)="startEdit('userName', user.userName)">
+          <svg lucidePencil size="14"></svg>
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  } @else {
+  <p class="loading-text">Загрузка профиля...</p>
+  }
+</div>

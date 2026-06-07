@@ -27,6 +27,7 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "polyfills": [],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -75,7 +76,8 @@
           "defaultConfiguration": "development",
           "options": {
             "proxyConfig": "src/proxy.conf.js",
-            "port": 64752
+            "port": 64752,
+            "servePath": "/projects/sigmaelectronix/"
           }
         },
         "test": {

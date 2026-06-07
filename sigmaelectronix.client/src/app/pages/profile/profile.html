@@ -1,0 +1,51 @@
+<div class="account-page">
+  <div class="container">
+    <h1 class="account-title">Личный кабинет</h1>
+
+    <div class="account-layout">
+      <aside class="account-sidebar">
+        <nav>
+          <a class="sidebar-item" routerLink="details" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <svg lucideUser size="18" strokeWidth="2"></svg>
+            <span>Личные данные</span>
+          </a>
+          <a class="sidebar-item" routerLink="orders" routerLinkActive="active">
+            <svg lucidePackage size="18" strokeWidth="2"></svg>
+            <span>История заказов</span>
+          </a>
+          <a class="sidebar-item" routerLink="wishlist" routerLinkActive="active">
+            <svg lucideHeart size="18" strokeWidth="2"></svg>
+            <span>Избранное</span>
+          </a>
+          <a class="sidebar-item" routerLink="addresses" routerLinkActive="active">
+            <svg lucideMapPin size="18" strokeWidth="2"></svg>
+            <span>Адреса доставки</span>
+          </a>
+          <a class="sidebar-item" routerLink="notifications" routerLinkActive="active">
+            <svg lucideBell size="18" strokeWidth="2"></svg>
+            <span>Уведомления</span>
+          </a>
+          <a class="sidebar-item" routerLink="reviews" routerLinkActive="active">
+            <svg lucideStar size="18" strokeWidth="2"></svg>
+            <span>Мои отзывы</span>
+          </a>
+          <a class="sidebar-item" routerLink="bonuses" routerLinkActive="active">
+            <svg lucideGift size="18" strokeWidth="2"></svg>
+            <span>Бонусы</span>
+          </a>
+
+          <div class="sidebar-divider"></div>
+
+          <button class="sidebar-item logout-item" (click)="logout()">
+            <svg lucideLogOut size="18" strokeWidth="2"></svg>
+            <span>Выйти</span>
+          </button>
+        </nav>
+      </aside>
+
+      <div class="account-content">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </div>
+</div>

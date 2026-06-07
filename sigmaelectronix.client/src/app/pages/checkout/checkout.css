@@ -1,0 +1,452 @@
+.checkout-page {
+  padding: 40px 0 80px;
+  background: var(--bg-color);
+  min-height: 100vh;
+  transition: background-color var(--transition);
+}
+
+.checkout-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: var(--text-main);
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  align-items: start;
+}
+
+/* ===== ЛЕВАЯ ЧАСТЬ: ШАГИ ===== */
+.checkout-main {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.checkout-step {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  background: var(--purple-gradient);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.step-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* Формы */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+  .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .form-group input {
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-color);
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: var(--transition);
+  }
+
+    .form-group input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+
+.link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.not-logged-in, .logged-in-info {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Опции доставки и оплаты */
+.delivery-options, .payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-color);
+}
+
+  .option-card.active {
+    border-color: var(--primary-color);
+    background: rgba(124, 58, 237, 0.04);
+    box-shadow: 0 0 0 1px var(--primary-color);
+  }
+
+  .option-card svg {
+    color: var(--text-muted);
+  }
+
+  .option-card.active svg {
+    color: var(--primary-color);
+  }
+
+  .option-card strong {
+    font-size: 16px;
+    font-weight: 600;
+    display: block;
+    color: var(--text-main);
+  }
+
+  .option-card span {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+.delivery-address-field {
+  margin-top: 16px;
+}
+
+  .delivery-address-field label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    color: var(--text-main);
+  }
+
+  .delivery-address-field input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-color);
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+  }
+
+/* Промокод и бонусы */
+.promo-section {
+  margin-bottom: 24px;
+}
+
+.promo-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 6px 6px 6px 14px;
+}
+
+  .promo-input-group input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 0;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-main);
+    outline: none;
+  }
+
+.apply-promo-btn {
+  background: var(--purple-gradient);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.applied-promo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.remove-promo-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+.promo-error {
+  color: #ef4444;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.promo-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.bonuses-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+.bonus-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.bonus-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.bonus-input-group {
+  margin-top: 12px;
+}
+
+  .bonus-input-group label {
+    font-size: 13px;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+  }
+
+  .bonus-input-group input {
+    width: 120px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-color);
+    color: var(--text-main);
+  }
+
+/* Кнопка оформления */
+.checkout-submit {
+  text-align: center;
+}
+
+.place-order-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--purple-gradient);
+  color: #fff;
+  border: none;
+  padding: 18px 32px;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 12px;
+}
+
+  .place-order-btn:hover {
+    background: var(--purple-gradient-hover);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+    transform: translateY(-1px);
+  }
+
+.agree-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ===== САЙДБАР ===== */
+.checkout-sidebar {
+  position: sticky;
+  top: 120px;
+}
+
+.sidebar-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+  .sidebar-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-main);
+  }
+
+.sidebar-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-item-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.sidebar-item-qty {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sidebar-item-price {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.sidebar-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.sidebar-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+  .sidebar-line.discount {
+    color: #10b981;
+  }
+
+  .sidebar-line.total {
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 2px solid var(--border-color);
+  }
+
+    .sidebar-line.total span:last-child {
+      font-size: 22px;
+      background: var(--purple-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+/* Адаптивность */
+@media (max-width: 992px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-sidebar {
+    position: static;
+    order: -1; /* на мобильных сайдбар сверху? но по логике лучше оставить снизу */
+    order: 1;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,138 @@
+/* ===== ОБЩАЯ СТРУКТУРА СТРАНИЦЫ ===== */
+.account-page {
+  padding: 40px 0 80px;
+  min-height: 80vh;
+  background-color: var(--bg-color);
+  transition: background-color var(--transition);
+}
+
+.account-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 32px;
+  color: var(--text-main);
+}
+
+.account-layout {
+  display: flex;
+  gap: 32px;
+}
+
+/* ===== БОКОВАЯ ПАНЕЛЬ ===== */
+.account-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+  .account-sidebar nav {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: var(--shadow-sm);
+  }
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+  .sidebar-item svg {
+    color: var(--text-muted);
+    transition: color var(--transition);
+    flex-shrink: 0;
+  }
+
+  .sidebar-item:hover {
+    background: var(--bg-color);
+  }
+
+    .sidebar-item:hover svg {
+      color: var(--primary-color);
+    }
+
+  .sidebar-item.active {
+    background: var(--purple-gradient);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  }
+
+    .sidebar-item.active svg {
+      color: #ffffff;
+    }
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+.logout-item {
+  color: #ef4444;
+}
+
+  .logout-item svg {
+    color: #ef4444;
+  }
+
+  .logout-item:hover {
+    background: rgba(239, 68, 68, 0.08);
+  }
+
+/* ===== КОНТЕНТНАЯ ОБЛАСТЬ ===== */
+.account-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== АДАПТИВ БОКОВОГО МЕНЮ ===== */
+@media (max-width: 992px) {
+  .account-layout {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .account-sidebar {
+    width: 100%;
+  }
+
+    .account-sidebar nav {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+  .sidebar-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .sidebar-divider {
+    display: none;
+  }
+
+  .logout-item {
+    margin-left: auto;
+  }
+}

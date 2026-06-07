@@ -1,0 +1,21 @@
+<div class="content-card fade-in">
+  <h2>Мои отзывы</h2>
+  @for (review of data.reviews(); track review.product) {
+  <div class="review-item">
+    <div class="review-header">
+      <span class="review-product">{{ review.product }}</span>
+      <span class="review-date">{{ review.date }}</span>
+    </div>
+    <div class="rating-row">
+      @for (star of [1,2,3,4,5]; track star) {
+      <svg lucideStar
+           [size]="14"
+           [strokeWidth]="0"
+           [class.filled-star]="star <= review.rating"
+           [class.empty-star]="star > review.rating"></svg>
+      }
+    </div>
+    <p class="review-text">{{ review.text }}</p>
+  </div>
+  }
+</div>

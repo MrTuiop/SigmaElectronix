@@ -1,1 +1,232 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Базовые переменные (Светлая тема) */
+:root {
+  /* Цветовая палитра (Фиолетовые оттенки) */
+  --primary-color: #7c3aed; /* Яркий фиолетовый */
+  --primary-hover: #6d28d9;
+  --secondary-color: #4c1d95; /* Темно-фиолетовый */
+  /* Градиенты */
+  --purple-gradient: linear-gradient(135deg, #4c1d95 0%, #8b5cf6 100%);
+  --purple-gradient-hover: linear-gradient(135deg, #3b0764 0%, #7c3aed 100%);
+  /* Фоны и текст */
+  --bg-color: #f3f4f6; /* Светло-серый фон сайта */
+  --card-bg: #ffffff; /* Белый фон для карточек */
+  --text-main: #111827; /* Почти черный текст */
+  --text-muted: #6b7280; /* Серый текст для описаний */
+  /* Прочее */
+  --border-color: #e5e7eb;
+  --border-radius: 12px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --transition: all 0.3s ease;
+}
+
+/* Темная тема (активируется классом .dark-theme на <body>) */
+body.dark-theme {
+  --bg-color: #0f172a; /* Очень темный сине-серый фон */
+  --card-bg: #1e293b; /* Фон карточек в темной теме */
+  --text-main: #f8fafc; /* Светлый текст */
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --purple-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+}
+
+/* Сброс базовых стилей */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition: background-color var(--transition), color var(--transition);
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Глобальные утилиты */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.btn-primary {
+  background: var(--purple-gradient);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+  .btn-primary:hover {
+    background: var(--purple-gradient-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  }
+
+/* ===== СТИЛИ ЛИЧНОГО КАБИНЕТА (только внутри .account-page) ===== */
+
+/* Общие карточки и анимация */
+.account-page .content-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Анимация появления */
+.account-page .fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Заголовки секций */
+.account-page .section-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+  .account-page .section-header-inner h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+.account-page .count-badge {
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* Кнопки (только внутри аккаунта) */
+.account-page .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--purple-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  transform: none; /* убираем возможное смещение */
+}
+
+  .account-page .btn-primary:hover {
+    background: var(--purple-gradient-hover);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    transform: none;
+  }
+
+.account-page .btn-outline-sm {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+  .account-page .btn-outline-sm:hover {
+    background: var(--primary-color);
+    color: #fff;
+  }
+
+.account-page .btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Текстовые кнопки */
+.account-page .text-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.account-page .text-btn-danger {
+  color: #ef4444;
+}
+
+/* Пустые состояния */
+.account-page .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+  .account-page .empty-state svg {
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .account-page .empty-state p {
+    font-size: 15px;
+  }
+
+/* Звёзды рейтинга */
+.account-page .rating-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.account-page .filled-star {
+  fill: #f59e0b;
+  color: #f59e0b;
+}
+
+.account-page .empty-star {
+  fill: none;
+  color: #d1d5db;
+}
+
+/* Адаптив для общих элементов */
+@media (max-width: 768px) {
+  .account-page .content-card {
+    padding: 20px;
+  }
+}

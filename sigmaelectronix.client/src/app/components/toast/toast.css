@@ -1,0 +1,137 @@
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.toast {
+  position: relative; /* ← обязательно для абсолютного позиционирования псевдоэлемента */
+  overflow: hidden; /* ← обрезаем псевдоэлемент по border-radius */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+  max-width: 440px;
+  padding: 14px 18px;
+  border-radius: var(--border-radius, 12px);
+  background: var(--card-bg, #ffffff);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.1));
+  border: 1px solid var(--border-color, #e5e7eb);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: toast-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+}
+
+  /* Цветная полоса слева – теперь всегда внутри блока */
+  .toast::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 12px 0 0 12px; /* скругляется только с левой стороны */
+  }
+
+  .toast.success::before {
+    background: #10b981;
+  }
+
+  .toast.error::before {
+    background: #ef4444;
+  }
+
+  .toast.info::before {
+    background: #3b82f6;
+  }
+
+  .toast:hover {
+    transform: translateX(-6px);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 0 0 1px var(--primary-color, #7c3aed) inset;
+  }
+
+.toast-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.toast.success .toast-icon svg {
+  color: #10b981;
+}
+
+.toast.error .toast-icon svg {
+  color: #ef4444;
+}
+
+.toast.info .toast-icon svg {
+  color: #3b82f6;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main, #111827);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  padding: 6px;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+  .toast-close:hover {
+    background: var(--bg-color, #f3f4f6);
+    color: var(--text-main, #111827);
+  }
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Тёмная тема */
+body.dark-theme .toast {
+  background: var(--card-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+}
+
+body.dark-theme .toast-message {
+  color: var(--text-main, #f8fafc);
+}
+
+body.dark-theme .toast-close {
+  color: var(--text-muted, #94a3b8);
+}
+
+  body.dark-theme .toast-close:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }

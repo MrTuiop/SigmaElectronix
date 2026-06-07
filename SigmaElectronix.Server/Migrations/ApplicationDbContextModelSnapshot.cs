@@ -310,6 +310,45 @@ namespace SigmaElectronix.Server.Migrations
                     b.ToTable("CartItems");
                 });
 
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.OrderModels.BonusTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BonusTransactions");
+                });
+
             modelBuilder.Entity("SigmaElectronix.Server.Entities.OrderModels.Coupon", b =>
                 {
                     b.Property<int>("Id")
@@ -954,6 +993,10 @@ namespace SigmaElectronix.Server.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("text");
 
+                    b.Property<decimal>("BonusBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -1174,6 +1217,24 @@ namespace SigmaElectronix.Server.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.OrderModels.BonusTransaction", b =>
+                {
+                    b.HasOne("SigmaElectronix.Server.Entities.OrderModels.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SigmaElectronix.Server.Entities.UserModels.ApplicationUser", "User")
+                        .WithMany("BonusTransactions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.OrderModels.Order", b =>
@@ -1435,6 +1496,8 @@ namespace SigmaElectronix.Server.Migrations
             modelBuilder.Entity("SigmaElectronix.Server.Entities.UserModels.ApplicationUser", b =>
                 {
                     b.Navigation("Addresses");
+
+                    b.Navigation("BonusTransactions");
 
                     b.Navigation("Cart");
 

@@ -1,0 +1,75 @@
+<div class="product-card">
+  <div class="product-badges">
+    @if (product.discount) {
+    <span class="discount-badge">–{{ product.discount }}%</span>
+    }
+    @if (product.isNew) {
+    <span class="new-badge">Новинка</span>
+    }
+  </div>
+
+  <button class="wishlist-btn" (click)="onToggleWishlist($event)">
+    <svg lucideHeart
+         size="18"
+         strokeWidth="2.5"
+         [class.filled]="inWishlist">
+    </svg>
+  </button>
+
+  <div class="product-image">
+    <div class="image-placeholder" [style.background]="product.gradient">
+      @switch(product.icon) {
+      @case('smartphone') {
+      <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @case('laptop') {
+      <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @case('headphones') {
+      <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @case('watch') {
+      <svg lucideWatch size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @case('tv') {
+      <svg lucideTv size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @case('gamepad-2') {
+      <svg lucideGamepad2 size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      @default {
+      <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
+      }
+      }
+    </div>
+  </div>
+
+  <div class="product-info">
+    <span class="product-brand">{{ product.brand }}</span>
+    <h3 class="product-name">{{ product.name }}</h3>
+
+    <div class="rating-row">
+      @for (star of [1,2,3,4,5]; track star) {
+      <svg lucideStar
+           [size]="13"
+           [strokeWidth]="0"
+           [class.filled-star]="star <= product.rating"
+           [class.empty-star]="star > product.rating">
+      </svg>
+      }
+      <span class="reviews-count">({{ product.reviews }})</span>
+    </div>
+
+    <div class="price-row">
+      <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
+      @if (product.oldPrice) {
+      <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+      }
+    </div>
+
+    <button class="add-to-cart-btn" (click)="onAddToCart($event)">
+      <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+      В корзину
+    </button>
+  </div>
+</div>

@@ -1,0 +1,67 @@
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()">
+      <svg lucideX size="20" strokeWidth="2.5"></svg>
+    </button>
+
+    @if (isLogin()) {
+    <h2 class="modal-title">Вход</h2>
+    <form (ngSubmit)="onSubmitLogin()" class="auth-form">
+      <div class="input-group">
+        <svg lucideUser size="16" strokeWidth="2"></svg>
+        <input type="text" placeholder="Логин" [(ngModel)]="login" name="login" autocomplete="username" />
+      </div>
+      <div class="input-group">
+        <svg lucideLock size="16" strokeWidth="2"></svg>
+        <input [type]="showPassword() ? 'text' : 'password'" placeholder="Пароль" [(ngModel)]="password" name="password" autocomplete="current-password" />
+        <button type="button" class="toggle-password" (click)="togglePassword('login')">
+          @if (showPassword()) { <svg lucideEye size="16" strokeWidth="2"></svg> }
+          @else { <svg lucideEyeOff size="16" strokeWidth="2"></svg> }
+        </button>
+      </div>
+      <button type="submit" class="submit-btn">Войти</button>
+    </form>
+    <p class="switch-mode">
+      Нет аккаунта?
+      <button type="button" class="link-btn" (click)="toggleMode()">Зарегистрироваться</button>
+    </p>
+    } @else {
+    <h2 class="modal-title">Регистрация</h2>
+    <form (ngSubmit)="onSubmitRegister()" class="auth-form">
+      <div class="input-group">
+        <svg lucideUser size="16" strokeWidth="2"></svg>
+        <input type="text" placeholder="Логин" [(ngModel)]="regLogin" name="regLogin" autocomplete="username" />
+      </div>
+      <div class="input-group">
+        <svg lucidePhone size="16" strokeWidth="2"></svg>
+        <input type="tel" placeholder="Телефон" [(ngModel)]="regPhone" name="regPhone" autocomplete="tel" />
+      </div>
+      <div class="input-group">
+        <svg lucideMail size="16" strokeWidth="2"></svg>
+        <input type="email" placeholder="Email (необязательно)" [(ngModel)]="regEmail" name="regEmail" autocomplete="email" />
+      </div>
+      <div class="input-group">
+        <svg lucideLock size="16" strokeWidth="2"></svg>
+        <input [type]="showRegPassword() ? 'text' : 'password'" placeholder="Пароль" [(ngModel)]="regPassword" name="regPassword" />
+        <button type="button" class="toggle-password" (click)="togglePassword('reg')">
+          @if (showRegPassword()) { <svg lucideEye size="16" strokeWidth="2"></svg> }
+          @else { <svg lucideEyeOff size="16" strokeWidth="2"></svg> }
+        </button>
+      </div>
+      <div class="input-group">
+        <svg lucideLock size="16" strokeWidth="2"></svg>
+        <input [type]="showRegConfirmPassword() ? 'text' : 'password'" placeholder="Подтвердите пароль" [(ngModel)]="regConfirmPassword" name="regConfirmPassword" />
+        <button type="button" class="toggle-password" (click)="togglePassword('confirm')">
+          @if (showRegConfirmPassword()) { <svg lucideEye size="16" strokeWidth="2"></svg> }
+          @else { <svg lucideEyeOff size="16" strokeWidth="2"></svg> }
+        </button>
+      </div>
+      <button type="submit" class="submit-btn">Зарегистрироваться</button>
+    </form>
+    <p class="switch-mode">
+      Уже есть аккаунт?
+      <button type="button" class="link-btn" (click)="toggleMode()">Войти</button>
+    </p>
+    }
+  </div>
+</div>

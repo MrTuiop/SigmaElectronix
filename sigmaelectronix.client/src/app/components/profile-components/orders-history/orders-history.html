@@ -1,0 +1,30 @@
+<div class="content-card fade-in">
+  <div class="section-header-inner">
+    <h2>История заказов</h2>
+  </div>
+  @if (data.orders().length === 0) {
+  <div class="empty-state">
+    <svg lucidePackage size="48" strokeWidth="1.5"></svg>
+    <p>У вас пока нет заказов</p>
+  </div>
+  } @else {
+  <div class="orders-list">
+    @for (order of data.orders(); track order.id) {
+    <div class="order-card">
+      <div class="order-top">
+        <span class="order-id">№ {{ order.id }}</span>
+        <span class="order-status" [style.background]="order.statusColor">{{ order.status }}</span>
+      </div>
+      <div class="order-meta">
+        <span>от {{ order.date }}</span>
+        <span>{{ order.items }} товар(а)</span>
+      </div>
+      <div class="order-bottom">
+        <span class="order-total">{{ order.total | currency:'₽':'symbol':'1.0-0' }}</span>
+        <button class="btn-outline-sm">Подробнее</button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

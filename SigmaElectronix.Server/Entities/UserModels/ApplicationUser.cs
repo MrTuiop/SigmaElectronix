@@ -35,7 +35,10 @@ namespace SigmaElectronix.Server.Entities.UserModels
         public int? PreferredStoreId { get; set; }
         public Store? PreferredStore { get; set; }
 
+        public decimal BonusBalance { get; set; } = 0;
+
         // Навигационные свойства
+        public ICollection<BonusTransaction> BonusTransactions { get; set; } = new List<BonusTransaction>();
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();

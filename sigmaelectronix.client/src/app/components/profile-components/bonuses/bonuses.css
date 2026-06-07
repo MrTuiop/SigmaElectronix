@@ -1,0 +1,64 @@
+/* ===== БОНУСЫ ===== */
+.bonus-hero {
+  text-align: center;
+  padding: 20px;
+  background: var(--bg-color);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.bonus-icon {
+  color: var(--primary-color);
+  margin-bottom: 12px;
+}
+
+.bonus-points {
+  font-size: 36px;
+  font-weight: 800;
+  background: var(--purple-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.bonus-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.bonus-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bonus-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+  .bonus-entry:last-child {
+    border-bottom: none;
+  }
+
+.entry-date {
+  color: var(--text-muted);
+  width: 80px;
+}
+
+.entry-desc {
+  flex: 1;
+  margin: 0 16px;
+  color: var(--text-main);
+}
+
+.entry-amount {
+  font-weight: 700;
+  color: #10b981;
+}

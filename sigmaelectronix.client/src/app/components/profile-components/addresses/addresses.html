@@ -1,0 +1,31 @@
+<div class="content-card fade-in">
+  <div class="section-header-inner">
+    <h2>Мои адреса</h2>
+    <button class="btn-primary btn-sm" (click)="addAddress()">
+      <svg lucidePlus size="16" strokeWidth="2.5"></svg>
+      Добавить
+    </button>
+  </div>
+
+  <div class="addresses-grid">
+    @for (addr of data.addresses(); track addr.id) {
+    <div class="address-card">
+      <div class="address-header">
+        <svg lucideMapPin size="20" strokeWidth="2" class="pin-icon"></svg>
+        <div class="address-title-group">
+          <span class="address-title">{{ addr.title }}</span>
+          @if (addr.isDefault) {
+          <span class="default-badge">По умолчанию</span>
+          }
+        </div>
+      </div>
+      <p class="address-text">{{ addr.street }}</p>
+      <p class="address-text">{{ addr.city }}, {{ addr.zip }}</p>
+      <div class="address-actions">
+        <button class="text-btn" (click)="editAddress(addr.id)">Изменить</button>
+        <button class="text-btn text-btn-danger" (click)="deleteAddress(addr.id)">Удалить</button>
+      </div>
+    </div>
+    }
+  </div>
+</div>

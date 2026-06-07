@@ -53,6 +53,9 @@ namespace SigmaElectronix.Server.Data
         // Адреса пользователей
         public DbSet<Address> Addresses { get; set; }
 
+        // История бонусов
+        public DbSet<BonusTransaction> BonusTransactions { get; set; }
+
         // Статистика
         public DbSet<ProductView> ProductViews { get; set; }
 
@@ -300,6 +303,8 @@ namespace SigmaElectronix.Server.Data
                 entity.Property(u => u.FirstName).HasMaxLength(100);
                 entity.Property(u => u.LastName).HasMaxLength(100);
 
+                entity.Property(u => u.BonusBalance).HasPrecision(18, 2);
+
                 // Привязка любимого города (настройка внешнего ключа)
                 entity.HasOne(u => u.PreferredCity)
                     .WithMany(c => c.Users)
@@ -311,6 +316,25 @@ namespace SigmaElectronix.Server.Data
                     .WithMany()
                     .HasForeignKey(u => u.PreferredStoreId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<BonusTransaction>(entity =>
+            {
+                entity.HasKey(bt => bt.Id);
+                entity.Property(bt => bt.Amount).HasPrecision(18, 2);
+                entity.Property(bt => bt.Reason).IsRequired().HasMaxLength(255);
+
+                // Связь: Один Пользователь -> Много Транзакций
+                entity.HasOne(bt => bt.User)
+                    .WithMany(u => u.BonusTransactions)
+                    .HasForeignKey(bt => bt.UserId)
+                    .OnDelete(DeleteBehavior.Cascade); // Удаляем юзера -> удаляем его историю бонусов
+
+                // Связь: Транзакция -> Заказ (опционально)
+                entity.HasOne(bt => bt.Order)
+                    .WithMany() // Со стороны Order коллекцию транзакций мы не делали, поэтому пустые скобки
+                    .HasForeignKey(bt => bt.OrderId)
+                    .OnDelete(DeleteBehavior.SetNull); // Если удалили заказ из БД, пусть история списания бонусов останется (просто OrderId станет null)
             });
 
             modelBuilder.Entity<Address>(entity =>

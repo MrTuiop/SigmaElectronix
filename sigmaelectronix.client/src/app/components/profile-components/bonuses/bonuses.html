@@ -1,0 +1,25 @@
+<div class="content-card fade-in">
+  <div class="bonus-hero">
+    <svg lucideGift size="40" strokeWidth="1.5" class="bonus-icon"></svg>
+    <div class="bonus-points">
+      {{ data.user()?.bonusBalance ?? 0 }} баллов
+    </div>
+    <p class="bonus-desc">1 балл = 1 рубль. Можно оплатить до 30% стоимости заказа.</p>
+  </div>
+
+  <h3>История начислений</h3>
+  <div class="bonus-history">
+    @for (entry of data.bonusHistory(); track entry.id) {
+    <div class="bonus-entry">
+      <span class="entry-date">{{ entry.createdAt | date:'dd.MM.yyyy' }}</span>
+      <span class="entry-desc">
+        {{ entry.reason }}
+        @if (entry.orderNumber) { (заказ №{{ entry.orderNumber }}) }
+      </span>
+      <span class="entry-amount" [class.positive]="entry.amount > 0">
+        {{ entry.amount > 0 ? '+' : '' }}{{ entry.amount }}
+      </span>
+    </div>
+    }
+  </div>
+</div>

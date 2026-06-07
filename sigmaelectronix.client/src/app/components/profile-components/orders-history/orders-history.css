@@ -1,0 +1,59 @@
+/* ===== ЗАКАЗЫ ===== */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: var(--transition);
+}
+
+  .order-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+  }
+
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.order-id {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-main);
+}
+
+.order-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.order-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.order-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-total {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}

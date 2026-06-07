@@ -1,0 +1,62 @@
+/* ===== УВЕДОМЛЕНИЯ ===== */
+.notification-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+  .notification-option:last-child {
+    border-bottom: none;
+  }
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-main);
+}
+
+.option-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.toggle-btn {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--border-color);
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+  .toggle-btn.active {
+    background: var(--primary-color);
+  }
+
+.toggle-knob {
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  left: 2px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-btn.active .toggle-knob {
+  transform: translateX(22px);
+}

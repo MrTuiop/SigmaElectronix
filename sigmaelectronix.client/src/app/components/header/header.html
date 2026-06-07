@@ -1,0 +1,167 @@
+<header class="site-header">
+
+  <div class="header-top-layer">
+    <div class="container top-inner">
+      <div class="top-left">
+        <span class="geo-link">
+          <svg lucideMapPin size="14" strokeWidth="2.5"></svg> Москва
+        </span>
+        <span class="lang-link">
+          <svg lucideGlobe size="14" strokeWidth="2.5"></svg> RU
+        </span>
+
+        <button class="theme-toggle-btn" (click)="toggleTheme()">
+          @if (isDarkTheme()) {
+          <svg lucideSun size="14" strokeWidth="2.5"></svg>
+          } @else {
+          <svg lucideMoon size="14" strokeWidth="2.5"></svg>
+          }
+        </button>
+      </div>
+
+      <nav class="top-center-nav">
+        <a href="#">Магазины</a>
+        <a href="#">Доставка и оплата</a>
+        <a href="#">Гарантия</a>
+        <a href="#">О компании</a>
+      </nav>
+
+      <div class="top-right">
+        <a href="tel:+78005553535" class="phone-link">
+          8 (800) 555-35-35
+          <span class="phone-tooltip">Пн–Вс: 10:00 – 22:00</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-bottom-layer">
+    <div class="container bottom-inner">
+
+      <div class="purple-brand-box">
+        <a href="/" class="logo">Sigma<span>Electronix</span></a>
+
+        <button class="catalog-btn" (click)="toggleMenu()">
+          <div class="hamburger-icon" [class.open]="isCategoryMenuOpen()">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="catalog-text">Каталог товаров</span>
+        </button>
+
+        @if (isCategoryMenuOpen()) {
+        <div class="dropdown-catalog-menu">
+          <ul>
+            @for (cat of categories(); track cat.name) {
+            <li>
+              <a href="#">
+                @switch(cat.icon) {
+                @case('smartphone') {
+                <svg lucideSmartphone size="18" class="cat-icon"></svg>
+                }
+                @case('laptop') {
+                <svg lucideLaptop size="18" class="cat-icon"></svg>
+                }
+                @case('headphones') {
+                <svg lucideHeadphones size="18" class="cat-icon"></svg>
+                }
+                @case('watch') {
+                <svg lucideWatch size="18" class="cat-icon"></svg>
+                }
+                @case('tv') {
+                <svg lucideTv size="18" class="cat-icon"></svg>
+                }
+                @case('gamepad-2') {
+                <svg lucideGamepad2 size="18" class="cat-icon"></svg>
+                }
+                @default {
+                <svg lucideSmartphone size="18" class="cat-icon"></svg>
+                }
+                }
+                <span class="cat-name">{{ cat.name }}</span>
+              </a>
+            </li>
+            }
+          </ul>
+        </div>
+        }
+      </div>
+
+      <div class="search-block">
+        <div class="search-wrapper">
+          <input type="text"
+                 [placeholder]="currentPlaceholder()"
+                 [value]="searchQuery()"
+                 (input)="onSearchInput($event)"
+                 (keyup.enter)="triggerSearch()">
+          <button class="search-submit-btn" (click)="triggerSearch()">
+            <svg lucideSearch size="20"></svg>
+          </button>
+        </div>
+
+        <div class="quick-tags-row">
+          <span class="tags-label">Популярно:</span>
+          @for (tag of quickTags(); track tag) {
+          <span class="quick-tag"
+                (mouseenter)="onTagHover(tag)"
+                (mouseleave)="onTagLeave()"
+                (click)="onTagClick(tag)">
+            {{ tag }}
+          </span>
+          }
+        </div>
+      </div>
+
+      <div class="actions-block">
+        <button class="action-item">
+          <div class="icon-box">
+            <svg lucideHeart size="24" strokeWidth="2"></svg>
+            @if (favoritesCount() > 0) {
+            <span class="counter-badge">{{ favoritesCount() }}</span>
+            }
+          </div>
+          <span class="action-label">Избранное</span>
+        </button>
+
+        <a class="action-item" routerLink="/cart">
+          <div class="icon-box">
+            <svg lucideShoppingCart size="24" strokeWidth="2"></svg>
+            @if (cartCount() > 0) {
+            <span class="counter-badge badge-alert">{{ cartCount() }}</span>
+            }
+          </div>
+          <span class="action-label">Корзина</span>
+        </a>
+
+        @if (isLoggedIn()) {
+        <!-- Вошёл: ссылка на профиль -->
+        <a class="action-item profile-item" routerLink="/profile">
+          <div class="avatar-placeholder">
+            @if (avatarUrl()) {
+            <!-- Настоящая аватарка, если есть -->
+            <img [src]="avatarUrl()" alt="avatar" class="avatar-img" />
+            } @else {
+            <!-- Заглушка, если аватар не загружен -->
+            <svg lucideUser size="24" strokeWidth="2"></svg>
+            }
+          </div>
+          <span class="action-label">{{ displayName() }}</span>
+        </a>
+        } @else {
+        <!-- Гость: кнопка открытия модалки -->
+        <button class="action-item profile-item" (click)="openAuthModal()">
+          <div class="avatar-placeholder">
+            <svg lucideUser size="24" strokeWidth="2"></svg>
+          </div>
+          <span class="action-label">Войти</span>
+        </button>
+        }
+      </div>
+
+    </div>
+  </div>
+
+  @if (showAuthModal()) {
+  <app-auth-modal (close)="showAuthModal.set(false)"/>
+  }
+
+</header>

@@ -1,0 +1,39 @@
+<div class="content-card fade-in">
+  <h2>Настройки уведомлений</h2>
+
+  <div class="notification-option">
+    <div class="option-text">
+      <span class="option-title">Email-рассылка</span>
+      <span class="option-desc">Получать информацию об акциях и новинках</span>
+    </div>
+    <button class="toggle-btn"
+            [class.active]="data.notifications().email"
+            (click)="data.toggleNotification('email')">
+      <div class="toggle-knob"></div>
+    </button>
+  </div>
+
+  <div class="notification-option">
+    <div class="option-text">
+      <span class="option-title">SMS-уведомления</span>
+      <span class="option-desc">Статус заказа и напоминания о доставке</span>
+    </div>
+    <button class="toggle-btn"
+            [class.active]="data.notifications().sms"
+            (click)="data.toggleNotification('sms')">
+      <div class="toggle-knob"></div>
+    </button>
+  </div>
+
+  <div class="notification-option">
+    <div class="option-text">
+      <span class="option-title">Push-уведомления</span>
+      <span class="option-desc">Мгновенные оповещения в браузере</span>
+    </div>
+    <button class="toggle-btn"
+            [class.active]="data.notifications().push"
+            (click)="data.toggleNotification('push')">
+      <div class="toggle-knob"></div>
+    </button>
+  </div>
+</div>

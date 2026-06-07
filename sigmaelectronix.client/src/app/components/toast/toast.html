@@ -1,0 +1,22 @@
+<div class="toast-container">
+  @for (toast of toastService.toasts(); track toast.id) {
+  <div class="toast"
+       [class.success]="toast.type === 'success'"
+       [class.error]="toast.type === 'error'"
+       [class.info]="toast.type === 'info'"
+       (click)="toastService.removeToast(toast.id)">
+    <div class="toast-icon">
+      @switch (toast.type) {
+      @case ('success') { <svg lucideCheckCircle size="18" strokeWidth="2" /> }
+      @case ('error') { <svg lucideAlertCircle size="18" strokeWidth="2" /> }
+      @case ('info') { <svg lucideInfo size="18" strokeWidth="2" /> }
+      }
+    </div>
+    <span class="toast-message">{{ toast.message }}</span>
+    <button class="toast-close"
+            (click)="$event.stopPropagation(); toastService.removeToast(toast.id)">
+      <svg lucideX size="16" strokeWidth="2" />
+    </button>
+  </div>
+  }
+</div>

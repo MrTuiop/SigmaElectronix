@@ -1,0 +1,33 @@
+/* ===== ОТЗЫВЫ ===== */
+.review-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 0;
+}
+
+  .review-item:last-child {
+    border-bottom: none;
+  }
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.review-product {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.review-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.review-text {
+  font-size: 14px;
+  color: var(--text-main);
+  margin-top: 8px;
+  line-height: 1.5;
+}

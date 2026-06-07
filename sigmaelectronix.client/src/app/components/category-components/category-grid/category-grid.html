@@ -1,0 +1,32 @@
+<div class="category-grid">
+  @for (cat of categories; track cat.slug) {
+  <a [routerLink]="['/catalog', cat.slug]" class="category-card">
+    <div class="cat-icon-wrapper">
+      @switch (cat.icon) {
+      @case ('smartphone') {
+      <svg lucideSmartphone size="28" strokeWidth="1.8"></svg>
+      }
+      @case ('laptop') {
+      <svg lucideLaptop size="28" strokeWidth="1.8"></svg>
+      }
+      @case ('headphones') {
+      <svg lucideHeadphones size="28" strokeWidth="1.8"></svg>
+      }
+      @case ('watch') {
+      <svg lucideWatch size="28" strokeWidth="1.8"></svg>
+      }
+      @case ('tv') {
+      <svg lucideTv size="28" strokeWidth="1.8"></svg>
+      }
+      @case ('gamepad-2') {
+      <svg lucideGamepad2 size="28" strokeWidth="1.8"></svg>
+      }
+      @default {
+      <svg lucideSmartphone size="28" strokeWidth="1.8"></svg>
+      }
+      }
+    </div>
+    <span class="cat-label">{{ cat.name }}</span>
+  </a>
+  }
+</div>

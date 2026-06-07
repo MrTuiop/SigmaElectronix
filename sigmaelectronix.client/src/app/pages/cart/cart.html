@@ -1,0 +1,103 @@
+<div class="cart-page">
+  <div class="container">
+    <h1 class="cart-title">Корзина</h1>
+
+    @if (items().length === 0) {
+    <div class="empty-cart">
+      <svg lucideShoppingCart size="64" strokeWidth="1" class="empty-icon"></svg>
+      <h2>В корзине пока пусто</h2>
+      <p>Добавьте товары из каталога</p>
+      <a href="/" class="btn-primary">Перейти к покупкам</a>
+    </div>
+    } @else {
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of items(); track item.id) {
+        <div class="cart-item-card">
+          <div class="item-image" [style.background]="item.gradient">
+            @switch (item.icon) {
+            @case ('smartphone') {
+            <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
+            }
+            @case ('headphones') {
+            <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg>
+            }
+            @case ('laptop') {
+            <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg>
+            }
+            @default {
+            <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
+            }
+            }
+          </div>
+
+          <div class="item-details">
+            <span class="item-brand">{{ item.brand }}</span>
+            <h3 class="item-name">{{ item.name }}</h3>
+            <div class="item-price-row">
+              <span class="current-price">{{ item.price | currency:'₽':'symbol':'1.0-0' }}</span>
+              @if (item.oldPrice) {
+              <span class="old-price">{{ item.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="item-actions">
+            <div class="quantity-controls">
+              <button class="qty-btn" (click)="decreaseQuantity(item.id)">
+                <svg lucideMinus size="14" strokeWidth="2.5"></svg>
+              </button>
+              <span class="qty-value">{{ item.quantity }}</span>
+              <button class="qty-btn" (click)="increaseQuantity(item.id)">
+                <svg lucidePlus size="14" strokeWidth="2.5"></svg>
+              </button>
+            </div>
+
+            <span class="item-total-price">
+              {{ (item.price * item.quantity) | currency:'₽':'symbol':'1.0-0' }}
+            </span>
+
+            <button class="remove-btn" (click)="removeItem(item.id)">
+              <svg lucideTrash2 size="18" strokeWidth="2"></svg>
+            </button>
+          </div>
+        </div>
+        }
+
+        <div class="cart-footer">
+          <button class="clear-cart-btn" (click)="clearCart()">
+            <svg lucideTrash2 size="16" strokeWidth="2.5"></svg>
+            Очистить корзину
+          </button>
+        </div>
+      </div>
+
+      <aside class="cart-summary">
+        <div class="summary-lines">
+          <div class="summary-line">
+            <span>Товары ({{ items().length }})</span>
+            <span>{{ subtotal() | currency:'₽':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-total">
+          <span>Итого</span>
+          <span class="total-price">
+            {{ total() | currency:'₽':'symbol':'1.0-0' }}
+          </span>
+        </div>
+
+        <button class="checkout-btn" routerLink="/checkout">
+          <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
+          Оформить заказ
+        </button>
+
+        <div class="secure-info">
+          <svg lucideShieldCheck size="14" strokeWidth="2.5"></svg>
+          Безопасная оплата
+        </div>
+      </aside>
+    </div>
+    }
+  </div>
+</div>

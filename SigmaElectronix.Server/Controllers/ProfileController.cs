@@ -53,9 +53,39 @@ namespace SigmaElectronix.Server.Controllers
                 AvatarUrl = user.AvatarUrl,
                 PreferredCityId = user.PreferredCityId,
                 PreferredStoreId = user.PreferredStoreId,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                BonusBalance = user.BonusBalance,
+                UserName = user.UserName ?? string.Empty
             });
         }
+
+        /// <summary>
+        /// Изменить имя пользователя (username)
+        /// </summary>
+        [HttpPut("user-name")]
+        public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await GetCurrentUserAsync();
+            if (user == null) return Unauthorized();
+
+            // Проверяем, не занято ли имя другим пользователем
+            var existingUser = await _userManager.FindByNameAsync(dto.Username);
+            if (existingUser != null && existingUser.Id != user.Id)
+                return BadRequest(new { error = "Это имя пользователя уже занято" });
+
+            user.UserName = dto.Username;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            _logger.LogInformation("User {UserId} changed username to {Username}", user.Id, dto.Username);
+            return Ok(new { user.UserName });
+        }
+
 
         /// <summary>
         /// Обновить только Имя (FirstName)
@@ -241,6 +271,43 @@ namespace SigmaElectronix.Server.Controllers
             if (user == null) return Unauthorized();
 
             return Ok(user.Addresses);
+        }
+
+        /// <summary>
+        /// История начислений и списаний бонусов
+        /// </summary>
+        [HttpGet("bonus-history")]
+        public async Task<IActionResult> GetBonusHistory()
+        {
+            // Берем ID пользователя из токена
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            // Вытаскиваем пользователя вместе с историей бонусов и связанными заказами
+            var user = await _userManager.Users
+                .AsNoTracking() // Ускоряет запрос, так как мы только читаем данные
+                .Include(u => u.BonusTransactions)
+                    .ThenInclude(bt => bt.Order) // Подтягиваем заказ, чтобы взять его номер
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) return Unauthorized();
+
+            // Преобразуем в DTO и сортируем: самые новые транзакции сверху
+            var history = user.BonusTransactions
+                .OrderByDescending(bt => bt.CreatedAt)
+                .Select(bt => new BonusTransactionDto
+                {
+                    Id = bt.Id,
+                    Amount = bt.Amount,
+                    Reason = bt.Reason,
+                    CreatedAt = bt.CreatedAt,
+                    OrderId = bt.OrderId,
+                    // Безопасная проверка: если бонуcы не связаны с заказом, будет null
+                    OrderNumber = bt.Order?.OrderNumber
+                })
+                .ToList();
+
+            return Ok(history);
         }
     }
 }

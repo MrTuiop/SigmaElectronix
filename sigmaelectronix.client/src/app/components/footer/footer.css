@@ -1,0 +1,219 @@
+/* === ОБЩИЕ СТИЛИ ФУТЕРА === */
+.site-footer {
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  margin-top: 60px; /* отступ от основного контента */
+  transition: background-color var(--transition);
+  color: var(--text-main);
+}
+
+/* --- ВЕРХНЯЯ СЕТКА --- */
+.footer-top {
+  padding: 56px 0 40px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1.4fr;
+  gap: 40px;
+}
+
+/* --- КОЛОНКИ --- */
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.col-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 4px 0;
+}
+
+/* --- БРЕНД-КОЛОНКА --- */
+.brand-col {
+  gap: 18px;
+}
+
+.footer-logo {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 800;
+  background: var(--purple-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+  .logo-text span {
+    font-weight: 400;
+  }
+
+.brand-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 260px;
+}
+
+/* Социальные иконки */
+.social-links {
+  display: flex;
+  gap: 12px;
+}
+
+.social-link {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--bg-color);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+  .social-link:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: var(--card-bg);
+    transform: translateY(-2px);
+  }
+
+/* --- ССЫЛКИ КАТАЛОГА / ПОМОЩИ --- */
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+  .footer-links a {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-decoration: none;
+    transition: var(--transition);
+    display: inline-block;
+  }
+
+    .footer-links a:hover {
+      color: var(--primary-color);
+      transform: translateX(4px);
+    }
+
+/* --- КОНТАКТНАЯ КОЛОНКА --- */
+.contact-col .footer-contacts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.footer-contacts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.contact-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary-color);
+}
+
+.footer-contacts a {
+  color: var(--text-main);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+  .footer-contacts a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+/* --- НИЖНЯЯ СТРОКА --- */
+.footer-bottom {
+  border-top: 1px solid var(--border-color);
+  padding: 20px 0;
+}
+
+.footer-bottom-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bottom-links {
+  display: flex;
+  gap: 24px;
+}
+
+  .bottom-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+    .bottom-links a:hover {
+      color: var(--primary-color);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+.copyright {
+  white-space: nowrap;
+}
+
+/* === АДАПТИВНОСТЬ === */
+@media (max-width: 992px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+
+  .brand-desc {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .footer-bottom-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .bottom-links {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

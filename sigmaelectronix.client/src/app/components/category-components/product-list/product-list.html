@@ -1,0 +1,68 @@
+<div class="product-list-container">
+  <!-- Панель управления: сортировка и кнопка фильтров -->
+  <div class="toolbar">
+    <button class="filter-toggle" (click)="toggleFilter()">
+      <svg lucideSlidersHorizontal size="16" strokeWidth="2"></svg>
+      Фильтры
+    </button>
+    <div class="sort-select">
+      <select [(ngModel)]="sortBy" (ngModelChange)="resetAndLoad()">
+        <option value="popular">По популярности</option>
+        <option value="price-asc">Цена: по возрастанию</option>
+        <option value="price-desc">Цена: по убыванию</option>
+        <option value="new">Новинки</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Фильтры (выезжающая панель) -->
+  @if (filterVisible()) {
+  <div class="filter-panel">
+    <div class="filter-group">
+      <h4>Бренд</h4>
+      <div class="brand-list">
+        @for (brand of brands; track brand) {
+        <label class="brand-check">
+          <input type="checkbox"
+                 [checked]="selectedBrands().includes(brand)"
+                 (change)="selectedBrands.update(v => v.includes(brand) ? v.filter(b => b !== brand) : [...v, brand])" />
+          {{ brand }}
+        </label>
+        }
+      </div>
+    </div>
+    <div class="filter-group">
+      <h4>Цена, ₽</h4>
+      <div class="price-inputs">
+        <input type="number" [(ngModel)]="priceRange().min" placeholder="0" />
+        <span>–</span>
+        <input type="number" [(ngModel)]="priceRange().max" placeholder="200000" />
+      </div>
+    </div>
+    <button class="apply-filters-btn" (click)="resetAndLoad()">Применить</button>
+    <button class="clear-filters-btn" (click)="clearFilters()">Сбросить</button>
+  </div>
+  }
+
+  <!-- Сетка товаров -->
+  <div class="products-grid">
+    @for (product of displayedProducts(); track product.id) {
+    <app-product-cart [product]="product" />
+    }
+  </div>
+
+  <!-- Кнопка загрузить ещё -->
+  @if (hasMore()) {
+  <div class="load-more">
+    <button class="btn-outline load-more-btn" (click)="loadMore()">
+      Загрузить ещё
+    </button>
+  </div>
+  }
+
+  @if (!displayedProducts().length) {
+  <div class="no-products">
+    <p>Товары не найдены</p>
+  </div>
+  }
+</div>

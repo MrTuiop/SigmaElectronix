@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using SigmaElectronix.Server.Controllers;
 using SigmaElectronix.Server.DTOs.AuthDTOs;
 using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Services.Interfaces;
@@ -13,11 +14,13 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+        public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration, ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<string>> RegisterAsync(RegisterUserDto dto)
@@ -25,10 +28,8 @@ namespace SigmaElectronix.Server.Services
             var user = new ApplicationUser
             {
                 UserName = dto.UserName,
-                Email = dto.Email,
-
-                FirstName = dto.FirstName ?? string.Empty,
-                LastName = dto.LastName ?? string.Empty,
+                Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim(),
+                PhoneNumber = dto.PhoneNumber,
 
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
@@ -66,11 +67,12 @@ namespace SigmaElectronix.Server.Services
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email!),
-                new Claim("UserName", user.UserName!),
-                new Claim("FirstName", user.FirstName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            AddClaimIfNotNull(authClaims, ClaimTypes.Email, user.Email);
+            AddClaimIfNotNull(authClaims, "UserName", user.UserName);
+            AddClaimIfNotNull(authClaims, "FirstName", user.FirstName);
 
             // Добавляем роли пользователя в токен
             var userRoles = await _userManager.GetRolesAsync(user);
@@ -91,6 +93,12 @@ namespace SigmaElectronix.Server.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private void AddClaimIfNotNull(List<Claim> claims, string type, string? value)
+        {
+            if (!string.IsNullOrEmpty(value))
+                claims.Add(new Claim(type, value));
         }
     }
 }
