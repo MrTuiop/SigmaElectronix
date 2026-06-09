@@ -1,0 +1,172 @@
+/* ВАЖНО: Делаем компонент блочным, чтобы он вел себя как обычный div/section */
+:host {
+  display: block;
+}
+
+.brands-section {
+  padding: 48px 0;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+}
+
+.section-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+  transition: var(--transition);
+  text-decoration: none; /* Защита от дефолтного подчеркивания */
+}
+
+  .section-link:hover {
+    gap: 10px;
+    opacity: 0.8;
+  }
+
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+  min-height: 156px; /* Защита от схлопывания высоты сетки */
+}
+
+.brand-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 16px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
+}
+
+  /* Применяем hover-эффекты только к реальным карточкам, не к скелетонам */
+  .brand-card:not(.skeleton-card):hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.1);
+    transform: translateY(-4px);
+  }
+
+.brand-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.brand-card:not(.skeleton-card):hover .brand-icon-wrapper {
+  background: var(--purple-gradient);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Строгие ширина и высота (не max-), чтобы Flexbox не сжимал картинки в Safari/Chrome */
+.brand-logo-img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  transition: var(--transition);
+}
+
+/* 🔥 КРУТОЙ ТРЮК: Если логотипы черные/цветные, при наведении на карточку мы делаем их чисто белыми, чтобы они шикарно смотрелись на фиолетовом фоне */
+.brand-card:not(.skeleton-card):hover .brand-logo-img {
+  filter: brightness(0) invert(1);
+}
+
+.fallback-icon {
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.brand-card:not(.skeleton-card):hover .fallback-icon {
+  color: #ffffff;
+}
+
+.brand-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-main);
+  text-align: center;
+}
+
+/* ===== СТИЛИ СКЕЛЕТОНА (Анимация загрузки) ===== */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-icon {
+  background: var(--border-color);
+  border-color: transparent;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text {
+  width: 60%;
+  height: 14px;
+  background: var(--border-color);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.error-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #ef4444;
+  font-weight: 600;
+  padding: 20px;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+  .brands-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

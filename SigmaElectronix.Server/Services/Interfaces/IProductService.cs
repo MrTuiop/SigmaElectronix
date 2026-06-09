@@ -12,6 +12,7 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync(int count = 8);
         Task<IEnumerable<ProductListDto>> GetDiscountedProductsAsync(int count = 8);
         Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(int productId, int count = 4);
+        Task<IEnumerable<ProductListDto>> GetNewArrivalsAsync(int count = 8);
 
         // Административные методы (CRUD)
         Task<ProductDetailDto> CreateProductAsync(CreateProductDto dto);

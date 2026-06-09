@@ -1,9 +1,19 @@
-import { Component, Input, signal, computed } from '@angular/core';
+import { Component, Input, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProductCartComponent } from '../product-cart/product-cart';
+import { RouterLink } from '@angular/router';
+import {
+  LucideSlidersHorizontal,
+  LucideStar,
+  LucideHeart,
+  LucideShoppingCart,
+  LucideCheck
+} from '@lucide/angular';
 
-
+interface ProductSpec {
+  label: string;
+  value: string;
+}
 
 interface Product {
   id: number;
@@ -16,6 +26,8 @@ interface Product {
   reviews: number;
   gradient: string;
   icon: string;
+  specs: ProductSpec[];
+  inStock: boolean;
 }
 
 @Component({
@@ -24,23 +36,25 @@ interface Product {
   imports: [
     CommonModule,
     FormsModule,
-    ProductCartComponent
+    RouterLink,
+    LucideStar,
+    LucideHeart,
+    LucideShoppingCart,
+    LucideCheck
   ],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
 })
-export class ProductListComponent {
+export class ProductListComponent implements OnInit {
   @Input() categorySlug!: string;
 
-  // Заглушки товаров (в реальности — запрос к API)
-  allProducts = signal<Product[]>(this.generateMockProducts(16));
+  allProducts = signal<Product[]>([]);
   displayedProducts = signal<Product[]>([]);
   page = signal(1);
-  readonly pageSize = 8;
+  readonly pageSize = 6; // Для длинных карточек лучше показывать поменьше за раз
   hasMore = computed(() => this.displayedProducts().length < this.allProducts().length);
 
-  // Фильтры (заглушка)
-  filterVisible = signal(false);
+  // Фильтры
   priceRange = signal({ min: 0, max: 200000 });
   selectedBrands = signal<string[]>([]);
   brands = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'ASUS'];
@@ -49,12 +63,11 @@ export class ProductListComponent {
   sortBy = signal<'popular' | 'price-asc' | 'price-desc' | 'new'>('popular');
 
   ngOnInit(): void {
-    // При изменении categorySlug сбрасываем и загружаем
     this.resetAndLoad();
   }
 
   resetAndLoad(): void {
-    this.allProducts.set(this.generateMockProducts(20));
+    this.allProducts.set(this.generateMockProducts(15));
     this.displayedProducts.set([]);
     this.page.set(1);
     this.loadMore();
@@ -62,7 +75,6 @@ export class ProductListComponent {
 
   loadMore(): void {
     const currentPage = this.page();
-    const start = 0;
     const end = currentPage * this.pageSize;
     const filtered = this.applyFilters(this.allProducts());
     const sorted = this.applySort(filtered);
@@ -85,11 +97,7 @@ export class ProductListComponent {
     if (type === 'price-asc') return [...products].sort((a, b) => a.price - b.price);
     if (type === 'price-desc') return [...products].sort((a, b) => b.price - a.price);
     if (type === 'new') return [...products].reverse();
-    return products; // popular (как есть)
-  }
-
-  toggleFilter(): void {
-    this.filterVisible.update(v => !v);
+    return products;
   }
 
   clearFilters(): void {
@@ -98,22 +106,38 @@ export class ProductListComponent {
     this.resetAndLoad();
   }
 
+  toggleBrand(brand: string): void {
+    this.selectedBrands.update(v =>
+      v.includes(brand) ? v.filter(b => b !== brand) : [...v, brand]
+    );
+    this.resetAndLoad();
+  }
+
   private generateMockProducts(count: number): Product[] {
     const icons = ['smartphone', 'laptop', 'headphones', 'watch', 'tv', 'gamepad-2'];
     const brands = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'ASUS'];
     const products: Product[] = [];
+
     for (let i = 0; i < count; i++) {
+      const currentBrand = brands[i % brands.length];
       products.push({
         id: i + 1,
-        name: `Товар ${i + 1}`,
-        brand: brands[i % brands.length],
-        price: Math.floor(Math.random() * 150000) + 5000,
-        oldPrice: Math.random() > 0.5 ? Math.floor(Math.random() * 180000) + 10000 : undefined,
-        discount: Math.random() > 0.5 ? Math.floor(Math.random() * 30) + 5 : undefined,
-        rating: Math.floor(Math.random() * 3) + 2,
-        reviews: Math.floor(Math.random() * 500),
-        gradient: `linear-gradient(135deg, #667eea, #764ba2)`,
-        icon: icons[i % icons.length]
+        name: `${currentBrand} Флагман Модель ${i + 1}`,
+        brand: currentBrand,
+        price: Math.floor(Math.random() * 140000) + 9000,
+        oldPrice: Math.random() > 0.4 ? Math.floor(Math.random() * 180000) + 15000 : undefined,
+        discount: Math.random() > 0.4 ? Math.floor(Math.random() * 25) + 5 : undefined,
+        rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
+        reviews: Math.floor(Math.random() * 280) + 5,
+        gradient: `linear-gradient(135deg, #764ba2, #667eea)`,
+        icon: icons[i % icons.length],
+        inStock: Math.random() > 0.15,
+        specs: [
+          { label: 'Экран', value: '6.7", OLED, 120 Гц' },
+          { label: 'Процессор', value: '8-ядерный мощный чипсет' },
+          { label: 'Память', value: '12 ГБ / 256 ГБ' },
+          { label: 'Гарантия', value: '12 месяцев' }
+        ]
       });
     }
     return products;

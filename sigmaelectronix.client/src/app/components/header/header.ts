@@ -10,6 +10,7 @@ import {
 import { AuthModalComponent } from '../auth-components/auth-modal/auth-modal';
 import { AuthService } from '../../services/auth-service';
 import { ProfileService } from '../../services/profile-service';
+import { CategoryMenuComponent } from '../category-components/category-menu/category-menu';
 
 @Component({
   selector: 'app-header',
@@ -17,6 +18,7 @@ import { ProfileService } from '../../services/profile-service';
   imports: [
     CommonModule,
     RouterLink,
+    CategoryMenuComponent,
     LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
     LucideHeart, LucideShoppingCart, LucideUser,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
@@ -101,14 +103,4 @@ export class HeaderComponent {
       console.log('Запуск поиска на бэкенде для:', this.searchQuery());
     }
   }
-
-  // 3. ОБНОВЛЯЕМ КАТЕГОРИИ: Теперь тут имена иконок Lucide (вместо эмодзи)
-  categories = signal([
-    { icon: 'smartphone', name: 'Смартфоны и гаджеты' },
-    { icon: 'laptop', name: 'Ноутбуки и компьютеры' },
-    { icon: 'headphones', name: 'Аудио и наушники' },
-    { icon: 'watch', name: 'Умные часы' },
-    { icon: 'tv', name: 'Телевизоры и видео' },
-    { icon: 'gamepad-2', name: 'Игры и приставки' }
-  ]);
 }

@@ -8,9 +8,9 @@
     <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\sigmaelectronix.client\browser\</BuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="src\app\components\home-components\" />
     <Folder Include="src\app\components\category-components\" />
     <Folder Include="src\app\components\auth-components\" />
+    <Folder Include="src\app\components\product-components\" />
     <Folder Include="src\app\components\profile-components\" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,46 @@
+<section class="brands-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Популярные бренды</h2>
+      <a routerLink="/brands" class="section-link">
+        Все бренды
+        <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+      </a>
+    </div>
+
+    <div class="brands-grid">
+
+      <ng-container *ngIf="loading">
+        <div *ngFor="let s of skeletonArray" class="brand-card skeleton-card">
+          <div class="brand-icon-wrapper skeleton-icon"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </ng-container>
+
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+
+      <ng-container *ngIf="!loading && !error">
+        <a *ngFor="let brand of brands"
+           [routerLink]="['/brands', brand.slug]"
+           class="brand-card">
+
+          <div class="brand-icon-wrapper">
+            <img *ngIf="brand.logoUrl; else fallbackIcon"
+                 [src]="brand.logoUrl"
+                 [alt]="brand.name"
+                 class="brand-logo-img"
+                 loading="lazy" />
+            <ng-template #fallbackIcon>
+              <svg lucidePackage size="28" strokeWidth="1.5" class="fallback-icon"></svg>
+            </ng-template>
+          </div>
+          <span class="brand-name">{{ brand.name }}</span>
+
+        </a>
+      </ng-container>
+
+    </div>
+  </div>
+</section>

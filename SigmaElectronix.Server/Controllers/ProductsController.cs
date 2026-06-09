@@ -54,6 +54,13 @@ namespace SigmaElectronix.Server.Controllers
             return Ok(products);
         }
 
+        [HttpGet("new")]
+        public async Task<IActionResult> GetNewArrivals([FromQuery] int count = 8)
+        {
+            var products = await _productService.GetNewArrivalsAsync(count);
+            return Ok(products);
+        }
+
         // GET: api/products/discounted
         [HttpGet("discounted")]
         public async Task<IActionResult> GetDiscounted([FromQuery] int count = 8)

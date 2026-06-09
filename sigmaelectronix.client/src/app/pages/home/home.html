@@ -61,107 +61,10 @@
   </section>
 
   <!-- ===== БРЕНДЫ (НОВАЯ СЕКЦИЯ) ===== -->
-  <section class="brands-section">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Популярные бренды</h2>
-        <a href="#" class="section-link">
-          Все бренды
-          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
-        </a>
-      </div>
-
-      <div class="brands-grid">
-        @for (brand of brands(); track brand.name) {
-        <a href="#" class="brand-card">
-          <div class="brand-icon-wrapper">
-            @switch(brand.icon) {
-            @case('apple') { <svg lucideApple size="32" strokeWidth="1.8"></svg> }
-            @case('samsung') { <svg lucideSmartphone size="32" strokeWidth="1.8"></svg> }
-            @case('sony') { <svg lucideGamepad2 size="32" strokeWidth="1.8"></svg> }
-            @case('lg') { <svg lucideMonitor size="32" strokeWidth="1.8"></svg> }
-            @case('asus') { <svg lucideLaptop size="32" strokeWidth="1.8"></svg> }
-            @case('xiaomi') { <svg lucideCpu size="32" strokeWidth="1.8"></svg> }
-            @default { <svg lucideSmartphone size="32" strokeWidth="1.8"></svg> }
-            }
-          </div>
-          <span class="brand-name">{{ brand.name }}</span>
-        </a>
-        }
-      </div>
-    </div>
-  </section>
+  <app-featured-brands [count]="6"></app-featured-brands>
 
   <!-- ===== ХИТЫ ПРОДАЖ (исправлены иконки избранного) ===== -->
-  <section class="products-section">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Хиты продаж</h2>
-        <a href="#" class="section-link">
-          Смотреть все
-          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
-        </a>
-      </div>
-
-      <div class="products-grid">
-        @for (product of bestsellers(); track product.id) {
-        <div class="product-card">
-          <div class="product-badges">
-            @if (product.discount) {
-            <span class="discount-badge">–{{ product.discount }}%</span>
-            }
-          </div>
-          <button class="wishlist-btn" (click)="toggleWishlist(product)">
-            <svg lucideHeart
-                 size="18"
-                 strokeWidth="2.5"
-                 [class.filled]="product.inWishlist">
-            </svg>
-          </button>
-
-          <div class="product-image">
-            <div class="image-placeholder" [style.background]="product.gradient">
-              @switch(product.icon) {
-              @case('smartphone') { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('laptop') { <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('headphones') { <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('watch') { <svg lucideWatch size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('tv') { <svg lucideTv size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('gamepad-2') { <svg lucideGamepad2 size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              }
-            </div>
-          </div>
-
-          <div class="product-info">
-            <span class="product-brand">{{ product.brand }}</span>
-            <h3 class="product-name">{{ product.name }}</h3>
-            <div class="rating-row">
-              @for (star of [1,2,3,4,5]; track star) {
-              <svg lucideStar
-                   [size]="13"
-                   [strokeWidth]="0"
-                   [class.filled-star]="star <= product.rating"
-                   [class.empty-star]="star > product.rating">
-              </svg>
-              }
-              <span class="reviews-count">({{ product.reviews }})</span>
-            </div>
-            <div class="price-row">
-              <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
-              @if (product.oldPrice) {
-              <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
-              }
-            </div>
-            <button class="add-to-cart-btn" (click)="addToCart(product)">
-              <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
-              В корзину
-            </button>
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-  </section>
+  <app-best-sellers></app-best-sellers>
 
   <!-- ===== БЛОК ПРЕИМУЩЕСТВ (без изменений) ===== -->
   <section class="advantages-section">
@@ -188,78 +91,7 @@
   </section>
 
   <!-- ===== НОВИНКИ (исправлены иконки избранного) ===== -->
-  <section class="products-section new-products-section">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Новинки</h2>
-        <a href="#" class="section-link">
-          Смотреть все
-          <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
-        </a>
-      </div>
-
-      <div class="products-grid">
-        @for (product of newProducts(); track product.id) {
-        <div class="product-card">
-          <div class="product-badges">
-            @if (product.isNew) {
-            <span class="new-badge">Новинка</span>
-            }
-            @if (product.discount) {
-            <span class="discount-badge">–{{ product.discount }}%</span>
-            }
-          </div>
-          <button class="wishlist-btn" (click)="toggleWishlist(product)">
-            <svg lucideHeart
-                 size="18"
-                 strokeWidth="2.5"
-                 [class.filled]="product.inWishlist">
-            </svg>
-          </button>
-
-          <div class="product-image">
-            <div class="image-placeholder" [style.background]="product.gradient">
-              @switch(product.icon) {
-              @case('smartphone') { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('laptop') { <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('headphones') { <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('watch') { <svg lucideWatch size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('tv') { <svg lucideTv size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              @case('gamepad-2') { <svg lucideGamepad2 size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-              }
-            </div>
-          </div>
-
-          <div class="product-info">
-            <span class="product-brand">{{ product.brand }}</span>
-            <h3 class="product-name">{{ product.name }}</h3>
-            <div class="rating-row">
-              @for (star of [1,2,3,4,5]; track star) {
-              <svg lucideStar
-                   [size]="13"
-                   [strokeWidth]="0"
-                   [class.filled-star]="star <= product.rating"
-                   [class.empty-star]="star > product.rating">
-              </svg>
-              }
-              <span class="reviews-count">({{ product.reviews }})</span>
-            </div>
-            <div class="price-row">
-              <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
-              @if (product.oldPrice) {
-              <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
-              }
-            </div>
-            <button class="add-to-cart-btn" (click)="addToCart(product)">
-              <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
-              В корзину
-            </button>
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-  </section>
+  <app-new-products></app-new-products>
 
   <!-- ===== РАССЫЛКА (без изменений) ===== -->
   <section class="subscribe-section">
@@ -271,7 +103,7 @@
             Узнавайте первыми о новых поступлениях, акциях и эксклюзивных предложениях.
           </p>
           <form class="subscribe-form" (submit)="onSubscribe($event)">
-            <input type="email" placeholder="Введите ваш email" required class="subscribe-input">
+            <input type="text" placeholder="Введите ваш email" required class="subscribe-input">
             <button type="submit" class="btn-primary subscribe-btn">
               <svg lucideSend size="18" strokeWidth="2.5"></svg>
               Подписаться

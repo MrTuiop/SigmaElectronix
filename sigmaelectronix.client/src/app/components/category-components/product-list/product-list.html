@@ -1,68 +1,137 @@
-<div class="product-list-container">
-  <!-- Панель управления: сортировка и кнопка фильтров -->
-  <div class="toolbar">
-    <button class="filter-toggle" (click)="toggleFilter()">
-      <svg lucideSlidersHorizontal size="16" strokeWidth="2"></svg>
-      Фильтры
-    </button>
-    <div class="sort-select">
-      <select [(ngModel)]="sortBy" (ngModelChange)="resetAndLoad()">
-        <option value="popular">По популярности</option>
-        <option value="price-asc">Цена: по возрастанию</option>
-        <option value="price-desc">Цена: по убыванию</option>
-        <option value="new">Новинки</option>
-      </select>
-    </div>
-  </div>
+<div class="catalog-layout">
 
-  <!-- Фильтры (выезжающая панель) -->
-  @if (filterVisible()) {
-  <div class="filter-panel">
-    <div class="filter-group">
-      <h4>Бренд</h4>
-      <div class="brand-list">
+  <aside class="sidebar-filters">
+    <div class="sidebar-header">
+      <h3>Фильтры</h3>
+      <button class="clear-all-btn" (click)="clearFilters()">Сбросить всё</button>
+    </div>
+
+    <div class="filter-section">
+      <h4>Цена, ₽</h4>
+      <div class="price-range-inputs">
+        <div class="input-field">
+          <span>от</span>
+          <input type="number" [(ngModel)]="priceRange().min" (change)="resetAndLoad()" placeholder="0" />
+        </div>
+        <div class="input-field">
+          <span>до</span>
+          <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200 000" />
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <h4>Бренды</h4>
+      <div class="checkbox-list">
         @for (brand of brands; track brand) {
-        <label class="brand-check">
+        <label class="checkbox-label" [class.checked]="selectedBrands().includes(brand)">
           <input type="checkbox"
                  [checked]="selectedBrands().includes(brand)"
-                 (change)="selectedBrands.update(v => v.includes(brand) ? v.filter(b => b !== brand) : [...v, brand])" />
-          {{ brand }}
+                 (change)="toggleBrand(brand)" />
+          <span class="custom-checkbox">
+            @if (selectedBrands().includes(brand)) {
+            <svg lucideCheck size="12" strokeWidth="3"></svg>
+            @}
+          </span>
+          <span class="brand-name">{{ brand }}</span>
         </label>
         }
       </div>
     </div>
-    <div class="filter-group">
-      <h4>Цена, ₽</h4>
-      <div class="price-inputs">
-        <input type="number" [(ngModel)]="priceRange().min" placeholder="0" />
-        <span>–</span>
-        <input type="number" [(ngModel)]="priceRange().max" placeholder="200000" />
+  </aside>
+
+  <main class="main-content">
+
+    <div class="toolbar-panel">
+      <div class="products-count">
+        Найдено товаров: <strong>{{ displayedProducts().length }}</strong>
+      </div>
+      <div class="sort-dropdown">
+        <span>Сортировка:</span>
+        <select [(ngModel)]="sortBy" (ngModelChange)="resetAndLoad()">
+          <option value="popular">По популярности</option>
+          <option value="price-asc">Сначала дешевле</option>
+          <option value="price-desc">Сначала дороже</option>
+          <option value="new">По новизне</option>
+        </select>
       </div>
     </div>
-    <button class="apply-filters-btn" (click)="resetAndLoad()">Применить</button>
-    <button class="clear-filters-btn" (click)="clearFilters()">Сбросить</button>
-  </div>
-  }
 
-  <!-- Сетка товаров -->
-  <div class="products-grid">
-    @for (product of displayedProducts(); track product.id) {
-    <app-product-cart [product]="product" />
+    <div class="products-list-vertical">
+      @for (product of displayedProducts(); track product.id) {
+
+      <a [routerLink]="['/product', product.id]" class="product-long-card">
+
+        <div class="card-image-side">
+          <div class="image-placeholder" [style.background]="product.gradient">
+            <span class="mock-image-icon">{{ product.brand.substring(0,2) }}</span>
+          </div>
+          @if (product.discount) {
+          <div class="discount-badge">-{{ product.discount }}%</div>
+          }
+        </div>
+
+        <div class="card-info-side">
+          <div class="card-brand">{{ product.brand }}</div>
+          <h3 class="card-title">{{ product.name }}</h3>
+
+          <div class="card-meta">
+            <div class="rating-box">
+              <svg lucideStar size="14" class="star-icon" fill="currentColor"></svg>
+              <span>{{ product.rating }}</span>
+            </div>
+            <span class="reviews-count">{{ product.reviews }} отзывов</span>
+            <span class="stock-status" [class.out]="!product.inStock">
+              {{ product.inStock ? 'В наличии' : 'Под заказ' }}
+            </span>
+          </div>
+
+          <div class="specs-grid">
+            @for (spec of product.specs; track spec.label) {
+            <div class="spec-item">
+              <span class="spec-label">{{ spec.label }}:</span>
+              <span class="spec-value">{{ spec.value }}</span>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="card-action-side" (click)="$event.stopPropagation(); $event.preventDefault()">
+          <div class="price-block">
+            @if (product.oldPrice) {
+            <span class="old-price">{{ product.oldPrice | number:'1.0-0' }} ₽</span>
+            }
+            <span class="current-price">{{ product.price | number:'1.0-0' }} ₽</span>
+          </div>
+
+          <div class="action-buttons">
+            <button class="buy-button" [disabled]="!product.inStock">
+              <svg lucideShoppingCart size="16"></svg>
+              <span>В корзину</span>
+            </button>
+
+            <button class="wishlist-btn-circle">
+              <svg lucideHeart size="18"></svg>
+            </button>
+          </div>
+        </div>
+
+      </a>
+      }
+    </div>
+
+    @if (hasMore()) {
+    <div class="load-more-section">
+      <button class="load-more-btn" (click)="loadMore()">
+        Показать ещё товары
+      </button>
+    </div>
     }
-  </div>
 
-  <!-- Кнопка загрузить ещё -->
-  @if (hasMore()) {
-  <div class="load-more">
-    <button class="btn-outline load-more-btn" (click)="loadMore()">
-      Загрузить ещё
-    </button>
-  </div>
-  }
-
-  @if (!displayedProducts().length) {
-  <div class="no-products">
-    <p>Товары не найдены</p>
-  </div>
-  }
+    @if (!displayedProducts().length) {
+    <div class="empty-state">
+      <p>Товары, соответствующие выбранным фильтрам, не найдены.</p>
+    </div>
+    }
+  </main>
 </div>

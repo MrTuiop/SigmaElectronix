@@ -1,0 +1,155 @@
+.mega-menu-host {
+  display: block;
+}
+
+.mega-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  width: 900px; /* Фиксируем ширину для красивого вида */
+  max-width: 100vw;
+  min-height: 400px; /* Чтобы меню не прыгало при переключении */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-5px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 1100;
+  overflow: hidden;
+}
+
+  .mega-menu-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+.menu-col {
+  padding: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* === Левая колонка (Родители) === */
+.col-root {
+  background: var(--bg-color);
+  width: 250px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+}
+
+.root-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.root-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+  .root-link:hover {
+    background-color: var(--card-bg);
+    color: var(--primary-color);
+  }
+
+.root-item.active .root-link {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.cat-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.root-item.active .cat-icon {
+  color: white;
+}
+
+.root-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.chevron {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+/* === Правая колонка (Контент / Сетка) === */
+.col-content {
+  flex: 1;
+  padding: 24px;
+  background: var(--card-bg);
+}
+
+.sub-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 колонки с подкатегориями */
+  gap: 24px 16px;
+  align-content: start;
+}
+
+/* Группа (Подкатегория 2 уровня) */
+.sub-category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sub-category-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  margin-bottom: 4px;
+  transition: color 0.15s;
+}
+
+  .sub-category-title:hover {
+    color: var(--primary-color);
+  }
+
+/* Элементы внутри группы (Подкатегории 3 уровня) */
+.sub-sub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-sub-link {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+  display: block;
+}
+
+  .sub-sub-link:hover {
+    color: var(--primary-color);
+  }
+
+/* Адаптация под тёмную тему */
+:host-context(.dark-theme) .col-root {
+  background: var(--bg-color-dark); /* Замени на свою переменную темного фона */
+}

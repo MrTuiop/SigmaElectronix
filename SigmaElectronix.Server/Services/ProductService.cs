@@ -127,6 +127,21 @@ namespace SigmaElectronix.Server.Services
             return related.Select(MapToListDto);
         }
 
+        public async Task<IEnumerable<ProductListDto>> GetNewArrivalsAsync(int count = 8)
+        {
+            var products = await _context.Products
+                .Where(p => !p.IsDeleted && p.IsPublished)
+                .Include(p => p.Brand)
+                .Include(p => p.Category)
+                .Include(p => p.Images)
+                .OrderByDescending(p => p.CreatedAt) // Сортируем по дате добавления (самые новые сверху)
+                .Take(count)
+                .AsNoTracking() // Оптимизация чтения
+                .ToListAsync();
+
+            return products.Select(MapToListDto);
+        }
+
         // ====== Административные методы (CRUD) ======
 
         public async Task<ProductDetailDto> CreateProductAsync(CreateProductDto dto)

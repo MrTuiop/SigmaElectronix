@@ -21,6 +21,7 @@ builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddHostedService<OrderReservationWorker>();
 

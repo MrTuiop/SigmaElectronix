@@ -1,0 +1,81 @@
+<section class="new-products-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Новинки</h2>
+      <a routerLink="/products" class="section-link">
+        Смотреть все
+        <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+      </a>
+    </div>
+
+    <div class="products-grid">
+      @if (loading()) {
+      @for (s of skeletonArray; track $index) {
+      <div class="product-card skeleton-card">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-info">
+          <div class="skeleton-text w-30"></div>
+          <div class="skeleton-text w-80"></div>
+          <div class="skeleton-text w-50"></div>
+          <div class="skeleton-btn"></div>
+        </div>
+      </div>
+      }
+      } @else if (error()) {
+      <div class="error-message">{{ error() }}</div>
+      } @else {
+      @for (product of products(); track product.id) {
+      <div class="product-card">
+        <div class="product-badges">
+          <span class="new-badge">Новинка</span>
+          @if (product.discount) {
+          <span class="discount-badge">–{{ product.discount }}%</span>
+          }
+        </div>
+
+        <button class="wishlist-btn" (click)="toggleWishlist(product)">
+          <svg lucideHeart size="18" strokeWidth="2.5" [class.filled]="product.inWishlist"></svg>
+        </button>
+
+        <div class="product-image">
+          @if (product.mainImageUrl) {
+          <img [src]="product.mainImageUrl" [alt]="product.name" loading="lazy" class="real-img" />
+          } @else {
+          <div class="image-placeholder" [style.background]="product.gradient">
+            <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
+          </div>
+          }
+        </div>
+
+        <div class="product-info">
+          <span class="product-brand">{{ product.brand?.name || 'Brand' }}</span>
+          <h3 class="product-name">{{ product.name }}</h3>
+
+          <div class="rating-row">
+            @for (star of [1,2,3,4,5]; track star) {
+            <svg lucideStar [size]="13" [strokeWidth]="0"
+                 [class.filled-star]="star <= product.averageRating"
+                 [class.empty-star]="star > product.averageRating">
+            </svg>
+            }
+            <span class="reviews-count">({{ product.reviewsCount }})</span>
+          </div>
+
+          <div class="price-row">
+            <span class="current-price">{{ (product.discountPrice || product.price) | currency:'₽':'symbol':'1.0-0' }}</span>
+            @if (product.discountPrice && product.discountPrice < product.price) {
+            <span class="old-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
+            }
+          </div>
+
+          <button class="add-to-cart-btn" (click)="addToCart(product)">
+            <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+            В корзину
+          </button>
+        </div>
+      </div>
+      }
+      }
+    </div>
+  </div>
+</section>

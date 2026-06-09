@@ -57,7 +57,12 @@ export const routes: Routes = [
   {
     path: 'catalog',
     component: CatalogPage,
-    title: 'Корзина'
+    title: 'Каталог'
+  },
+
+  {
+    path: 'catalog/:categorySlug',
+    component: CatalogPage
   },
 
   {
@@ -66,8 +71,8 @@ export const routes: Routes = [
   },
 
   {
-    path: 'product',
-    component: ProductCartComponent
+    path: 'product/:id',
+    component: ProductDetailPage
   },
 
   // Fallback-роут: если пользователь введет абракадабру в адресную строку,

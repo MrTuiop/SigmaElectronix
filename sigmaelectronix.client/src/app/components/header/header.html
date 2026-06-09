@@ -48,42 +48,8 @@
           <span class="catalog-text">Каталог товаров</span>
         </button>
 
-        @if (isCategoryMenuOpen()) {
-        <div class="dropdown-catalog-menu">
-          <ul>
-            @for (cat of categories(); track cat.name) {
-            <li>
-              <a href="#">
-                @switch(cat.icon) {
-                @case('smartphone') {
-                <svg lucideSmartphone size="18" class="cat-icon"></svg>
-                }
-                @case('laptop') {
-                <svg lucideLaptop size="18" class="cat-icon"></svg>
-                }
-                @case('headphones') {
-                <svg lucideHeadphones size="18" class="cat-icon"></svg>
-                }
-                @case('watch') {
-                <svg lucideWatch size="18" class="cat-icon"></svg>
-                }
-                @case('tv') {
-                <svg lucideTv size="18" class="cat-icon"></svg>
-                }
-                @case('gamepad-2') {
-                <svg lucideGamepad2 size="18" class="cat-icon"></svg>
-                }
-                @default {
-                <svg lucideSmartphone size="18" class="cat-icon"></svg>
-                }
-                }
-                <span class="cat-name">{{ cat.name }}</span>
-              </a>
-            </li>
-            }
-          </ul>
-        </div>
-        }
+        <app-category-menu [isOpen]="isCategoryMenuOpen()"
+                           (closeMenu)="isCategoryMenuOpen.set(false)" />
       </div>
 
       <div class="search-block">

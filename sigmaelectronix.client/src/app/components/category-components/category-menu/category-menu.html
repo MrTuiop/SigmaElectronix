@@ -1,0 +1,51 @@
+<div class="mega-menu-panel" [class.visible]="isOpen">
+  <div class="menu-col col-root">
+    <ul class="root-list">
+      @for (cat of tree(); track cat.id) {
+      <li class="root-item"
+          [class.active]="selectedRoot()?.id === cat.id"
+          (mouseenter)="onRootHover(cat.id)">
+
+        <a [routerLink]="['/catalog', cat.slug]" (click)="onLinkClick()" class="root-link">
+
+          <ng-container *ngComponentOutlet="getIcon(cat.slug); inputs: { size: 18, class: 'cat-icon' }"></ng-container>
+
+          <span class="root-name">{{ cat.name }}</span>
+
+          @if (cat.subCategories.length > 0) {
+          <svg lucideChevronRight size="14" class="chevron"></svg>
+          }
+        </a>
+      </li>
+      }
+    </ul>
+  </div>
+
+  @if (rootSubCategories().length > 0) {
+  <div class="menu-col col-content">
+    <div class="sub-categories-grid">
+
+      @for (sub of rootSubCategories(); track sub.id) {
+      <div class="sub-category-group">
+        <a [routerLink]="['/catalog', sub.slug]" (click)="onLinkClick()" class="sub-category-title">
+          {{ sub.name }}
+        </a>
+
+        @if (sub.subCategories.length > 0) {
+        <ul class="sub-sub-list">
+          @for (subsub of sub.subCategories; track subsub.id) {
+          <li>
+            <a [routerLink]="['/catalog', subsub.slug]" (click)="onLinkClick()" class="sub-sub-link">
+              {{ subsub.name }}
+            </a>
+          </li>
+          }
+        </ul>
+        }
+      </div>
+      }
+
+    </div>
+  </div>
+  }
+</div>
