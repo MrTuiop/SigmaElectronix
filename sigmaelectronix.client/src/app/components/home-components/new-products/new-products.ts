@@ -1,10 +1,12 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage } from '@lucide/angular';
+import { Router, RouterModule } from '@angular/router';
+import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck } from '@lucide/angular';
 import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
 import { WishlistService } from '../../../services/wishlist-service';
+import { CartService } from '../../../services/cart-service';
+import { ToastService } from '../../../services/toast';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -19,7 +21,7 @@ interface UiProduct extends ProductListDto {
     CommonModule,
     CurrencyPipe,
     RouterModule,
-    LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage
+    LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck
   ],
   templateUrl: './new-products.html',
   styleUrl: './new-products.css',
@@ -28,15 +30,16 @@ export class NewProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
   private wishlistService = inject(WishlistService);
+  private cartService = inject(CartService);
+  private toastService = inject(ToastService); // <-- сервис уведомлений
+  private router = inject(Router);
 
   loading = signal(true);
   error = signal<string | null>(null);
   skeletonArray = Array(4).fill(0);
 
-  // Кеш градиентов, чтобы цвета не моргали при клике на лайк
   private gradientCache = new Map<number, string>();
 
-  // Сигнал автоматически пересчитается, если изменится список товаров ИЛИ список избранного
   products = computed<UiProduct[]>(() =>
     this.productService.newArrivals().slice(0, 4).map(p => ({
       ...p,
@@ -47,7 +50,6 @@ export class NewProductsComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    // 🎯 ВОТ ЭТОТ КОД БЫЛ ПОТЕРЯН! Возвращаем его на место:
     if (this.productService.newArrivals().length > 0) {
       this.loading.set(false);
       return;
@@ -59,7 +61,7 @@ export class NewProductsComponent implements OnInit {
     this.productService.loadNewArrivals(4).subscribe({
       next: () => {
         this.loading.set(false);
-        this.cdr.detectChanges(); // обязательно для zoneless
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Ошибка загрузки новинок', err);
@@ -71,14 +73,40 @@ export class NewProductsComponent implements OnInit {
   }
 
   toggleWishlist(product: UiProduct): void {
-    this.wishlistService.toggleItem(product.id).subscribe();
+    this.wishlistService.toggleItem(product.id).subscribe({
+      next: () => {
+        const nowInWishlist = this.wishlistService.isInWishlist(product.id);
+        if (nowInWishlist) {
+          this.toastService.success('Добавлено в избранное');
+        } else {
+          this.toastService.info('Удалено из избранного');
+        }
+      },
+      error: () => this.toastService.error('Не удалось обновить избранное')
+    });
   }
 
-  addToCart(product: UiProduct): void {
-    console.log(`Товар добавлен в корзину: ${product.name}`);
+  addToCart(product: any): void {
+    if (this.isInCart(product.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    const price = product.discountPrice || product.price;
+    this.cartService.addItem({
+      productId: product.id,
+      quantity: 1,
+      price: price
+    }).subscribe({
+      next: () => this.toastService.success('Товар добавлен в корзину'),
+      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    });
   }
 
-  // Вспомогательный метод для скидки
+  isInCart(productId: number): boolean {
+    return this.cartService.isInCart(productId);
+  }
+
   private calcDiscount(p: ProductListDto): number | undefined {
     if (p.discountPrice && p.discountPrice < p.price) {
       return Math.round(((p.price - p.discountPrice) / p.price) * 100);
@@ -86,7 +114,6 @@ export class NewProductsComponent implements OnInit {
     return undefined;
   }
 
-  // Вспомогательный метод для градиентов (с кешированием)
   private getGradient(productId: number): string {
     if (!this.gradientCache.has(productId)) {
       const gradients = [

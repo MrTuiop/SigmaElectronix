@@ -1,16 +1,16 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
-
-import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage } from '@lucide/angular';
-
+import { Router, RouterModule } from '@angular/router';
+import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck } from '@lucide/angular';
 import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
 import { WishlistService } from '../../../services/wishlist-service';
+import { CartService } from '../../../services/cart-service';
+import { ToastService } from '../../../services/toast';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
-  isNew: boolean; // 🆕 Добавляем флаг новинки в UI-модель
+  isNew: boolean;
   discount?: number;
   gradient?: string;
 }
@@ -22,7 +22,7 @@ interface UiProduct extends ProductListDto {
     CommonModule,
     CurrencyPipe,
     RouterModule,
-    LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage
+    LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck
   ],
   templateUrl: './best-sellers.html',
   styleUrl: './best-sellers.css',
@@ -30,28 +30,24 @@ interface UiProduct extends ProductListDto {
 export class BestSellersComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
-
-  // 🎯 2. Инжектим сервис избранного
   private wishlistService = inject(WishlistService);
+  private cartService = inject(CartService);
+  private toastService = inject(ToastService); // <-- сервис уведомлений
+  private router = inject(Router);
 
   loading = signal(true);
   error = signal<string | null>(null);
   skeletonArray = Array(4).fill(0);
 
-  // 🎯 УДАЛЯЕМ локальный wishlistState = signal<Set<number>>(new Set());
-
   private gradientCache = new Map<number, string>();
 
-  // 🎯 3. Обновляем вычисляемый сигнал
   products = computed<UiProduct[]>(() => {
-    // Получаем ID всех товаров, которые сейчас загружены как новинки
     const newArrivalsIds = new Set(this.productService.newArrivals().map(p => p.id));
 
     return this.productService.featuredProducts()
       .slice(0, 4)
       .map(p => ({
         ...p,
-        // Проверяем статус напрямую через глобальный сервис!
         inWishlist: this.wishlistService.isInWishlist(p.id),
         isNew: (p as any).isNew || newArrivalsIds.has(p.id),
         discount: this.calcDiscount(p),
@@ -60,8 +56,6 @@ export class BestSellersComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Если кэш уже заполнен (например, другим компонентом или при возврате на страницу) —
-    // сразу показываем данные без запроса
     if (this.productService.featuredProducts().length > 0) {
       this.loading.set(false);
       return;
@@ -70,7 +64,7 @@ export class BestSellersComponent implements OnInit {
     this.productService.loadFeatured(4).subscribe({
       next: () => {
         this.loading.set(false);
-        this.cdr.detectChanges(); // обязательно в zoneless
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Ошибка загрузки хитов продаж', err);
@@ -82,13 +76,38 @@ export class BestSellersComponent implements OnInit {
   }
 
   toggleWishlist(product: UiProduct): void {
-    // Больше никаких локальных Set. Просто отправляем запрос, 
-    // сервис обновит свой сигнал, и карточки перерисуются сами!
-    this.wishlistService.toggleItem(product.id).subscribe();
+    this.wishlistService.toggleItem(product.id).subscribe({
+      next: () => {
+        const nowInWishlist = this.wishlistService.isInWishlist(product.id);
+        if (nowInWishlist) {
+          this.toastService.success('Добавлено в избранное');
+        } else {
+          this.toastService.info('Удалено из избранного');
+        }
+      },
+      error: () => this.toastService.error('Не удалось обновить избранное')
+    });
   }
 
-  addToCart(product: UiProduct): void {
-    console.log(`Товар добавлен в корзину: ${product.name}`);
+  addToCart(product: any): void {
+    if (this.isInCart(product.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    const price = product.discountPrice || product.price;
+    this.cartService.addItem({
+      productId: product.id,
+      quantity: 1,
+      price: price
+    }).subscribe({
+      next: () => this.toastService.success('Товар добавлен в корзину'),
+      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    });
+  }
+
+  isInCart(productId: number): boolean {
+    return this.cartService.isInCart(productId);
   }
 
   private calcDiscount(p: ProductListDto): number | undefined {

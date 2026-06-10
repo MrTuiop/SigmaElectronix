@@ -65,7 +65,7 @@ export interface BrandCategoryDto {
 export interface BrandSummaryDto {
   id: number;
   name: string;
-  slug: string;
+  slug?: string;
   logoUrl?: string;
 }
 

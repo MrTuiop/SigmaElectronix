@@ -105,9 +105,25 @@ namespace SigmaElectronix.Server.Controllers
         }
 
         // 🔹 Вспомогательный метод для получения SessionId
-        private string? GetSessionId()
+        private string GetSessionId()
         {
-            return Request.Cookies["sessionId"];
+            var sessionId = Request.Cookies["sessionId"];
+
+            // Если куки нет (новый гость) — создаем её и отдаем браузеру
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                sessionId = Guid.NewGuid().ToString();
+                var cookieOptions = new CookieOptions
+                {
+                    IsEssential = true,
+                    Expires = DateTime.UtcNow.AddDays(30), // Запоминаем корзину на 30 дней
+                    HttpOnly = true, // Защита от XSS
+                    SameSite = SameSiteMode.Lax // Разрешаем передачу куки между фронтом и бэком
+                };
+                Response.Cookies.Append("sessionId", sessionId, cookieOptions);
+            }
+
+            return sessionId;
         }
     }
 }

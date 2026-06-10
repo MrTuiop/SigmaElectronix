@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-
 import {
   LucideTrash2,
   LucidePlus,
@@ -11,19 +10,10 @@ import {
   LucideTruck,
   LucideArrowRight,
   LucidePercent,
-  LucideShieldCheck
+  LucideShieldCheck,
+  LucidePackage,
 } from '@lucide/angular';
-
-interface CartItem {
-  id: number;
-  name: string;
-  brand: string;
-  price: number;
-  oldPrice?: number;
-  gradient: string;
-  icon: string;
-  quantity: number;
-}
+import { CartService } from '../../services/cart-service';
 
 @Component({
   selector: 'app-cart',
@@ -39,80 +29,50 @@ interface CartItem {
     LucideTruck,
     LucideArrowRight,
     LucidePercent,
-    LucideShieldCheck
+    LucideShieldCheck,
+    LucidePackage,
   ],
   templateUrl: './cart.html',
-  styleUrl: './cart.css',
+  styleUrls: ['./cart.css'],
 })
-export class CartPage {
-  items = signal<CartItem[]>([
-    {
-      id: 1,
-      name: 'Samsung Galaxy S24 Ultra',
-      brand: 'Samsung',
-      price: 129990,
-      oldPrice: 139990,
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      icon: 'smartphone',
-      quantity: 1
-    },
-    {
-      id: 2,
-      name: 'Sony WH-1000XM5',
-      brand: 'Sony',
-      price: 34990,
-      oldPrice: 39990,
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      icon: 'headphones',
-      quantity: 2
-    },
-    {
-      id: 3,
-      name: 'Apple MacBook Air M3',
-      brand: 'Apple',
-      price: 149990,
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      icon: 'laptop',
-      quantity: 1
-    }
-  ]);
+export class CartPage implements OnInit {
+  private cartService = inject(CartService);
 
-  subtotal = computed(() =>
-    this.items().reduce((sum, item) => sum + item.price * item.quantity, 0)
-  );
+  // Прямой доступ к сигналу корзины
+  readonly cart = this.cartService.cart;
 
-  total = computed(() => this.subtotal());
+  // Сумма заказа берётся прямо из серверного DTO
+  readonly cartTotal = computed(() => this.cart()?.total ?? 0);
+
+  ngOnInit(): void {
+    // Загружаем актуальную корзину при входе на страницу
+    this.cartService.loadCart().subscribe();
+  }
 
   increaseQuantity(itemId: number): void {
-    this.items.update(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
+    const item = this.cart()?.items.find(i => i.id === itemId);
+    if (item) {
+      this.cartService.updateItemQuantity(itemId, item.quantity + 1).subscribe();
+    }
   }
 
   decreaseQuantity(itemId: number): void {
-    this.items.update(items =>
-      items
-        .map(item =>
-          item.id === itemId && item.quantity > 1
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter(item => item.quantity > 0)
-    );
+    const item = this.cart()?.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (item.quantity > 1) {
+      this.cartService.updateItemQuantity(itemId, item.quantity - 1).subscribe();
+    } else {
+      // Если количество 1 — удаляем товар
+      this.removeItem(itemId);
+    }
   }
 
   removeItem(itemId: number): void {
-    this.items.update(items => items.filter(item => item.id !== itemId));
+    this.cartService.removeItem(itemId).subscribe();
   }
 
   clearCart(): void {
-    this.items.set([]);
-  }
-
-  checkout(): void {
-    alert('Заказ оформлен! (заглушка)');
-    this.clearCart();
+    this.cartService.clearCart().subscribe();
   }
 }

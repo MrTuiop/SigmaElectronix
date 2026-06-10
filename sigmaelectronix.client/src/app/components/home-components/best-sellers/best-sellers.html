@@ -31,7 +31,7 @@
       @else {
       @for (product of products(); track product.id) {
       <!-- ⚡️ Карточка теперь ссылка -->
-      <a class="product-card" [routerLink]="['/product', product.id]">
+      <a class="product-card" [routerLink]="['/product', product.slug]">
         <div class="product-badges">
           @if (product.isNew) {
           <span class="new-badge">Новинка</span>
@@ -79,9 +79,17 @@
           </div>
 
           <!-- Кнопка «В корзину» с защитой от перехода -->
-          <div class="add-to-cart-btn" (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+          <div class="add-to-cart-btn"
+               [class.in-cart]="isInCart(product.id)"
+               (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+
+            @if (isInCart(product.id)) {
+            <svg lucideCheck size="18" strokeWidth="3"></svg>
+            В корзине
+            } @else {
             <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
             В корзину
+            }
           </div>
         </div>
       </a>

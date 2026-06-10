@@ -2,7 +2,7 @@
   <div class="container">
     <h1 class="cart-title">Корзина</h1>
 
-    @if (items().length === 0) {
+    @if (!cart() || cart()?.items?.length === 0) {
     <div class="empty-cart">
       <svg lucideShoppingCart size="64" strokeWidth="1" class="empty-icon"></svg>
       <h2>В корзине пока пусто</h2>
@@ -12,33 +12,20 @@
     } @else {
     <div class="cart-layout">
       <div class="cart-items">
-        @for (item of items(); track item.id) {
+        @for (item of cart()?.items; track item.id) {
         <div class="cart-item-card">
-          <div class="item-image" [style.background]="item.gradient">
-            @switch (item.icon) {
-            @case ('smartphone') {
-            <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
-            }
-            @case ('headphones') {
-            <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg>
-            }
-            @case ('laptop') {
-            <svg lucideLaptop size="40" strokeWidth="1.5" class="ph-icon"></svg>
-            }
-            @default {
-            <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg>
-            }
+          <div class="item-image" [style.background]="'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'">
+            @if (item.productImage) {
+            <img [src]="item.productImage" alt="" class="product-thumb" />
+            } @else {
+            <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
             }
           </div>
 
           <div class="item-details">
-            <span class="item-brand">{{ item.brand }}</span>
-            <h3 class="item-name">{{ item.name }}</h3>
+            <h3 class="item-name">{{ item.productName }}</h3>
             <div class="item-price-row">
-              <span class="current-price">{{ item.price | currency:'₽':'symbol':'1.0-0' }}</span>
-              @if (item.oldPrice) {
-              <span class="old-price">{{ item.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
-              }
+              <span class="current-price">{{ item.unitPrice | currency:'₽':'symbol':'1.0-0' }}</span>
             </div>
           </div>
 
@@ -54,7 +41,7 @@
             </div>
 
             <span class="item-total-price">
-              {{ (item.price * item.quantity) | currency:'₽':'symbol':'1.0-0' }}
+              {{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}
             </span>
 
             <button class="remove-btn" (click)="removeItem(item.id)">
@@ -75,15 +62,15 @@
       <aside class="cart-summary">
         <div class="summary-lines">
           <div class="summary-line">
-            <span>Товары ({{ items().length }})</span>
-            <span>{{ subtotal() | currency:'₽':'symbol':'1.0-0' }}</span>
+            <span>Товары ({{ cart()?.items?.length || 0 }})</span>
+            <span>{{ cartTotal() | currency:'₽':'symbol':'1.0-0' }}</span>
           </div>
         </div>
 
         <div class="summary-total">
           <span>Итого</span>
           <span class="total-price">
-            {{ total() | currency:'₽':'symbol':'1.0-0' }}
+            {{ cartTotal() | currency:'₽':'symbol':'1.0-0' }}
           </span>
         </div>
 

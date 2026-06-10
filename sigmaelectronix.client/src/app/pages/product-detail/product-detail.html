@@ -1,35 +1,34 @@
 <div class="product-page">
   <div class="container">
-    @if (!product()) {
+    @if (isLoading()) {
     <div class="loading">Загрузка...</div>
-    } @else {
-    <!-- Хлебные крошки (упрощённо) -->
+    }
+    @else if (error()) {
+    <div class="error-message">{{ error() }}</div>
+    }
+    @else if (product()) {
     <nav class="breadcrumbs">
       <a routerLink="/">Главная</a>
       <span> / </span>
-      <a [routerLink]="['/catalog', product()?.categorySlug]">{{ product()?.categorySlug }}</a>
+      <a [routerLink]="['/catalog', product()?.categoryId]">{{ product()?.categoryName || 'Категория' }}</a>
       <span> / </span>
       <span>{{ product()?.name }}</span>
     </nav>
 
     <div class="product-layout">
-      <!-- ГАЛЕРЕЯ -->
       <div class="product-gallery">
         <div class="gallery-main" (click)="nextImage()">
           @let images = product()?.images ?? [];
-          <div class="gallery-slide"
-               [style.background]="images[activeImageIndex()]?.gradient">
-            <!-- Вот здесь был нерабочий биндинг, заменён на ngSwitch -->
-            <ng-container [ngSwitch]="product()?.icon">
-              <svg *ngSwitchCase="'smartphone'" lucideSmartphone size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-              <svg *ngSwitchCase="'laptop'" lucideLaptop size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-              <svg *ngSwitchCase="'headphones'" lucideHeadphones size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-              <svg *ngSwitchCase="'watch'" lucideWatch size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-              <svg *ngSwitchCase="'tv'" lucideTv size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-              <svg *ngSwitchCase="'gamepad-2'" lucideGamepad2 size="80" strokeWidth="1.5" class="gallery-icon"></svg>
-            </ng-container>
+
+          @if (images.length > 0) {
+          <img [src]="images[activeImageIndex()].url" [alt]="product()?.name" class="gallery-image" />
+          } @else {
+          <div class="gallery-slide" style="background: var(--card-bg);">
+            <svg lucidePackage size="80" strokeWidth="1.5" class="gallery-icon" style="color: var(--text-muted);"></svg>
           </div>
+          }
         </div>
+
         <div class="gallery-controls">
           <button class="gallery-arrow left" (click)="prevImage()">
             <svg lucideChevronLeft size="20" strokeWidth="2.5"></svg>
@@ -38,7 +37,7 @@
             <svg lucideChevronRight size="20" strokeWidth="2.5"></svg>
           </button>
           <div class="gallery-dots">
-            @for (img of images; track img; let i = $index) {
+            @for (img of product()?.images ?? []; track img.id; let i = $index) {
             <button class="dot"
                     [class.active]="i === activeImageIndex()"
                     (click)="setImageIndex(i)"></button>
@@ -47,48 +46,31 @@
         </div>
       </div>
 
-      <!-- ИНФОРМАЦИЯ О ТОВАРЕ -->
       <div class="product-info">
-        <span class="brand">{{ product()?.brand }}</span>
+        <span class="brand">{{ product()?.brand?.name }}</span>
         <h1 class="product-name">{{ product()?.name }}</h1>
+
         <div class="rating-row">
           <div class="stars">
             @for (star of [1,2,3,4,5]; track star) {
             <svg lucideStar
                  size="16"
-                 [strokeWidth]="star <= (product()?.rating ?? 0) - 0.5 ? 0 : 2"
-                 [class.filled]="star <= Math.round(product()?.rating ?? 0)"
-                 [class.empty]="star > Math.round(product()?.rating ?? 0)"></svg>
+                 [strokeWidth]="star <= (product()?.averageRating ?? 0) - 0.5 ? 0 : 2"
+                 [class.filled]="star <= Math.round(product()?.averageRating ?? 0)"
+                 [class.empty]="star > Math.round(product()?.averageRating ?? 0)"></svg>
             }
           </div>
-          <span class="rating-value">{{ product()?.rating }}</span>
+          <span class="rating-value">{{ product()?.averageRating }}</span>
           <span class="reviews-count">({{ product()?.reviewsCount }} отзывов)</span>
         </div>
 
         <div class="price-block">
-          <span class="current-price">{{ currentPrice() | currency:'₽':'symbol':'1.0-0' }}</span>
-          @if (currentOldPrice()) {
-          <span class="old-price">{{ currentOldPrice() | currency:'₽':'symbol':'1.0-0' }}</span>
-          <!-- Исправлено: добавлена проверка currentOldPrice() и доступ к Math -->
-          <span class="discount-badge">–{{ currentOldPrice() ? Math.round((1 - currentPrice()! / currentOldPrice()!) * 100) : 0 }}%</span>
+          <span class="current-price">{{ (product()?.discountPrice || product()?.price) | currency:'₽':'symbol':'1.0-0' }}</span>
+          @if (product()?.discountPrice && product()?.discountPrice! < product()?.price!) {
+          <span class="old-price">{{ product()?.price | currency:'₽':'symbol':'1.0-0' }}</span>
+          <span class="discount-badge">–{{ Math.round((1 - product()?.discountPrice! / product()?.price!) * 100) }}%</span>
           }
         </div>
-
-        <!-- Выбор варианта (если есть) -->
-        @if (product()?.variants?.length) {
-        <div class="variants">
-          <span class="variant-label">Объем памяти:</span>
-          <div class="variant-buttons">
-            @for (v of product()?.variants; track v.label; let i = $index) {
-            <button class="variant-btn"
-                    [class.active]="i === selectedVariantIndex()"
-                    (click)="selectVariant(i)">
-              {{ v.label }}
-            </button>
-            }
-          </div>
-        </div>
-        }
 
         <div class="quantity-block">
           <span>Количество:</span>
@@ -100,12 +82,21 @@
         </div>
 
         <div class="actions">
-          <button class="add-to-cart-btn" (click)="addToCart()">
+          <button class="add-to-cart-btn"
+                  [class.in-cart]="cartService.isInCart(product()?.id || 0)"
+                  (click)="addToCart()">
+
+            @if (cartService.isInCart(product()?.id || 0)) {
+            <svg lucideCheck size="20" strokeWidth="3"></svg>
+            В корзине ({{ cartService.getItemQuantity(product()?.id || 0) }} шт.)
+            } @else {
             <svg lucideShoppingCart size="20" strokeWidth="2.5"></svg>
             В корзину
+            }
           </button>
+
           <button class="wishlist-btn" (click)="toggleWishlist()" [class.in-wishlist]="inWishlist()">
-            <svg lucideHeart size="20" strokeWidth="2.5"></svg>
+            <svg lucideHeart size="20" strokeWidth="2.5" [class.filled]="inWishlist()"></svg>
           </button>
         </div>
 
@@ -124,8 +115,7 @@
           </div>
         </div>
 
-        <!-- Кнопка «Сообщить о снижении цены» -->
-        @if (!priceAlertRequested() && currentOldPrice() === undefined) {
+        @if (!priceAlertRequested() && !product()?.discountPrice) {
         <button class="price-alert-btn" (click)="requestPriceAlert()">
           <svg lucideBell size="16" strokeWidth="2"></svg>
           Сообщить о снижении цены
@@ -140,75 +130,42 @@
       </div>
     </div>
 
-    <!-- ОПИСАНИЕ И ХАРАКТЕРИСТИКИ -->
     <div class="details-section">
       <h2>Описание</h2>
-      <p>{{ product()?.description }}</p>
+      <p>{{ product()?.fullDescription }}</p>
 
       <h2>Характеристики</h2>
       <table class="specs-table">
-        @for (spec of product()?.specifications; track spec.name) {
+        @for (spec of product()?.specifications | keyvalue; track spec.key) {
         <tr>
-          <td>{{ spec.name }}</td>
+          <td>{{ spec.key }}</td>
           <td>{{ spec.value }}</td>
         </tr>
         }
       </table>
     </div>
 
-    <!-- ОТЗЫВЫ -->
-    <div class="reviews-section">
-      <div class="reviews-header">
-        <h2>Отзывы ({{ reviews().length }})</h2>
-        <div class="reviews-filter">
-          @for (star of [5,4,3,2,1]; track star) {
-          <button class="filter-btn"
-                  [class.active]="reviewFilterRating() === star"
-                  (click)="reviewFilterRating.set(reviewFilterRating() === star ? null : star)">
-            {{ star }} ★
-          </button>
-          }
-        </div>
-      </div>
-      <div class="reviews-list">
-        @for (review of filteredReviews(); track review.user) {
-        <div class="review-card">
-          <div class="review-header">
-            <strong>{{ review.user }}</strong>
-            <div class="stars small">
-              @for (star of [1,2,3,4,5]; track star) {
-              <svg lucideStar
-                   size="12"
-                   [strokeWidth]="0"
-                   [class.filled]="star <= review.rating"></svg>
-              }
-            </div>
-            <span class="review-date">{{ review.date }}</span>
-          </div>
-          <p>{{ review.text }}</p>
-        </div>
-        }
-      </div>
-    </div>
-
-    <!-- ПОХОЖИЕ ТОВАРЫ -->
+    @if (relatedProducts().length > 0) {
     <div class="related-section">
       <h2>Похожие товары</h2>
       <div class="related-grid">
-        @for (product of relatedProducts(); track product.id) {
-        <a [routerLink]="['/product', product.id, product.slug]" class="related-card">
-          <div class="related-image" [style.background]="product.gradient">
-            <svg lucideSmartphone
-                 size="36"
-                 strokeWidth="1.5"
-                 class="related-icon"></svg>
+        @for (rel of relatedProducts(); track rel.id) {
+        <a [routerLink]="['/product', rel.slug]" class="related-card">
+          <div class="related-image">
+            @if (rel.mainImageUrl) {
+            <img [src]="rel.mainImageUrl" [alt]="rel.name" class="related-img" />
+            } @else {
+            <div style="background: var(--card-bg); height: 100%; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <svg lucidePackage size="36" strokeWidth="1.5" style="color: var(--text-muted);"></svg>
+            </div>
+            }
           </div>
           <div class="related-info">
-            <span class="related-name">{{ product.name }}</span>
+            <span class="related-name">{{ rel.name }}</span>
             <div class="related-price">
-              <span>{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
-              @if (product.oldPrice) {
-              <span class="related-old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+              <span>{{ (rel.discountPrice || rel.price) | currency:'₽':'symbol':'1.0-0' }}</span>
+              @if (rel.discountPrice && rel.discountPrice < rel.price) {
+              <span class="related-old-price">{{ rel.price | currency:'₽':'symbol':'1.0-0' }}</span>
               }
             </div>
           </div>
@@ -216,6 +173,7 @@
         }
       </div>
     </div>
+    }
     }
   </div>
 </div>

@@ -152,12 +152,14 @@ namespace SigmaElectronix.Server.Services
         private async Task<Cart> GetOrCreateCartAsync(string? userId, string? sessionId)
         {
             var cart = await _context.Carts
+                .Include(c => c.Items) // ⚠️ ВАЖНОЕ ИСПРАВЛЕНИЕ: Загружаем товары вместе с корзиной
                 .FirstOrDefaultAsync(c =>
                     (userId != null && c.UserId == userId) ||
                     (sessionId != null && c.SessionId == sessionId && c.UserId == null));
 
             if (cart != null) return cart;
 
+            // Если корзины нет - создаем новую
             cart = new Cart
             {
                 UserId = userId,

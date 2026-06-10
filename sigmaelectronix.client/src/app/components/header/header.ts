@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth-service';
 import { ProfileService } from '../../services/profile-service';
 import { CategoryMenuComponent } from '../category-components/category-menu/category-menu';
 import { WishlistService } from '../../services/wishlist-service';
+import { CartService } from '../../services/cart-service';
 
 @Component({
   selector: 'app-header',
@@ -34,9 +35,13 @@ export class HeaderComponent implements OnInit{
   private profile = inject(ProfileService);
   private router = inject(Router);
   private wishlistService = inject(WishlistService);
+  private cartService = inject(CartService);
 
   // Теперь счётчик берётся из сервиса
   readonly favoritesCount = computed(() => this.wishlistService.totalItems());
+
+  // 🔹 Счётчик корзины – реактивно из CartService
+  readonly cartCount = computed(() => this.cartService.totalItems());
 
   readonly isLoggedIn = computed(() => this.auth.token() !== null);
 
@@ -67,6 +72,8 @@ export class HeaderComponent implements OnInit{
     if (this.isLoggedIn()) {
       this.wishlistService.loadWishlist().subscribe();
     }
+
+    this.cartService.loadCart().subscribe();
     // Если неавторизован — счётчик и так будет 0, и бейдж скроется
   }
 
@@ -77,7 +84,6 @@ export class HeaderComponent implements OnInit{
   }
 
   isCategoryMenuOpen = signal(false);
-  cartCount = signal(3);
   isDarkTheme = signal(false);
 
   searchQuery = signal('');

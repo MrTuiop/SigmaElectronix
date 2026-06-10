@@ -486,6 +486,53 @@
   margin-left: 8px;
 }
 
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Картинка товара будет целиком помещаться в квадрат */
+}
+
+.related-img {
+  width: 100%;
+  height: 150px; /* Высота карточки похожих товаров */
+  object-fit: cover;
+}
+
+/* ===== 1. Убираем стандартные HTML-стрелочки в инпуте ===== */
+.quantity-controls input[type="number"]::-webkit-inner-spin-button,
+.quantity-controls input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-controls input[type="number"] {
+  -moz-appearance: textfield; /* Для Firefox */
+}
+
+
+/* ===== 2. Заливка сердечка при добавлении в избранное ===== */
+.wishlist-btn.in-wishlist {
+  color: #ef4444;
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.05); /* Легкий красный фон для красоты */
+}
+
+/* Применяем заливку (fill) именно к SVG-иконке */
+.wishlist-btn svg.filled {
+  fill: currentColor;
+}
+
+
+/* ===== 3. Стили для кнопки "В корзине" ===== */
+.add-to-cart-btn.in-cart {
+  background: #10b981; /* Зеленый цвет успеха */
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+  .add-to-cart-btn.in-cart:hover {
+    background: #059669; /* Чуть темнее при наведении */
+  }
+
 @media (max-width: 768px) {
   .product-layout {
     grid-template-columns: 1fr;
