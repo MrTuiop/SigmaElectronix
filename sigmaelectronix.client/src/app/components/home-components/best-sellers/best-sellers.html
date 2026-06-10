@@ -31,7 +31,7 @@
       @else {
       @for (product of products(); track product.id) {
       <!-- ⚡️ Карточка теперь ссылка -->
-      <a class="product-card" [routerLink]="['/product', product.slug]">
+      <a class="product-card" [routerLink]="['/products', product.slug]">
         <div class="product-badges">
           @if (product.isNew) {
           <span class="new-badge">Новинка</span>

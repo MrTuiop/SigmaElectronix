@@ -20,6 +20,8 @@ namespace SigmaElectronix.Server.Entities.ProductModels
 
         public Dictionary<string, string> Specifications { get; set; } = new();
 
+        public List<string> Tags { get; set; } = new();
+
         public double AverageRating { get; set; }
         public int ReviewsCount { get; set; }
 

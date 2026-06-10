@@ -11,6 +11,7 @@
         public int BrandId { get; set; }
         public int CategoryId { get; set; }
         public Dictionary<string, string> Specifications { get; set; } = new();
+        public List<string> Tags { get; set; } = new();
         public bool IsPublished { get; set; }
     }
 }

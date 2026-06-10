@@ -77,7 +77,7 @@
     <div class="products-list-vertical">
       @for (product of displayedProducts(); track product.id) {
 
-      <a [routerLink]="['/product', product.slug]" class="product-long-card">
+      <a [routerLink]="['/products', product.slug]" class="product-long-card">
 
         <div class="card-image-side">
           @if (product.mainImageUrl) {

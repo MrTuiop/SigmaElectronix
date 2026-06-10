@@ -1,0 +1,73 @@
+<div class="search-block">
+  <div class="search-wrapper">
+    <input type="text"
+           [placeholder]="currentPlaceholder()"
+           [value]="searchQuery()"
+           (input)="onSearchInput($event)"
+           (keyup.enter)="triggerSearch()"
+           (focus)="searchQuery().length >= 2 ? isDropdownOpen.set(true) : null">
+    <button class="search-submit-btn" (click)="triggerSearch()">
+      <svg lucideSearch size="20"></svg>
+    </button>
+  </div>
+
+  <div class="quick-tags-row">
+    <span class="tags-label">Популярно:</span>
+    @for (tag of quickTags(); track tag) {
+    <span class="quick-tag"
+          (mouseenter)="onTagHover(tag)"
+          (mouseleave)="onTagLeave()"
+          (click)="onTagClick(tag)">
+      {{ tag }}
+    </span>
+    }
+  </div>
+
+  @if (isDropdownOpen() && suggestions()) {
+  <div class="search-overlay" (click)="closeDropdown()"></div>
+
+  <div class="search-dropdown-panel">
+    <div class="left-col">
+      @if (suggestions()!.categories.length > 0) {
+      <div class="suggest-group">
+        <h4>Категории</h4>
+        @for (cat of suggestions()!.categories; track cat.slug) {
+        <a [routerLink]="['/catalog', cat.slug]" (click)="closeDropdown()">
+          {{ cat.name }}
+        </a>
+        }
+      </div>
+      }
+
+      @if (suggestions()!.brands.length > 0) {
+      <div class="suggest-group">
+        <h4>Бренды</h4>
+        @for (brand of suggestions()!.brands; track brand.slug) {
+        <a [routerLink]="['/brands', brand.slug]" (click)="closeDropdown()">
+          {{ brand.name }}
+        </a>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="right-col">
+      <h4>Товары</h4>
+
+      @if (suggestions()!.products.length === 0) {
+      <div class="no-results">По вашему запросу ничего не найдено</div>
+      }
+
+      @for (prod of suggestions()!.products; track prod.id) {
+      <a [routerLink]="['/products', prod.slug]" class="suggest-product" (click)="closeDropdown()">
+        <img [src]="prod.imageUrl || '/assets/images/no-image.jpg'" alt="">
+        <div class="prod-info">
+          <span class="prod-name">{{ prod.name }}</span>
+          <span class="prod-price">{{ prod.discountPrice || prod.price | currency:'RUB':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+      </a>
+      }
+    </div>
+  </div>
+  }
+</div>

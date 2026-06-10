@@ -1,0 +1,231 @@
+/* Все стили поискового блока из header.css */
+.search-block {
+  flex: 1;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-wrapper {
+  display: flex;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+  .search-wrapper:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    background-color: var(--card-bg);
+  }
+
+  .search-wrapper input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    color: var(--text-main);
+  }
+
+    .search-wrapper input::placeholder {
+      transition: color 0.15s ease;
+    }
+
+.search-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0 16px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+  .search-submit-btn:hover {
+    color: var(--primary-color);
+    transform: scale(1.05);
+  }
+
+.quick-tags-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  padding-left: 4px;
+}
+
+.tags-label {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.quick-tag {
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+  .quick-tag:hover {
+    color: var(--primary-color);
+    background-color: rgba(124, 58, 237, 0.08);
+  }
+
+/* Твои старые стили остаются нетронутыми... */
+.search-block {
+  flex: 1;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative; /* КРИТИЧЕСКИ ВАЖНО ДЛЯ ВЫПАДАЮЩЕГО ОКНА */
+}
+
+/* === СТИЛИ ВЫПАДАЮЩЕГО ОКНА === */
+
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99; /* Поверх всего сайта */
+  cursor: default;
+}
+
+.search-dropdown-panel {
+  position: absolute;
+  top: calc(100% - 22px); /* Прямо под инпутом, над тегами */
+  left: 0;
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  z-index: 100; /* Поверх overlay */
+  display: grid;
+  grid-template-columns: 200px 1fr; /* 200px слева, остальное справа */
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Колонки */
+.left-col {
+  background: var(--bg-color);
+  padding: 16px;
+  border-right: 1px solid var(--border-color);
+}
+
+.right-col {
+  padding: 16px;
+  background: var(--card-bg);
+}
+
+/* Группы в левой колонке */
+.suggest-group {
+  margin-bottom: 20px;
+}
+
+  .suggest-group:last-child {
+    margin-bottom: 0;
+  }
+
+h4 {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.suggest-group a {
+  display: block;
+  padding: 6px 10px;
+  margin: 0 -10px;
+  color: var(--text-main);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+  .suggest-group a:hover {
+    background: rgba(124, 58, 237, 0.1);
+    color: var(--primary-color);
+  }
+
+/* Карточки товаров в правой колонке */
+.suggest-product {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  margin: 0 -10px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+  .suggest-product:hover {
+    background: var(--bg-color);
+  }
+
+  .suggest-product img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid var(--border-color);
+  }
+
+.prod-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prod-name {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* Обрезает длинный текст троеточием */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prod-price {
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.no-results {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 10px 0;
+}

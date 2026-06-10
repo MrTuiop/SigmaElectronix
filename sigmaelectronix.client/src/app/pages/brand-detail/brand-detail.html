@@ -99,7 +99,7 @@
 
       <div class="products-grid">
         @for (product of uiProducts; track product.id) {
-        <a class="product-card" [routerLink]="['/product', product.slug]">
+        <a class="product-card" [routerLink]="['/products', product.slug]">
           <div class="product-badges">
             @if (product.isNew) {
             <span class="new-badge">Новинка</span>

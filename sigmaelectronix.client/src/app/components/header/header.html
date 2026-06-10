@@ -52,30 +52,8 @@
                            (closeMenu)="isCategoryMenuOpen.set(false)" />
       </div>
 
-      <div class="search-block">
-        <div class="search-wrapper">
-          <input type="text"
-                 [placeholder]="currentPlaceholder()"
-                 [value]="searchQuery()"
-                 (input)="onSearchInput($event)"
-                 (keyup.enter)="triggerSearch()">
-          <button class="search-submit-btn" (click)="triggerSearch()">
-            <svg lucideSearch size="20"></svg>
-          </button>
-        </div>
-
-        <div class="quick-tags-row">
-          <span class="tags-label">Популярно:</span>
-          @for (tag of quickTags(); track tag) {
-          <span class="quick-tag"
-                (mouseenter)="onTagHover(tag)"
-                (mouseleave)="onTagLeave()"
-                (click)="onTagClick(tag)">
-            {{ tag }}
-          </span>
-          }
-        </div>
-      </div>
+      <!-- Вместо блока поиска теперь компонент -->
+      <app-search-bar></app-search-bar>
 
       <div class="actions-block">
         <button class="action-item" (click)="goToWishlist()">
@@ -99,21 +77,17 @@
         </a>
 
         @if (isLoggedIn()) {
-        <!-- Вошёл: ссылка на профиль -->
         <a class="action-item profile-item" routerLink="/profile">
           <div class="avatar-placeholder">
             @if (avatarUrl()) {
-            <!-- Настоящая аватарка, если есть -->
             <img [src]="avatarUrl()" alt="avatar" class="avatar-img" />
             } @else {
-            <!-- Заглушка, если аватар не загружен -->
             <svg lucideUser size="24" strokeWidth="2"></svg>
             }
           </div>
           <span class="action-label">{{ displayName() }}</span>
         </a>
         } @else {
-        <!-- Гость: кнопка открытия модалки -->
         <button class="action-item profile-item" (click)="openAuthModal()">
           <div class="avatar-placeholder">
             <svg lucideUser size="24" strokeWidth="2"></svg>
@@ -127,7 +101,7 @@
   </div>
 
   @if (showAuthModal()) {
-  <app-auth-modal (close)="showAuthModal.set(false)"/>
+  <app-auth-modal (close)="showAuthModal.set(false)" />
   }
 
 </header>

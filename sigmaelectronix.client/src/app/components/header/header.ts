@@ -13,6 +13,7 @@ import { ProfileService } from '../../services/profile-service';
 import { CategoryMenuComponent } from '../category-components/category-menu/category-menu';
 import { WishlistService } from '../../services/wishlist-service';
 import { CartService } from '../../services/cart-service';
+import { SearchBarComponent } from '../header-components/search-bar/search-bar';
 
 @Component({
   selector: 'app-header',
@@ -24,7 +25,7 @@ import { CartService } from '../../services/cart-service';
     LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
     LucideHeart, LucideShoppingCart, LucideUser,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
-    AuthModalComponent
+    AuthModalComponent, SearchBarComponent
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -104,33 +105,6 @@ export class HeaderComponent implements OnInit{
       document.body.classList.add('dark-theme');
     } else {
       document.body.classList.remove('dark-theme');
-    }
-  }
-
-  onTagHover(tag: string) {
-    clearTimeout(this.hoverTimeout);
-    this.currentPlaceholder.set(`Нажмите, чтобы искать: "${tag}"`);
-  }
-
-  onTagLeave() {
-    this.hoverTimeout = setTimeout(() => {
-      this.currentPlaceholder.set(this.defaultPlaceholder);
-    }, 50);
-  }
-
-  onTagClick(tag: string) {
-    this.searchQuery.set(tag);
-    this.triggerSearch();
-  }
-
-  onSearchInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.searchQuery.set(input.value);
-  }
-
-  triggerSearch() {
-    if (this.searchQuery().trim()) {
-      console.log('Запуск поиска на бэкенде для:', this.searchQuery());
     }
   }
 }

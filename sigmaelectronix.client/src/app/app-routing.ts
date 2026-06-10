@@ -74,7 +74,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'product/:slug',
+    path: 'products/:slug',
     component: ProductDetailPage
   },
 
