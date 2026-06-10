@@ -11,7 +11,7 @@ export interface ProductFilterDto {
   minPrice?: number;
   maxPrice?: number;
   searchQuery?: string;
-  specifications?: Record<string, string>;
+  specifications?: Record<string, string[]>;
   sortBy?: string; // 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'popular'
   pageNumber?: number;
   pageSize?: number;
@@ -97,4 +97,11 @@ export interface PaginatedResponse<T> {
   totalCount: number;
   pageNumber: number;
   pageSize: number;
+}
+
+export interface CategoryFilterDto {
+  minPrice: number;
+  maxPrice: number;
+  brands: { id: number; name: string }[];
+  specifications: Record<string, string[]>;
 }

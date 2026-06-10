@@ -7,7 +7,8 @@ import {
   ProductDetailDto,
   CreateProductDto,
   UpdateProductDto,
-  PaginatedResponse
+  PaginatedResponse,
+  CategoryFilterDto
 } from '../models/product-models';
 
 @Injectable({ providedIn: 'root' })
@@ -125,7 +126,6 @@ export class ProductService {
       params = params.set('categoryId', filter.categoryId.toString());
     }
     if (filter.brandIds?.length) {
-      // Передаём как несколько значений параметра (brandIds=1&brandIds=2)
       filter.brandIds.forEach(id => params = params.append('brandIds', id.toString()));
     }
     if (filter.minPrice != null) {
@@ -137,12 +137,19 @@ export class ProductService {
     if (filter.searchQuery) {
       params = params.set('searchQuery', filter.searchQuery);
     }
+
+    // 🚀 НОВАЯ СЕРИАЛИЗАЦИЯ ХАРАКТЕРИСТИК (Массивы)
     if (filter.specifications) {
-      // Для словаря ASP.NET Core ожидает параметры вида specifications[key]=value
-      Object.entries(filter.specifications).forEach(([key, value]) => {
-        params = params.append(`specifications[${key}]`, value);
+      Object.entries(filter.specifications).forEach(([key, values]) => {
+        if (values && values.length > 0) {
+          // ASP.NET Core поймет формат: specifications[Память]=128 ГБ&specifications[Память]=256 ГБ
+          values.forEach(val => {
+            params = params.append(`specifications[${key}]`, val);
+          });
+        }
       });
     }
+
     if (filter.sortBy) {
       params = params.set('sortBy', filter.sortBy);
     }
@@ -155,5 +162,12 @@ export class ProductService {
   private handleError(error: any): Observable<never> {
     console.error('ProductService error:', error);
     return throwError(() => error);
+  }
+
+  getFilters(categoryId?: number): Observable<CategoryFilterDto> {
+    let params = new HttpParams();
+    if (categoryId) params = params.set('categoryId', categoryId.toString());
+    return this.http.get<CategoryFilterDto>(`${this.baseUrl}/filters`, { params })
+      .pipe(catchError(this.handleError));
   }
 }

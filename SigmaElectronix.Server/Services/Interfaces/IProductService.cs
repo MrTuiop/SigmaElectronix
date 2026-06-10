@@ -20,5 +20,6 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<bool> DeleteProductAsync(int id); // Soft delete
         Task<bool> RestoreProductAsync(int id);
         Task<PagedResult<ProductListDto>> GetAllProductsAdminAsync(ProductFilterDto filter);
+        Task<CategoryFilterDto> GetAvailableFiltersAsync(int? categoryId);
     }
 }

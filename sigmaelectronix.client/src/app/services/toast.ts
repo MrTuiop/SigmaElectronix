@@ -4,6 +4,7 @@ export interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error' | 'info';
+  isBumping?: boolean; // <-- Флаг для анимации дубликата
 }
 
 @Injectable({
@@ -15,14 +16,39 @@ export class ToastService {
 
   readonly toasts = signal<Toast[]>([]);
 
+  // <-- Храним таймеры, чтобы сбрасывать их при дублировании
+  private timeouts = new Map<number, any>();
+
   private addToast(message: string, type: Toast['type']): void {
-    // Проверка на дубликат: ищем тост с таким же сообщением и типом
     const currentToasts = this.toasts();
     const duplicate = currentToasts.find(
       (t) => t.message === message && t.type === type
     );
 
     if (duplicate) {
+      // 1. Сбрасываем старый таймер, чтобы уведомление не исчезло раньше времени
+      if (this.timeouts.has(duplicate.id)) {
+        clearTimeout(this.timeouts.get(duplicate.id));
+      }
+
+      // 2. Ставим новый таймер (еще на 4 секунды)
+      this.timeouts.set(
+        duplicate.id,
+        setTimeout(() => this.removeToast(duplicate.id), this.duration)
+      );
+
+      // 3. Включаем анимацию "пульсации"
+      this.toasts.update(list => list.map(t =>
+        t.id === duplicate.id ? { ...t, isBumping: true } : t
+      ));
+
+      // 4. Выключаем класс через 300мс, чтобы при следующем клике анимация сработала снова
+      setTimeout(() => {
+        this.toasts.update(list => list.map(t =>
+          t.id === duplicate.id ? { ...t, isBumping: false } : t
+        ));
+      }, 300);
+
       return;
     }
 
@@ -30,10 +56,19 @@ export class ToastService {
     const toast: Toast = { id, message, type };
 
     this.toasts.update((list) => [...list, toast]);
-    setTimeout(() => this.removeToast(id), this.duration);
+
+    // Сохраняем таймер нового тоста
+    this.timeouts.set(
+      id,
+      setTimeout(() => this.removeToast(id), this.duration)
+    );
   }
 
   removeToast(id: number): void {
+    if (this.timeouts.has(id)) {
+      clearTimeout(this.timeouts.get(id));
+      this.timeouts.delete(id);
+    }
     this.toasts.update((list) => list.filter((t) => t.id !== id));
   }
 

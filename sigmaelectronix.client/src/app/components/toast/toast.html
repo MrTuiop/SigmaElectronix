@@ -4,7 +4,9 @@
        [class.success]="toast.type === 'success'"
        [class.error]="toast.type === 'error'"
        [class.info]="toast.type === 'info'"
+       [class.bump]="toast.isBumping"
        (click)="toastService.removeToast(toast.id)">
+
     <div class="toast-icon">
       @switch (toast.type) {
       @case ('success') { <svg lucideCheckCircle size="18" strokeWidth="2" /> }

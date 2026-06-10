@@ -135,3 +135,24 @@ body.dark-theme .toast-close {
     background: rgba(255,255,255,0.1);
     color: #fff;
   }
+
+/* ===== Анимация дубликата ===== */
+@keyframes toast-bump {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.toast.bump {
+  /* Переопределяем начальную анимацию toast-in на анимацию пульсации */
+  animation: toast-bump 0.3s ease-in-out;
+}

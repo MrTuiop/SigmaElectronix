@@ -7,8 +7,11 @@
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
         public string? SearchQuery { get; set; }
-        public Dictionary<string, string>? Specifications { get; set; }
-        public string? SortBy { get; set; } = "newest"; // newest, price_asc, price_desc, rating, popular
+
+        // 🚀 ИЗМЕНЕНИЕ ЗДЕСЬ: Теперь это список строк для каждого ключа
+        public Dictionary<string, List<string>>? Specifications { get; set; }
+
+        public string? SortBy { get; set; } = "newest";
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 20;
     }

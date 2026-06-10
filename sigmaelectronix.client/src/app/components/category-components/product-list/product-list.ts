@@ -1,32 +1,20 @@
-import { Component, Input, signal, computed, OnInit } from '@angular/core';
+import { Component, Input, signal, computed, OnInit, inject, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
-  LucideSlidersHorizontal,
-  LucideStar,
-  LucideHeart,
-  LucideShoppingCart,
-  LucideCheck
+  LucideSlidersHorizontal, LucideStar, LucideHeart, LucideShoppingCart, LucideCheck
 } from '@lucide/angular';
+import { CartService } from '../../../services/cart-service';
+import { WishlistService } from '../../../services/wishlist-service';
+import { ToastService } from '../../../services/toast';
+import { ProductService } from '../../../services/product-service';
+import { ProductListDto, ProductFilterDto } from '../../../models/product-models';
 
-interface ProductSpec {
-  label: string;
-  value: string;
-}
-
-interface Product {
-  id: number;
-  name: string;
-  brand: string;
-  price: number;
-  oldPrice?: number;
-  discount?: number;
-  rating: number;
-  reviews: number;
+interface UiProduct extends ProductListDto {
+  inWishlist: boolean;
+  discountPercent?: number;
   gradient: string;
-  icon: string;
-  specs: ProductSpec[];
   inStock: boolean;
 }
 
@@ -34,112 +22,220 @@ interface Product {
   selector: 'app-product-list',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    LucideStar,
-    LucideHeart,
-    LucideShoppingCart,
-    LucideCheck
+    CommonModule, FormsModule, RouterLink,
+    LucideStar, LucideHeart, LucideShoppingCart, LucideCheck
   ],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
 })
-export class ProductListComponent implements OnInit {
-  @Input() categorySlug!: string;
+export class ProductListComponent implements OnInit, OnChanges {
+  @Input() categoryId?: number;
 
-  allProducts = signal<Product[]>([]);
-  displayedProducts = signal<Product[]>([]);
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  private wishlistService = inject(WishlistService);
+  private toastService = inject(ToastService);
+  private router = inject(Router);
+
+  // === СИГНАЛЫ СОСТОЯНИЯ ===
+  displayedProducts = signal<UiProduct[]>([]);
   page = signal(1);
-  readonly pageSize = 6; // Для длинных карточек лучше показывать поменьше за раз
-  hasMore = computed(() => this.displayedProducts().length < this.allProducts().length);
+  readonly pageSize = 6;
+  hasMore = signal(true);
+  isLoading = signal(false);
 
-  // Фильтры
+  // === СИГНАЛЫ ФИЛЬТРОВ ===
   priceRange = signal({ min: 0, max: 200000 });
-  selectedBrands = signal<string[]>([]);
-  brands = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'ASUS'];
+  selectedBrandIds = signal<number[]>([]);
+  sortBy = signal<'popular' | 'price_asc' | 'price_desc' | 'new'>('popular'); // <-- Теперь это СИГНАЛ!
 
-  // Сортировка
-  sortBy = signal<'popular' | 'price-asc' | 'price-desc' | 'new'>('popular');
+  // Доступные фильтры с бэкенда
+  availableBrands = signal<{ id: number, name: string }[]>([]);
+  availableSpecs = signal<{ key: string, values: string[] }[]>([]);
+  selectedSpecs = signal<Record<string, string[]>>({});
+
+  private gradientCache = new Map<number, string>();
 
   ngOnInit(): void {
     this.resetAndLoad();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['categoryId']) {
+      this.loadFiltersAndProducts();
+    }
+  }
+
+  // 1. Загружаем доступные фильтры для этой категории
+  loadFiltersAndProducts(): void {
+    this.productService.getFilters(this.categoryId).subscribe({
+      next: (filters) => {
+        // Устанавливаем доступные бренды и цены из БД
+        this.availableBrands.set(filters.brands);
+        this.priceRange.set({ min: filters.minPrice, max: filters.maxPrice });
+
+        // Превращаем словарь в массив для удобного вывода в HTML
+        const specsArray = Object.entries(filters.specifications).map(([key, values]) => ({ key, values }));
+        this.availableSpecs.set(specsArray);
+
+        // Очищаем старый выбор и грузим товары
+        this.selectedBrandIds.set([]);
+        this.selectedSpecs.set({});
+        this.resetAndLoad();
+      }
+    });
+  }
+
+  // 2. Добавляем метод клика по характеристике
+  toggleSpec(key: string, value: string): void {
+    const current = this.selectedSpecs();
+    const currentValuesForKey = current[key] || []; // Текущие выбранные значения для этой харакеристики
+
+    let newValuesForKey: string[];
+
+    if (currentValuesForKey.includes(value)) {
+      // Если значение уже было выбрано — удаляем его из массива
+      newValuesForKey = currentValuesForKey.filter(v => v !== value);
+    } else {
+      // Иначе — добавляем в массив
+      newValuesForKey = [...currentValuesForKey, value];
+    }
+
+    const newSpecs = { ...current };
+
+    if (newValuesForKey.length === 0) {
+      // Если массив опустел, вообще удаляем этот ключ, чтобы не слать пустые запросы
+      delete newSpecs[key];
+    } else {
+      newSpecs[key] = newValuesForKey;
+    }
+
+    this.selectedSpecs.set(newSpecs);
+    this.resetAndLoad();
+  }
+
+  toggleWishlist(product: UiProduct): void {
+    // 1. Мгновенно меняем визуальное состояние в интерфейсе (Оптимистичный UI)
+    product.inWishlist = !product.inWishlist;
+
+    // 2. Сразу показываем уведомление пользователю
+    if (product.inWishlist) {
+      this.toastService.success('Добавлено в избранное');
+    } else {
+      this.toastService.info('Удалено из избранного');
+    }
+
+    // 3. Отправляем запрос на сервер в фоновом режиме
+    this.wishlistService.toggleItem(product.id).subscribe({
+      error: () => {
+        // Если сервер вернул ошибку (например, пропал интернет), откатываем визуал назад
+        product.inWishlist = !product.inWishlist;
+        this.toastService.error('Не удалось обновить избранное');
+      }
+    });
+  }
+
+  addToCart(product: UiProduct): void {
+    if (this.isInCart(product.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    this.cartService.addItem({
+      productId: product.id,
+      quantity: 1,
+      price: product.finalPrice
+    }).subscribe({
+      next: () => this.toastService.success('Товар добавлен в корзину'),
+      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    });
+  }
+
+  isInCart(productId: number): boolean {
+    return this.cartService.isInCart(productId);
+  }
+
+  // === ЛОГИКА ФИЛЬТРАЦИИ И ЗАГРУЗКИ С СЕРВЕРА ===
+
   resetAndLoad(): void {
-    this.allProducts.set(this.generateMockProducts(15));
     this.displayedProducts.set([]);
     this.page.set(1);
+    this.hasMore.set(true);
     this.loadMore();
   }
 
   loadMore(): void {
-    const currentPage = this.page();
-    const end = currentPage * this.pageSize;
-    const filtered = this.applyFilters(this.allProducts());
-    const sorted = this.applySort(filtered);
-    this.displayedProducts.set(sorted.slice(0, end));
-    this.page.update(p => p + 1);
-  }
+    if (!this.hasMore() || this.isLoading()) return;
+    this.isLoading.set(true);
 
-  applyFilters(products: Product[]): Product[] {
-    let result = products;
-    if (this.selectedBrands().length > 0) {
-      result = result.filter(p => this.selectedBrands().includes(p.brand));
-    }
-    const { min, max } = this.priceRange();
-    result = result.filter(p => p.price >= min && p.price <= max);
-    return result;
-  }
+    const filter: ProductFilterDto = {
+      pageNumber: this.page(),
+      pageSize: this.pageSize,
+      minPrice: this.priceRange().min,
+      maxPrice: this.priceRange().max,
+      categoryId: this.categoryId && this.categoryId > 0 ? this.categoryId : undefined,
+      sortBy: this.sortBy(),
+      brandIds: this.selectedBrandIds().length > 0 ? this.selectedBrandIds() : undefined,
+      specifications: Object.keys(this.selectedSpecs()).length > 0 ? this.selectedSpecs() : undefined // ПЕРЕДАЕМ ХАРАКТЕРИСТИКИ
+    };
 
-  applySort(products: Product[]): Product[] {
-    const type = this.sortBy();
-    if (type === 'price-asc') return [...products].sort((a, b) => a.price - b.price);
-    if (type === 'price-desc') return [...products].sort((a, b) => b.price - a.price);
-    if (type === 'new') return [...products].reverse();
-    return products;
+    // Отправляем запрос
+    this.productService.getProducts(filter).subscribe({
+      next: (res) => {
+        const mapped: UiProduct[] = res.items.map(p => ({
+          ...p,
+          inWishlist: this.wishlistService.isInWishlist(p.id),
+          discountPercent: p.discountPrice && p.discountPrice < p.price
+            ? Math.round(((p.price - p.discountPrice) / p.price) * 100)
+            : undefined,
+          gradient: this.getGradient(p.id),
+          inStock: true
+        }));
+
+        this.displayedProducts.update(prev => [...prev, ...mapped]);
+        this.hasMore.set(res.items.length === this.pageSize);
+        this.page.update(p => p + 1);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.toastService.error('Ошибка загрузки товаров');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   clearFilters(): void {
-    this.selectedBrands.set([]);
+    this.selectedBrandIds.set([]);
+    this.selectedSpecs.set({}); // <-- Добавили очистку характеристик!
     this.priceRange.set({ min: 0, max: 200000 });
+    this.sortBy.set('popular');
     this.resetAndLoad();
   }
 
-  toggleBrand(brand: string): void {
-    this.selectedBrands.update(v =>
-      v.includes(brand) ? v.filter(b => b !== brand) : [...v, brand]
+  // Теперь переключаем ID бренда, а не строку
+  toggleBrand(brandId: number): void {
+    this.selectedBrandIds.update(v =>
+      v.includes(brandId) ? v.filter(id => id !== brandId) : [...v, brandId]
     );
     this.resetAndLoad();
   }
 
-  private generateMockProducts(count: number): Product[] {
-    const icons = ['smartphone', 'laptop', 'headphones', 'watch', 'tv', 'gamepad-2'];
-    const brands = ['Apple', 'Samsung', 'Sony', 'Xiaomi', 'ASUS'];
-    const products: Product[] = [];
+  // Если юзер меняет сортировку в селекте
+  onSortChange(newSort: any): void {
+    this.sortBy.set(newSort);
+    this.resetAndLoad();
+  }
 
-    for (let i = 0; i < count; i++) {
-      const currentBrand = brands[i % brands.length];
-      products.push({
-        id: i + 1,
-        name: `${currentBrand} Флагман Модель ${i + 1}`,
-        brand: currentBrand,
-        price: Math.floor(Math.random() * 140000) + 9000,
-        oldPrice: Math.random() > 0.4 ? Math.floor(Math.random() * 180000) + 15000 : undefined,
-        discount: Math.random() > 0.4 ? Math.floor(Math.random() * 25) + 5 : undefined,
-        rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
-        reviews: Math.floor(Math.random() * 280) + 5,
-        gradient: `linear-gradient(135deg, #764ba2, #667eea)`,
-        icon: icons[i % icons.length],
-        inStock: Math.random() > 0.15,
-        specs: [
-          { label: 'Экран', value: '6.7", OLED, 120 Гц' },
-          { label: 'Процессор', value: '8-ядерный мощный чипсет' },
-          { label: 'Память', value: '12 ГБ / 256 ГБ' },
-          { label: 'Гарантия', value: '12 месяцев' }
-        ]
-      });
+  private getGradient(productId: number): string {
+    if (!this.gradientCache.has(productId)) {
+      const gradients = [
+        'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+        'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+        'linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%)',
+      ];
+      this.gradientCache.set(productId, gradients[Math.floor(Math.random() * gradients.length)]);
     }
-    return products;
+    return this.gradientCache.get(productId)!;
   }
 }

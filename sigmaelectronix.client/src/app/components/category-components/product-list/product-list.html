@@ -15,7 +15,7 @@
         </div>
         <div class="input-field">
           <span>до</span>
-          <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200 000" />
+          <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200000" />
         </div>
       </div>
     </div>
@@ -23,35 +23,52 @@
     <div class="filter-section">
       <h4>Бренды</h4>
       <div class="checkbox-list">
-        @for (brand of brands; track brand) {
-        <label class="checkbox-label" [class.checked]="selectedBrands().includes(brand)">
+        @for (brand of availableBrands(); track brand.id) {
+        <label class="checkbox-label" [class.checked]="selectedBrandIds().includes(brand.id)">
           <input type="checkbox"
-                 [checked]="selectedBrands().includes(brand)"
-                 (change)="toggleBrand(brand)" />
+                 [checked]="selectedBrandIds().includes(brand.id)"
+                 (change)="toggleBrand(brand.id)" />
           <span class="custom-checkbox">
-            @if (selectedBrands().includes(brand)) {
+            @if (selectedBrandIds().includes(brand.id)) {
             <svg lucideCheck size="12" strokeWidth="3"></svg>
-            @}
+            }
           </span>
-          <span class="brand-name">{{ brand }}</span>
+          <span class="brand-name">{{ brand.name }}</span>
         </label>
         }
       </div>
     </div>
+
+    @for (spec of availableSpecs(); track spec.key) {
+    <div class="filter-section">
+      <h4>{{ spec.key }}</h4>
+      <div class="checkbox-list">
+        @for (val of spec.values; track val) {
+        <label class="checkbox-label" [class.checked]="(selectedSpecs()[spec.key] || []).includes(val)">
+          <input type="checkbox"
+                 [checked]="(selectedSpecs()[spec.key] || []).includes(val)"
+                 (change)="toggleSpec(spec.key, val)" />
+          <span class="custom-checkbox">
+            @if ((selectedSpecs()[spec.key] || []).includes(val)) {
+            <svg lucideCheck size="12" strokeWidth="3"></svg>
+            }
+          </span>
+          <span class="brand-name">{{ val }}</span>
+        </label>
+        }
+      </div>
+    </div>
+    }
   </aside>
 
   <main class="main-content">
-
     <div class="toolbar-panel">
-      <div class="products-count">
-        Найдено товаров: <strong>{{ displayedProducts().length }}</strong>
-      </div>
       <div class="sort-dropdown">
         <span>Сортировка:</span>
-        <select [(ngModel)]="sortBy" (ngModelChange)="resetAndLoad()">
+        <select [ngModel]="sortBy()" (ngModelChange)="onSortChange($event)">
           <option value="popular">По популярности</option>
-          <option value="price-asc">Сначала дешевле</option>
-          <option value="price-desc">Сначала дороже</option>
+          <option value="price_asc">Сначала дешевле</option>
+          <option value="price_desc">Сначала дороже</option>
           <option value="new">По новизне</option>
         </select>
       </div>
@@ -60,59 +77,69 @@
     <div class="products-list-vertical">
       @for (product of displayedProducts(); track product.id) {
 
-      <a [routerLink]="['/product', product.id]" class="product-long-card">
+      <a [routerLink]="['/product', product.slug]" class="product-long-card">
 
         <div class="card-image-side">
+          @if (product.mainImageUrl) {
+          <img [src]="product.mainImageUrl" [alt]="product.name" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" />
+          } @else {
           <div class="image-placeholder" [style.background]="product.gradient">
-            <span class="mock-image-icon">{{ product.brand.substring(0,2) }}</span>
+            <span class="mock-image-icon">{{ product.brand?.name?.substring(0,2) | uppercase }}</span>
           </div>
-          @if (product.discount) {
-          <div class="discount-badge">-{{ product.discount }}%</div>
+          }
+
+          @if (product.discountPercent) {
+          <div class="discount-badge">-{{ product.discountPercent }}%</div>
           }
         </div>
 
         <div class="card-info-side">
-          <div class="card-brand">{{ product.brand }}</div>
+          <div class="card-brand">{{ product.brand?.name }}</div>
           <h3 class="card-title">{{ product.name }}</h3>
 
           <div class="card-meta">
             <div class="rating-box">
               <svg lucideStar size="14" class="star-icon" fill="currentColor"></svg>
-              <span>{{ product.rating }}</span>
+              <span>{{ product.averageRating }}</span>
             </div>
-            <span class="reviews-count">{{ product.reviews }} отзывов</span>
+            <span class="reviews-count">{{ product.reviewsCount }} отзывов</span>
+
             <span class="stock-status" [class.out]="!product.inStock">
               {{ product.inStock ? 'В наличии' : 'Под заказ' }}
             </span>
           </div>
 
-          <div class="specs-grid">
-            @for (spec of product.specs; track spec.label) {
-            <div class="spec-item">
-              <span class="spec-label">{{ spec.label }}:</span>
-              <span class="spec-value">{{ spec.value }}</span>
-            </div>
-            }
+          <div class="short-desc" style="font-size: 13px; color: var(--text-muted); margin-top: 10px;">
+            {{ product.shortDescription }}
           </div>
         </div>
 
-        <div class="card-action-side" (click)="$event.stopPropagation(); $event.preventDefault()">
+        <div class="card-action-side">
           <div class="price-block">
-            @if (product.oldPrice) {
-            <span class="old-price">{{ product.oldPrice | number:'1.0-0' }} ₽</span>
+            @if (product.discountPrice && product.discountPrice < product.price) {
+            <span class="old-price">{{ product.price | number:'1.0-0' }} ₽</span>
             }
-            <span class="current-price">{{ product.price | number:'1.0-0' }} ₽</span>
+            <span class="current-price">{{ product.finalPrice | number:'1.0-0' }} ₽</span>
           </div>
 
           <div class="action-buttons">
-            <button class="buy-button" [disabled]="!product.inStock">
+            <div class="buy-button"
+                 [class.in-cart]="isInCart(product.id)"
+                 [class.disabled]="!product.inStock"
+                 (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+              @if (isInCart(product.id)) {
+              <svg lucideCheck size="16" strokeWidth="3"></svg>
+              <span>В корзине</span>
+              } @else {
               <svg lucideShoppingCart size="16"></svg>
               <span>В корзину</span>
-            </button>
+              }
+            </div>
 
-            <button class="wishlist-btn-circle">
-              <svg lucideHeart size="18"></svg>
-            </button>
+            <div class="wishlist-btn-circle"
+                 (click)="$event.preventDefault(); $event.stopPropagation(); toggleWishlist(product)">
+              <svg lucideHeart size="18" strokeWidth="2.5" [class.filled]="product.inWishlist"></svg>
+            </div>
           </div>
         </div>
 
@@ -120,7 +147,13 @@
       }
     </div>
 
-    @if (hasMore()) {
+    @if (isLoading()) {
+    <div class="loading-state">
+      <p>Загрузка товаров...</p>
+    </div>
+    }
+
+    @if (hasMore() && !isLoading() && displayedProducts().length > 0) {
     <div class="load-more-section">
       <button class="load-more-btn" (click)="loadMore()">
         Показать ещё товары

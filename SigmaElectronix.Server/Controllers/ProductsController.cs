@@ -138,5 +138,20 @@ namespace SigmaElectronix.Server.Controllers
 
             return Ok(new { message = "Товар восстановлен" });
         }
+
+        // GET: api/products/filters?categoryId=1
+        [HttpGet("filters")]
+        public async Task<IActionResult> GetFilters([FromQuery] int? categoryId)
+        {
+            try
+            {
+                var filters = await _productService.GetAvailableFiltersAsync(categoryId);
+                return Ok(filters);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Ошибка при загрузке фильтров", error = ex.Message });
+            }
+        }
     }
 }

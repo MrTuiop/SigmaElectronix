@@ -248,7 +248,11 @@ namespace SigmaElectronix.Server.Services
         private IQueryable<Product> ApplyFilters(IQueryable<Product> query, ProductFilterDto filter)
         {
             if (filter.CategoryId.HasValue)
-                query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+            {
+                // Ищем товары в категории и всех её подкатегориях
+                var categoryIds = GetCategoryAndAllSubCategoryIds(filter.CategoryId.Value);
+                query = query.Where(p => categoryIds.Contains(p.CategoryId));
+            }
 
             if (filter.BrandIds != null && filter.BrandIds.Any())
                 query = query.Where(p => filter.BrandIds.Contains(p.BrandId));
@@ -267,13 +271,98 @@ namespace SigmaElectronix.Server.Services
                     p.ShortDescription.ToLower().Contains(search));
             }
 
-            // Фильтрация по словарю (Specifications) в БД работает только 
-            // если словарь сериализуется в JSON и БД поддерживает JSON-запросы (PostgreSQL).
-            // В SQLite/SQLServer без явной настройки JSON это может выдать ошибку трансляции.
-            // Поэтому для надежности лучше делать такую фильтрацию в памяти, если товаров не сотни тысяч.
-            // Оставляем пока как есть, если EF настроен правильно - отработает.
+            // 🚀 РАЗБЛОКИРОВАНО: Фильтрация по характеристикам!
+            // EF Core 8 Npgsql умеет транслировать это в мощные JSONB SQL-операторы
+            if (filter.Specifications != null && filter.Specifications.Any())
+            {
+                foreach (var spec in filter.Specifications)
+                {
+                    var key = spec.Key;
+                    var values = spec.Value; // Это наш List<string> со значениями
+
+                    if (values == null || !values.Any())
+                        continue;
+
+                    // 1. Превращаем выбранные значения в готовые JSON-строки для поиска
+                    var jsons = values
+                        .Take(6) // Поддерживаем до 6 выбранных чекбоксов одной характеристики
+                        .Select(val => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { { key, val } }))
+                        .ToList();
+
+                    // 2. Создаем "пустышку", которая гарантированно не совпадет ни с одним товаром
+                    var dummyJson = "{\"__DUMMY_KEY__\":\"__DUMMY_VALUE__\"}";
+
+                    // 3. Заполняем слоты поиска (если значений меньше 6, лишние слоты будут пустышками)
+                    var j0 = jsons.Count > 0 ? jsons[0] : dummyJson;
+                    var j1 = jsons.Count > 1 ? jsons[1] : dummyJson;
+                    var j2 = jsons.Count > 2 ? jsons[2] : dummyJson;
+                    var j3 = jsons.Count > 3 ? jsons[3] : dummyJson;
+                    var j4 = jsons.Count > 4 ? jsons[4] : dummyJson;
+                    var j5 = jsons.Count > 5 ? jsons[5] : dummyJson;
+
+                    // 4. Формируем SQL-запрос с логикой OR (ИЛИ) для текущей группы.
+                    // PostgreSQL безупречно и молниеносно обрабатывает это через JSONB оператор @>
+                    query = query.Where(p =>
+                        EF.Functions.JsonContains(p.Specifications, j0) ||
+                        EF.Functions.JsonContains(p.Specifications, j1) ||
+                        EF.Functions.JsonContains(p.Specifications, j2) ||
+                        EF.Functions.JsonContains(p.Specifications, j3) ||
+                        EF.Functions.JsonContains(p.Specifications, j4) ||
+                        EF.Functions.JsonContains(p.Specifications, j5)
+                    );
+                }
+            }
 
             return query;
+        }
+
+        // 🚀 НОВЫЙ МЕТОД: Сбор доступных фильтров для фронтенда
+        public async Task<CategoryFilterDto> GetAvailableFiltersAsync(int? categoryId)
+        {
+            var query = _context.Products.Where(p => !p.IsDeleted && p.IsPublished);
+
+            if (categoryId.HasValue)
+            {
+                var categoryIds = GetCategoryAndAllSubCategoryIds(categoryId.Value);
+                query = query.Where(p => categoryIds.Contains(p.CategoryId));
+            }
+
+            // 1. Получаем реальную минимальную и максимальную цену в этой категории
+            var minPrice = await query.MinAsync(p => (decimal?)(p.DiscountPrice ?? p.Price)) ?? 0;
+            var maxPrice = await query.MaxAsync(p => (decimal?)(p.DiscountPrice ?? p.Price)) ?? 200000;
+
+            // 2. Получаем только те бренды, товары которых реально есть в этой категории
+            var brands = await query
+                .Where(p => p.Brand != null)
+                .Select(p => p.Brand)
+                .Distinct()
+                .Select(b => new BrandSummaryDto { Id = b.Id, Name = b.Name })
+                .ToListAsync();
+
+            // 3. Вытаскиваем все спецификации (JSON) из найденных товаров и собираем уникальные значения
+            var allSpecs = await query.Select(p => p.Specifications).ToListAsync();
+            var specDict = new Dictionary<string, HashSet<string>>();
+
+            foreach (var dict in allSpecs)
+            {
+                if (dict == null) continue;
+                foreach (var kvp in dict)
+                {
+                    if (!specDict.ContainsKey(kvp.Key))
+                        specDict[kvp.Key] = new HashSet<string>();
+
+                    specDict[kvp.Key].Add(kvp.Value);
+                }
+            }
+
+            return new CategoryFilterDto
+            {
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                Brands = brands,
+                // Переводим HashSet (уникальные значения) обратно в List для JSON
+                Specifications = specDict.ToDictionary(k => k.Key, v => v.Value.OrderBy(val => val).ToList())
+            };
         }
 
         private IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy)
@@ -354,6 +443,7 @@ namespace SigmaElectronix.Server.Services
             };
         }
 
+
         // Исправленный метод для списков
         // Исправленный метод для списков
         private ProductListDto MapToListDto(Product p)
@@ -389,6 +479,41 @@ namespace SigmaElectronix.Server.Services
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                               ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty
             };
+        }
+
+        private List<int> GetCategoryAndAllSubCategoryIds(int categoryId)
+        {
+            // Сразу добавляем родительскую категорию в список
+            var result = new List<int> { categoryId };
+
+            // Загружаем ВСЕ категории из БД один раз (только нужные поля для скорости)
+            // Это намного быстрее, чем делать отдельный SQL-запрос для каждого уровня вложенности
+            var allCategories = _context.Categories
+                .AsNoTracking()
+                .Select(c => new { c.Id, c.ParentCategoryId })
+                .ToList();
+
+            // Создаем локальную рекурсивную функцию
+            void FindChildren(int parentId)
+            {
+                // Находим всех детей текущей категории
+                var children = allCategories
+                    .Where(c => c.ParentCategoryId == parentId)
+                    .Select(c => c.Id)
+                    .ToList();
+
+                // Добавляем их в общий список и ищем детей для каждого ребенка
+                foreach (var childId in children)
+                {
+                    result.Add(childId);
+                    FindChildren(childId); // Рекурсия!
+                }
+            }
+
+            // Запускаем поиск, начиная с выбранной категории
+            FindChildren(categoryId);
+
+            return result;
         }
     }
 }

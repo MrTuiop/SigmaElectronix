@@ -39,7 +39,7 @@ export class ProductDetailPage implements OnInit {
   private productService = inject(ProductService);
   public cartService = inject(CartService);
   private wishlistService = inject(WishlistService);
-  private toastService = inject(ToastService); // <-- сервис уведомлений
+  private toastService = inject(ToastService);
 
   // 🔹 2. Сигналы с реальными DTO
   product = signal<ProductDetailDto | null>(null);
@@ -106,11 +106,22 @@ export class ProductDetailPage implements OnInit {
     });
   }
 
-  // 🔹 5. Реальное добавление в избранное
+  // 🔹 5. Реальное добавление в избранное с уведомлением
   toggleWishlist(): void {
     const p = this.product();
     if (!p) return;
-    this.wishlistService.toggleItem(p.id).subscribe();
+
+    this.wishlistService.toggleItem(p.id).subscribe({
+      next: () => {
+        const isNowInWishlist = this.wishlistService.isInWishlist(p.id);
+        if (isNowInWishlist) {
+          this.toastService.success('Добавлено в избранное');
+        } else {
+          this.toastService.info('Удалено из избранного');
+        }
+      },
+      error: () => this.toastService.error('Не удалось обновить избранное')
+    });
   }
 
   // Навигация по картинкам

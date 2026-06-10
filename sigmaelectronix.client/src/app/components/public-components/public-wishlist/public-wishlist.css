@@ -201,11 +201,12 @@ a.product-card {
   color: var(--text-main);
 }
 
-/* Кнопка корзины (сделано через div) */
+/* ===== КНОПКА КОРЗИНЫ ===== */
 .add-to-cart-btn {
   width: 100%;
+  height: 40px; /* 🎯 Жестко фиксируем высоту кнопки */
   margin-top: 8px;
-  padding: 10px 16px;
+  padding: 0 16px; /* 🎯 Убираем вертикальные отступы, центровка идет за счет flex */
   background: var(--purple-gradient);
   color: #ffffff;
   border: none;
@@ -217,7 +218,8 @@ a.product-card {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: var(--transition);
+  white-space: nowrap; /* 🎯 Запрещаем тексту съезжать на вторую строку */
+  transition: all 0.3s ease;
 }
 
   .add-to-cart-btn:hover {
@@ -306,3 +308,65 @@ a.product-card {
   color: #9ca3af;
   text-decoration: line-through; /* 🎯 Вот то самое зачеркивание */
 }
+
+.add-to-cart-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0;
+}
+
+.add-to-cart-btn:hover {
+  background: var(--purple-gradient-hover);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Стили для кнопки, когда товар уже в корзине */
+.add-to-cart-btn.in-cart {
+  background: #10b981;
+}
+
+  .add-to-cart-btn.in-cart:hover {
+    background: #059669;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  }
+
+/* ===== Подвал избранного (кнопка очистки) ===== */
+.wishlist-footer {
+  display: flex;
+  justify-content: flex-end; /* Прижимаем кнопку вправо */
+  margin-top: 32px; /* Чуть больше отступ от карточек */
+  padding-top: 24px; /* Добавляем визуальный разделитель */
+  border-top: 1px solid var(--border-color); /* Полоса над кнопкой */
+  width: 100%;
+}
+
+.clear-wishlist-btn {
+  display: flex; /* 🎯 Меняем inline-flex на flex для строгого позиционирования */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px; /* Делаем кнопку чуть шире и выше */
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 42px; /* 🎯 Жестко фиксируем высоту, чтобы её не плющило */
+}
+
+  .clear-wishlist-btn svg {
+    flex-shrink: 0; /* Чтобы иконка не сжималась */
+    width: 16px;
+    height: 16px;
+  }
+
+  .clear-wishlist-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+    transform: translateY(-1px); /* Небольшой эффект нажатия */
+  }

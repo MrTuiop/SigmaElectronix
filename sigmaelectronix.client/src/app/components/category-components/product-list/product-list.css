@@ -49,19 +49,35 @@
     color: var(--text-main);
   }
 
+/* ===== Кнопка "Сбросить всё" ===== */
 .clear-all-btn {
-  background: none;
+  background: rgba(102, 126, 234, 0.1);
   border: none;
   color: var(--accent-color);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
   .clear-all-btn:hover {
-    text-decoration: underline;
+    background: var(--accent-color);
+    color: white;
+    text-decoration: none;
   }
+
+/* ===== Убираем стрелочки (spinners) у input type="number" ===== */
+.input-field input[type="number"]::-webkit-outer-spin-button,
+.input-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-field input[type="number"] {
+  -moz-appearance: textfield; /* Для Firefox */
+}
 
 .filter-section {
   margin-bottom: 28px;
@@ -468,6 +484,68 @@
   background: #f9fafb;
   border-radius: 12px;
   border: 1px dashed var(--border-color);
+}
+
+/* ===== АНИМАЦИЯ КОРЗИНЫ ===== */
+.buy-button.in-cart {
+  background: #10b981;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+  animation: cartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+  .buy-button.in-cart:hover:not(:disabled) {
+    background: #059669;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+    transform: translateY(-1px);
+  }
+
+div.buy-button.disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  pointer-events: none; /* Полностью отключаем клики */
+}
+
+@keyframes cartPop {
+  0% {
+    transform: scale(0.95);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ===== ЗАЛИВКА ИЗБРАННОГО ===== */
+.wishlist-btn-circle .filled {
+  fill: #ef4444;
+  color: #ef4444;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--accent-color);
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
 /* Адаптивность для планшетов */
