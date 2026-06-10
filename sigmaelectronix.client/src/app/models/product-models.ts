@@ -32,6 +32,7 @@ export interface ProductListDto {
   averageRating: number;
   reviewsCount: number;
   isPublished: boolean;
+  isNew: boolean;
 }
 
 // Детальная карточка товара

@@ -78,7 +78,7 @@
       </div>
 
       <div class="actions-block">
-        <button class="action-item">
+        <button class="action-item" (click)="goToWishlist()">
           <div class="icon-box">
             <svg lucideHeart size="24" strokeWidth="2"></svg>
             @if (favoritesCount() > 0) {

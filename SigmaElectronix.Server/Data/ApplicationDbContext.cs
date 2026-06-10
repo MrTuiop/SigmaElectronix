@@ -7,6 +7,7 @@ using SigmaElectronix.Server.Entities.OrderModels;
 using SigmaElectronix.Server.Entities.ProductModels;
 using SigmaElectronix.Server.Entities.StoreModels;
 using SigmaElectronix.Server.Entities.UserModels;
+using SigmaElectronix.Server.Entities.WishlistModels;
 using System.Text.Json;
 
 namespace SigmaElectronix.Server.Data
@@ -58,6 +59,10 @@ namespace SigmaElectronix.Server.Data
 
         // Статистика
         public DbSet<ProductView> ProductViews { get; set; }
+        
+        // Список желаемого
+        public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<WishlistItem> WishlistItems { get; set; }
 
         #endregion
 

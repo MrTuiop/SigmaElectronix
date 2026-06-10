@@ -7,30 +7,10 @@ import {
   LucideShoppingCart, LucideStar, LucideTruck, LucideShieldCheck,
   LucideRefreshCw, LucideHeadset, LucideMail, LucideSend, LucideZap
 } from '@lucide/angular';
-import { FeaturedBrandsComponent } from '../../components/brand-components/featured-brands/featured-brands';
+import { FeaturedBrandsComponent } from '../../components/home-components/featured-brands/featured-brands';
 import { BestSellersComponent } from '../../components/home-components/best-sellers/best-sellers';
 import { NewProductsComponent } from '../../components/home-components/new-products/new-products';
-
-interface Category {
-  icon: string;
-  name: string;
-  count: number;
-}
-
-interface Product {
-  id: number;
-  icon: string;
-  gradient: string;
-  brand: string;
-  name: string;
-  rating: number;
-  reviews: number;
-  price: number;
-  oldPrice?: number;
-  discount?: number;
-  isNew?: boolean;
-  inWishlist: boolean;
-}
+import { CategoriesComponent } from '../../components/home-components/categories/categories';
 
 interface Advantage {
   icon: string;
@@ -47,6 +27,7 @@ interface Advantage {
     FeaturedBrandsComponent,
     BestSellersComponent,
     NewProductsComponent,
+    CategoriesComponent,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch,
     LucideTv, LucideGamepad2, LucideArrowRight, LucideHeart,
     LucideShoppingCart, LucideStar, LucideTruck, LucideShieldCheck,
@@ -56,16 +37,6 @@ interface Advantage {
   styleUrl: './home.css',
 })
 export class HomePage {
-  // ---- КАТЕГОРИИ ----
-  categories = signal<Category[]>([
-    { icon: 'smartphone', name: 'Смартфоны', count: 142 },
-    { icon: 'laptop', name: 'Ноутбуки', count: 89 },
-    { icon: 'headphones', name: 'Наушники', count: 67 },
-    { icon: 'watch', name: 'Умные часы', count: 45 },
-    { icon: 'tv', name: 'Телевизоры', count: 38 },
-    { icon: 'gamepad-2', name: 'Игры', count: 112 },
-  ]);
-
   // ---- ПРЕИМУЩЕСТВА ----
   advantages = signal<Advantage[]>([
     {

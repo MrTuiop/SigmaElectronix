@@ -13,6 +13,8 @@ import { AddressesComponent } from './components/profile-components/addresses/ad
 import { NotificationsComponent } from './components/profile-components/notifications/notifications';
 import { ReviewsComponent } from './components/profile-components/reviews/reviews';
 import { BonusesComponent } from './components/profile-components/bonuses/bonuses';
+import { BrandDetailComponent } from './pages/brand-detail/brand-detail';
+import { PublicWishlistComponent } from './components/public-components/public-wishlist/public-wishlist';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -38,6 +40,12 @@ export const routes: Routes = [
       { path: 'reviews', component: ReviewsComponent },
       { path: 'bonuses', component: BonusesComponent },
     ],
+  },
+
+  {
+    path: 'wishlist',
+    component: PublicWishlistComponent,
+    title: 'Мое избранное'
   },
 
   // Страница корзины (будет доступна по адресу /projects/sigmaelectronix/cart)
@@ -73,6 +81,11 @@ export const routes: Routes = [
   {
     path: 'product/:id',
     component: ProductDetailPage
+  },
+
+  {
+    path: 'brands/:slug',
+    component: BrandDetailComponent
   },
 
   // Fallback-роут: если пользователь введет абракадабру в адресную строку,

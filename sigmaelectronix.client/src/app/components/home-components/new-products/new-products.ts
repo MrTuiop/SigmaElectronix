@@ -1,11 +1,10 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-
 import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage } from '@lucide/angular';
-
 import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
+import { WishlistService } from '../../../services/wishlist-service';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -28,18 +27,27 @@ interface UiProduct extends ProductListDto {
 export class NewProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
+  private wishlistService = inject(WishlistService);
 
   loading = signal(true);
   error = signal<string | null>(null);
   skeletonArray = Array(4).fill(0);
 
-  // Читаем из сигнала сервиса и маппим в UI-модель на лету
+  // Кеш градиентов, чтобы цвета не моргали при клике на лайк
+  private gradientCache = new Map<number, string>();
+
+  // Сигнал автоматически пересчитается, если изменится список товаров ИЛИ список избранного
   products = computed<UiProduct[]>(() =>
-    this.productService.newArrivals().slice(0, 4).map(p => this.toUiProduct(p))
+    this.productService.newArrivals().slice(0, 4).map(p => ({
+      ...p,
+      inWishlist: this.wishlistService.isInWishlist(p.id),
+      discount: this.calcDiscount(p),
+      gradient: this.getGradient(p.id)
+    }))
   );
 
   ngOnInit(): void {
-    // Если данные уже есть в кэше сервиса — сразу их используем
+    // 🎯 ВОТ ЭТОТ КОД БЫЛ ПОТЕРЯН! Возвращаем его на место:
     if (this.productService.newArrivals().length > 0) {
       this.loading.set(false);
       return;
@@ -63,36 +71,32 @@ export class NewProductsComponent implements OnInit {
   }
 
   toggleWishlist(product: UiProduct): void {
-    // Поскольку products — computed от неизменяемого источника,
-    // для wishlist нужен отдельный локальный сигнал (или WishlistService)
-    console.log(`Переключено избранное: ${product.name}`);
+    this.wishlistService.toggleItem(product.id).subscribe();
   }
 
   addToCart(product: UiProduct): void {
     console.log(`Товар добавлен в корзину: ${product.name}`);
   }
 
-  private toUiProduct(p: ProductListDto): UiProduct {
-    let discount: number | undefined;
+  // Вспомогательный метод для скидки
+  private calcDiscount(p: ProductListDto): number | undefined {
     if (p.discountPrice && p.discountPrice < p.price) {
-      discount = Math.round(((p.price - p.discountPrice) / p.price) * 100);
+      return Math.round(((p.price - p.discountPrice) / p.price) * 100);
     }
-
-    return {
-      ...p,
-      inWishlist: false, // Позже подключим WishlistService
-      discount,
-      gradient: this.getRandomGradient()
-    };
+    return undefined;
   }
 
-  private getRandomGradient(): string {
-    const gradients = [
-      'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
-      'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
-      'linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%)',
-    ];
-    return gradients[Math.floor(Math.random() * gradients.length)];
+  // Вспомогательный метод для градиентов (с кешированием)
+  private getGradient(productId: number): string {
+    if (!this.gradientCache.has(productId)) {
+      const gradients = [
+        'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+        'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+        'linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%)',
+      ];
+      this.gradientCache.set(productId, gradients[Math.floor(Math.random() * gradients.length)]);
+    }
+    return this.gradientCache.get(productId)!;
   }
 }

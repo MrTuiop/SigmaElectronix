@@ -1,0 +1,160 @@
+<div class="brand-page-wrapper">
+
+  @if (loading) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Загрузка витрины...</p>
+  </div>
+  }
+
+  @if (error) {
+  <div class="error-state">
+    <p>{{ error }}</p>
+    <a routerLink="/brands" class="back-link">Вернуться к списку брендов</a>
+  </div>
+  }
+
+  @if (!loading && brand) {
+
+  <a routerLink="/brands" class="back-btn">
+    <svg lucideArrowLeft size="20"></svg>
+    Все бренды
+  </a>
+
+  <section class="brand-hero"
+           [style.backgroundImage]="brand.heroImageUrl ? 'url(' + brand.heroImageUrl + ')' : 'var(--purple-gradient)'">
+    <div class="hero-overlay"></div>
+    <div class="hero-content container">
+      <h1 class="hero-title">{{ brand.heroTitle || brand.name }}</h1>
+      @if (brand.heroSubtitle) {
+      <p class="hero-subtitle">{{ brand.heroSubtitle }}</p>
+      }
+      @if (brand.bannerButtonText) {
+      <button class="hero-btn">{{ brand.bannerButtonText }}</button>
+      }
+    </div>
+  </section>
+
+  <main class="brand-main-content container">
+
+    <div class="brand-info-card">
+      <div class="brand-logo-container">
+        @if (brand.logoUrl) {
+        <img [src]="brand.logoUrl" [alt]="brand.name" class="main-logo">
+        } @else {
+        <svg lucidePackage size="48" class="fallback-icon"></svg>
+        }
+      </div>
+      <div class="brand-text">
+        <h2>О бренде {{ brand.name }}</h2>
+        <p>{{ brand.description }}</p>
+      </div>
+    </div>
+
+    @if (brand.categories?.length) {
+    <section class="brand-categories">
+      <h3 class="section-title">Категории {{ brand.name }}</h3>
+      <div class="categories-grid">
+        @for (cat of brand.categories; track cat.categoryId) {
+        <a [routerLink]="['/catalog', cat.categorySlug]"
+           [queryParams]="{ brand: brand.slug }"
+           class="category-card">
+          <div class="cat-icon-wrapper">
+            @if (cat.iconUrl) {
+            <img [src]="cat.iconUrl" alt="">
+            } @else {
+            <svg lucideFolder size="24"></svg>
+            }
+          </div>
+          <div class="cat-info">
+            <span class="cat-name">{{ cat.categoryName }}</span>
+            <span class="cat-count">{{ cat.productsCount }} товаров</span>
+          </div>
+          <svg lucideChevronRight size="18" class="cat-arrow"></svg>
+        </a>
+        }
+      </div>
+    </section>
+    }
+
+    @if (brand.images?.length) {
+    <section class="brand-gallery">
+      <h3 class="section-title">Галерея</h3>
+      <div class="gallery-grid">
+        @for (img of brand.images; track img.id) {
+        <div class="gallery-item">
+          <img [src]="img.url" [alt]="img.altText || brand.name" loading="lazy">
+        </div>
+        }
+      </div>
+    </section>
+    }
+
+    @if (uiProducts.length) {
+    <section class="brand-products products-section">
+      <div class="section-header">
+        <h3 class="section-title">Хиты продаж {{ brand?.name }}</h3>
+        <span class="total-count">Всего товаров: {{ brand?.totalProductsCount }}</span>
+      </div>
+
+      <div class="products-grid">
+        @for (product of uiProducts; track product.id) {
+        <a class="product-card" [routerLink]="['/product', product.slug]">
+          <div class="product-badges">
+            @if (product.isNew) {
+            <span class="new-badge">Новинка</span>
+            }
+            @if (product.discount) {
+            <span class="discount-badge">–{{ product.discount }}%</span>
+            }
+          </div>
+
+          <div class="wishlist-btn" (click)="$event.preventDefault(); $event.stopPropagation(); toggleWishlist(product)">
+            <svg lucideHeart size="18" strokeWidth="2.5" [class.filled]="product.inWishlist"></svg>
+          </div>
+
+          <div class="product-image">
+            @if (product.mainImageUrl) {
+            <img [src]="product.mainImageUrl" [alt]="product.name" loading="lazy" class="real-img" />
+            } @else {
+            <div class="image-placeholder" [style.background]="product.gradient || 'var(--card-bg)'">
+              <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
+            </div>
+            }
+          </div>
+
+          <div class="product-info">
+            <span class="product-brand">{{ brand?.name }}</span>
+            <h3 class="product-name">{{ product.name }}</h3>
+
+            <div class="rating-row">
+              @for (star of [1,2,3,4,5]; track star) {
+              <svg lucideStar [size]="13" [strokeWidth]="0"
+                   [class.filled-star]="star <= (product.averageRating || 5)"
+                   [class.empty-star]="star > (product.averageRating || 5)">
+              </svg>
+              }
+              <span class="reviews-count">({{ product.reviewsCount || 0 }})</span>
+            </div>
+
+            <div class="price-row">
+              <span class="current-price">{{ (product.discountPrice || product.price) | currency:'RUB':'symbol':'1.0-0' }}</span>
+              @if (product.discountPrice && product.discountPrice < product.price) {
+              <span class="old-price">{{ product.price | currency:'RUB':'symbol':'1.0-0' }}</span>
+              }
+            </div>
+
+            <div class="add-to-cart-btn" (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+              <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+              В корзину
+            </div>
+          </div>
+        </a>
+        }
+      </div>
+    </section>
+    }
+
+  </main>
+  }
+</div>

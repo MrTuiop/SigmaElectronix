@@ -129,14 +129,17 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<IEnumerable<ProductListDto>> GetNewArrivalsAsync(int count = 8)
         {
+            // Считаем новинками только то, что добавлено за последние 30 дней
+            var thresholdDate = DateTime.UtcNow.AddDays(-30);
+
             var products = await _context.Products
-                .Where(p => !p.IsDeleted && p.IsPublished)
+                .Where(p => !p.IsDeleted && p.IsPublished && p.CreatedAt >= thresholdDate) // 🎯 ДОБАВЛЕН ФИЛЬТР ПО ДАТЕ
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
                 .Include(p => p.Images)
-                .OrderByDescending(p => p.CreatedAt) // Сортируем по дате добавления (самые новые сверху)
+                .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
-                .AsNoTracking() // Оптимизация чтения
+                .AsNoTracking()
                 .ToListAsync();
 
             return products.Select(MapToListDto);
@@ -352,8 +355,13 @@ namespace SigmaElectronix.Server.Services
         }
 
         // Исправленный метод для списков
+        // Исправленный метод для списков
         private ProductListDto MapToListDto(Product p)
         {
+            // 🎯 Считаем товар новинкой, если он добавлен менее 90 дней назад
+            // (Ты можешь поменять 90 на любое количество дней, подходящее для твоего магазина)
+            var thresholdDate = DateTime.UtcNow.AddDays(-30);
+
             return new ProductListDto
             {
                 Id = p.Id,
@@ -364,7 +372,6 @@ namespace SigmaElectronix.Server.Services
                 DiscountPrice = p.DiscountPrice,
                 CategoryName = p.Category?.Name ?? string.Empty,
 
-                // Создаем объект BrandDto
                 Brand = p.Brand != null ? new BrandSummaryDto
                 {
                     Id = p.Brand.Id,
@@ -374,7 +381,10 @@ namespace SigmaElectronix.Server.Services
 
                 AverageRating = p.AverageRating,
                 ReviewsCount = p.ReviewsCount,
-                IsPublished = p.IsPublished, // Добавлено поле из вашего нового DTO
+                IsPublished = p.IsPublished,
+
+                // 🎯 Устанавливаем флаг "Новинка" на основе даты создания
+                IsNew = p.CreatedAt >= thresholdDate,
 
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                               ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty

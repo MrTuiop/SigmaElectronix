@@ -14,9 +14,22 @@ export interface ProductListDto {
   id: number;
   name: string;
   slug: string;
+  shortDescription: string;
   price: number;
+  discountPrice?: number;
+  finalPrice: number;
+  brand?: BrandSummaryDto;
+  categoryName?: string;
   mainImageUrl?: string;
-  // ... при необходимости добавьте другие поля
+  averageRating?: number;
+  reviewsCount?: number;
+  isPublished?: boolean;
+
+  // Поля для UI
+  discount?: number;
+  isNew?: boolean;
+  inWishlist?: boolean;
+  gradient?: string;
 }
 
 // ---------- Бренд-специфичные DTO ----------

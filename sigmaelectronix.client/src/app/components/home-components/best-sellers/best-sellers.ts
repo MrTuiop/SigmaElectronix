@@ -6,9 +6,11 @@ import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePa
 
 import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
+import { WishlistService } from '../../../services/wishlist-service';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
+  isNew: boolean; // 🆕 Добавляем флаг новинки в UI-модель
   discount?: number;
   gradient?: string;
 }
@@ -29,24 +31,29 @@ export class BestSellersComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
 
+  // 🎯 2. Инжектим сервис избранного
+  private wishlistService = inject(WishlistService);
+
   loading = signal(true);
   error = signal<string | null>(null);
   skeletonArray = Array(4).fill(0);
 
-  // Локальный сигнал для избранного (computed только читает, поэтому нужен отдельный источник)
-  private wishlistState = signal<Set<number>>(new Set());
+  // 🎯 УДАЛЯЕМ локальный wishlistState = signal<Set<number>>(new Set());
 
-  // Кэш градиентов: чтобы при каждом пересчёте computed карточки не меняли цвет
   private gradientCache = new Map<number, string>();
 
-  // computed: автоматически пересчитывается при изменении featuredProducts или wishlistState
+  // 🎯 3. Обновляем вычисляемый сигнал
   products = computed<UiProduct[]>(() => {
-    const wishlist = this.wishlistState();
+    // Получаем ID всех товаров, которые сейчас загружены как новинки
+    const newArrivalsIds = new Set(this.productService.newArrivals().map(p => p.id));
+
     return this.productService.featuredProducts()
       .slice(0, 4)
       .map(p => ({
         ...p,
-        inWishlist: wishlist.has(p.id),
+        // Проверяем статус напрямую через глобальный сервис!
+        inWishlist: this.wishlistService.isInWishlist(p.id),
+        isNew: (p as any).isNew || newArrivalsIds.has(p.id),
         discount: this.calcDiscount(p),
         gradient: this.getGradient(p.id)
       }));
@@ -75,17 +82,9 @@ export class BestSellersComponent implements OnInit {
   }
 
   toggleWishlist(product: UiProduct): void {
-    this.wishlistState.update(set => {
-      const next = new Set(set);
-      if (next.has(product.id)) {
-        next.delete(product.id);
-        console.log(`Удалено из избранного: ${product.name}`);
-      } else {
-        next.add(product.id);
-        console.log(`Добавлено в избранное: ${product.name}`);
-      }
-      return next;
-    });
+    // Больше никаких локальных Set. Просто отправляем запрос, 
+    // сервис обновит свой сигнал, и карточки перерисуются сами!
+    this.wishlistService.toggleItem(product.id).subscribe();
   }
 
   addToCart(product: UiProduct): void {

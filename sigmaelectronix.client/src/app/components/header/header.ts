@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import {
   LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
@@ -11,6 +11,7 @@ import { AuthModalComponent } from '../auth-components/auth-modal/auth-modal';
 import { AuthService } from '../../services/auth-service';
 import { ProfileService } from '../../services/profile-service';
 import { CategoryMenuComponent } from '../category-components/category-menu/category-menu';
+import { WishlistService } from '../../services/wishlist-service';
 
 @Component({
   selector: 'app-header',
@@ -27,9 +28,15 @@ import { CategoryMenuComponent } from '../category-components/category-menu/cate
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit{
+
   private auth = inject(AuthService);
   private profile = inject(ProfileService);
+  private router = inject(Router);
+  private wishlistService = inject(WishlistService);
+
+  // Теперь счётчик берётся из сервиса
+  readonly favoritesCount = computed(() => this.wishlistService.totalItems());
 
   readonly isLoggedIn = computed(() => this.auth.token() !== null);
 
@@ -45,6 +52,24 @@ export class HeaderComponent {
     return user?.avatarUrl ?? null;
   });
 
+  goToWishlist(): void {
+    if (this.isLoggedIn()) {
+      // Если авторизован -> в личный кабинет
+      this.router.navigate(['/profile/wishlist']);
+    } else {
+      // Если гость -> на публичную страницу
+      this.router.navigate(['/wishlist']);
+    }
+  }
+
+  ngOnInit(): void {
+    // Загружаем избранное, если пользователь уже авторизован
+    if (this.isLoggedIn()) {
+      this.wishlistService.loadWishlist().subscribe();
+    }
+    // Если неавторизован — счётчик и так будет 0, и бейдж скроется
+  }
+
   showAuthModal = signal(false);
 
   openAuthModal(): void {
@@ -53,7 +78,6 @@ export class HeaderComponent {
 
   isCategoryMenuOpen = signal(false);
   cartCount = signal(3);
-  favoritesCount = signal(5);
   isDarkTheme = signal(false);
 
   searchQuery = signal('');

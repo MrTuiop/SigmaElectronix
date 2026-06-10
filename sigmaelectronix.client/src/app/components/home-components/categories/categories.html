@@ -1,0 +1,45 @@
+<section class="categories-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Категории товаров</h2>
+      <a routerLink="/catalog" class="section-link">
+        Все категории
+        <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
+      </a>
+    </div>
+
+    <div class="categories-grid">
+      @if (loading()) {
+      @for (s of skeletonArray; track $index) {
+      <div class="category-card skeleton-card">
+        <div class="cat-icon-wrapper skeleton-icon"></div>
+        <span class="cat-label skeleton-text w-80"></span>
+        <span class="cat-count skeleton-text w-50"></span>
+      </div>
+      }
+      }
+      @else if (error()) {
+      <div class="error-message">{{ error() }}</div>
+      }
+      @else {
+      @for (cat of categories(); track cat.id) {
+      <a [routerLink]="['/catalog', cat.slug]" class="category-card">
+        <div class="cat-icon-wrapper">
+          @switch (cat.iconType) {
+          @case ('smartphone') { <svg lucideSmartphone size="28" strokeWidth="1.8"></svg> }
+          @case ('laptop') { <svg lucideLaptop size="28" strokeWidth="1.8"></svg> }
+          @case ('headphones') { <svg lucideHeadphones size="28" strokeWidth="1.8"></svg> }
+          @case ('watch') { <svg lucideWatch size="28" strokeWidth="1.8"></svg> }
+          @case ('tv') { <svg lucideTv size="28" strokeWidth="1.8"></svg> }
+          @case ('gamepad-2') { <svg lucideGamepad2 size="28" strokeWidth="1.8"></svg> }
+          @default { <svg lucideTag size="28" strokeWidth="1.8"></svg> }
+          }
+        </div>
+        <span class="cat-label">{{ cat.name }}</span>
+        <span class="cat-count">{{ cat.productsCount }} товаров</span>
+      </a>
+      }
+      }
+    </div>
+  </div>
+</section>

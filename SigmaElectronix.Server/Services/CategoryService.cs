@@ -18,9 +18,42 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<List<CategoryDto>> GetAllAsync()
         {
-            // Здесь .Include не нужен. EF Core сам сделает JOIN благодаря .Select()
-            return await _context.Categories
+            // 1. Вытягиваем плоский список из БД со счетчиком только ПРЯМЫХ товаров.
+            // Выполняется 1 быстрый SQL-запрос.
+            var flatCategories = await _context.Categories
                 .AsNoTracking()
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Slug,
+                    c.ImageUrl,
+                    c.ParentCategoryId,
+                    ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
+                    SubCategoriesCount = c.SubCategories.Count,
+                    DirectProductsCount = c.Products.Count // Это товары, привязанные напрямую
+                })
+                .ToListAsync();
+
+            // 2. Создаем словарь связей (кто чей родитель) для очень быстрого поиска
+            var childrenLookup = flatCategories.ToLookup(c => c.ParentCategoryId);
+
+            // 3. Локальная рекурсивная функция подсчета товаров для любой глубины
+            int GetTotalProducts(int categoryId, int directCount)
+            {
+                int total = directCount;
+
+                // Проходимся по всем дочерним категориям и суммируем их товары
+                foreach (var child in childrenLookup[categoryId])
+                {
+                    total += GetTotalProducts(child.Id, child.DirectProductsCount);
+                }
+
+                return total;
+            }
+
+            // 4. Формируем финальный список DTO и сортируем
+            return flatCategories
                 .OrderBy(c => c.Name)
                 .Select(c => new CategoryDto
                 {
@@ -29,11 +62,11 @@ namespace SigmaElectronix.Server.Services
                     Slug = c.Slug,
                     ImageUrl = c.ImageUrl,
                     ParentCategoryId = c.ParentCategoryId,
-                    ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
-                    ProductsCount = c.Products.Count, // Транслируется в COUNT() в SQL
-                    SubCategoriesCount = c.SubCategories.Count // Транслируется в COUNT() в SQL
+                    ParentCategoryName = c.ParentCategoryName,
+                    SubCategoriesCount = c.SubCategoriesCount,
+                    ProductsCount = GetTotalProducts(c.Id, c.DirectProductsCount) // 👈 Считаем общую сумму
                 })
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<List<CategoryTreeDto>> GetTreeAsync()

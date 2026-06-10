@@ -106,9 +106,22 @@ export class AuthModalComponent {
       email: regEmail().trim() || null
     }).subscribe({
       next: (res) => {
-        this.toastService.success('Регистрация успешна! Теперь войдите.');
-        // Сразу переключаем на форму входа
-        this.toggleMode();
+        // После успешной регистрации сразу авторизуемся
+        this.authService.login({
+          usernameOrEmail: regLogin().trim(),
+          password: regPassword()
+        }).subscribe({
+          next: () => {
+            this.authenticated.emit();
+            this.closeModal();
+            this.toastService.success('Успешная регистрация и вход!');
+          },
+          error: (loginErr: Error) => {
+            // Регистрация прошла, но войти не удалось — переключаем на форму входа
+            this.toastService.error('Регистрация прошла, но не удалось войти: ' + loginErr.message);
+            this.toggleMode();
+          }
+        });
       },
       error: (err: Error) => {
         this.toastService.error(err.message);

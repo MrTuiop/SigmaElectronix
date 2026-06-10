@@ -30,16 +30,22 @@
       <!-- РЕАЛЬНЫЕ ДАННЫЕ -->
       @else {
       @for (product of products(); track product.id) {
-      <div class="product-card">
+      <!-- ⚡️ Карточка теперь ссылка -->
+      <a class="product-card" [routerLink]="['/product', product.id]">
         <div class="product-badges">
+          @if (product.isNew) {
+          <span class="new-badge">Новинка</span>
+          }
+
           @if (product.discount) {
           <span class="discount-badge">–{{ product.discount }}%</span>
           }
         </div>
 
-        <button class="wishlist-btn" (click)="toggleWishlist(product)">
+        <!-- Кнопка «Избранное» с защитой от перехода -->
+        <div class="wishlist-btn" (click)="$event.preventDefault(); $event.stopPropagation(); toggleWishlist(product)">
           <svg lucideHeart size="18" strokeWidth="2.5" [class.filled]="product.inWishlist"></svg>
-        </button>
+        </div>
 
         <div class="product-image">
           @if (product.mainImageUrl) {
@@ -72,12 +78,13 @@
             }
           </div>
 
-          <button class="add-to-cart-btn" (click)="addToCart(product)">
+          <!-- Кнопка «В корзину» с защитой от перехода -->
+          <div class="add-to-cart-btn" (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
             <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
             В корзину
-          </button>
+          </div>
         </div>
-      </div>
+      </a>
       }
       }
     </div>

@@ -17,5 +17,8 @@ namespace SigmaElectronix.Server.DTOs.ProductDTOs
         public double AverageRating { get; set; }
         public int ReviewsCount { get; set; }
         public bool IsPublished { get; set; }
+
+        public bool IsNew { get; set; }
+
     }
 }

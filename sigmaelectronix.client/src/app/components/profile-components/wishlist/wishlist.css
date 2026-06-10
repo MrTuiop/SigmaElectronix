@@ -154,6 +154,87 @@
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
   }
 
+/* ===== ДОПОЛНЕНИЯ К ТВОЕМУ CSS ===== */
+
+a.product-card {
+  text-decoration: none;
+  color: inherit;
+  display: block; /* Важно для тега a, чтобы он вел себя как блок */
+}
+
+/* Анимация картинки при наведении */
+.real-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.image-placeholder {
+  transition: transform 0.4s ease;
+}
+
+.product-card:hover .real-img,
+.product-card:hover .image-placeholder {
+  transform: scale(1.05);
+}
+
+/* Кнопка удаления */
+.wishlist-remove-btn {
+  /* Твои стили были отличными, добавим только плавную тень */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+  .wishlist-remove-btn:hover {
+    transform: scale(1.1);
+    background-color: #fef2f2; /* Легкий красный фон при наведении */
+  }
+
+/* Красивое пустое состояние (Empty State) */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+  .empty-state svg {
+    color: #cbd5e1;
+    margin-bottom: 20px;
+  }
+
+  .empty-state p {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+  }
+
+.empty-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.go-to-catalog-btn {
+  padding: 12px 24px;
+  background: var(--purple-gradient);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+  .go-to-catalog-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  }
+
 @media (max-width: 992px) {
   .wishlist-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

@@ -1,57 +1,52 @@
 <div class="content-card fade-in">
   <div class="section-header-inner">
     <h2>Избранные товары</h2>
-    <span class="count-badge">{{ data.wishlistItems().length }}</span>
+    <span class="count-badge">{{ items().length }}</span>
   </div>
-  @if (data.wishlistItems().length === 0) {
+
+  @if (items().length === 0) {
   <div class="empty-state">
-    <svg lucideHeart size="48" strokeWidth="1.5"></svg>
+    <svg lucideHeart size="56" strokeWidth="1.5"></svg>
     <p>В избранном пока пусто</p>
+    <span class="empty-subtitle">Добавляйте товары в избранное, чтобы не потерять их</span>
+    <a routerLink="/catalog" class="go-to-catalog-btn">Перейти в каталог</a>
   </div>
   } @else {
   <div class="wishlist-grid">
-    @for (product of data.wishlistItems(); track product.id) {
-    <div class="product-card">
-      <div class="product-badges">
-        @if (product.discount) {
-        <span class="discount-badge">–{{ product.discount }}%</span>
+    @for (item of items(); track item.id) {
+    <a class="product-card" [routerLink]="['/product', item.productId]">
+
+      <button class="wishlist-remove-btn"
+              (click)="$event.preventDefault(); $event.stopPropagation(); removeFromWishlist(item.productId)"
+              title="Удалить из избранного">
+        <svg lucideX size="18" strokeWidth="2.5"></svg>
+      </button>
+
+      <div class="product-image">
+        @if (item.productImage) {
+        <img [src]="item.productImage" [alt]="item.productName" loading="lazy" class="real-img" />
+        } @else {
+        <div class="image-placeholder" [style.background]="item.gradient">
+          <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
+        </div>
         }
       </div>
-      <button class="wishlist-remove-btn" (click)="data.removeFromWishlist(product.id)">
-        <svg lucideX size="16" strokeWidth="2.5"></svg>
-      </button>
-      <div class="product-image">
-        <div class="image-placeholder" [style.background]="product.gradient">
-          @switch (product.icon) {
-          @case ('smartphone') { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-          @case ('headphones') { <svg lucideHeadphones size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-          @default { <svg lucideSmartphone size="40" strokeWidth="1.5" class="ph-icon"></svg> }
-          }
-        </div>
-      </div>
+
       <div class="product-info">
-        <span class="product-brand">{{ product.brand }}</span>
-        <h3 class="product-name">{{ product.name }}</h3>
-        <div class="rating-row">
-          @for (star of [1,2,3,4,5]; track star) {
-          <svg lucideStar [size]="13" [strokeWidth]="0"
-               [class.filled-star]="star <= product.rating"
-               [class.empty-star]="star > product.rating"></svg>
-          }
-          <span class="reviews-count">({{ product.reviews }})</span>
-        </div>
+        <span class="product-brand">Товар</span>
+        <h3 class="product-name">{{ item.productName }}</h3>
+
         <div class="price-row">
-          <span class="current-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
-          @if (product.oldPrice) {
-          <span class="old-price">{{ product.oldPrice | currency:'₽':'symbol':'1.0-0' }}</span>
-          }
+          <span class="current-price">{{ item.price | currency:'₽':'symbol':'1.0-0' }}</span>
         </div>
-        <button class="add-to-cart-btn">
+
+        <button class="add-to-cart-btn"
+                (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(item.productId)">
           <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
           В корзину
         </button>
       </div>
-    </div>
+    </a>
     }
   </div>
   }

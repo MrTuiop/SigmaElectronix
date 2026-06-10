@@ -12,6 +12,7 @@ import {
   RegisterResponse,
   ApiError
 } from '../models/auth-models';
+import { WishlistService } from './wishlist-service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -26,6 +27,10 @@ export class AuthService {
     return this.injector.get(ProfileService);
   }
 
+  private getWishlistService(): WishlistService {
+    return this.injector.get(WishlistService);
+  }
+
   register(dto: RegisterRequest): Observable<RegisterResponse> {
     return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, dto).pipe(
       catchError(this.handleError)
@@ -37,6 +42,7 @@ export class AuthService {
       tap(response => {
         this.setToken(response.accessToken);
         this.getProfileService().loadProfile().subscribe();
+        this.getWishlistService().mergeGuestWishlist().subscribe();
       }),
       catchError(this.handleError)
     );
@@ -51,6 +57,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     this.token.set(null);
     this.getProfileService().clearAll();
+    this.getWishlistService().wishlist.set(null);
     this.router.navigate(['/login']);
   }
 
@@ -69,7 +76,13 @@ export class AuthService {
   }
 
   constructor() {
-    // Загружаем профиль, только если уже есть токен, и откладываем вызов
+    // 1. Избранное загружаем ВСЕГДА (и для гостей, и для авторизованных)
+    // Используем setTimeout, чтобы избежать проблемы с циклическими зависимостями или ранней инициализацией
+    setTimeout(() => {
+      this.getWishlistService().loadWishlist().subscribe();
+    });
+
+    // 2. А профиль загружаем ТОЛЬКО если есть токен (пользователь авторизован)
     if (this.token()) {
       setTimeout(() => {
         this.getProfileService().loadProfile().subscribe();

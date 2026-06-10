@@ -1,0 +1,97 @@
+<section class="public-wishlist-page">
+  <div class="container">
+
+    <div class="page-header">
+      <h1 class="page-title">Мое избранное</h1>
+      <span class="count-badge">{{ getItemsWord(items().length) }}</span>
+    </div>
+
+    <div class="guest-banner">
+      <div class="banner-content">
+        <h3>Сохраните списки навсегда!</h3>
+        <p>Вы просматриваете избранное как гость. Войдите в аккаунт, чтобы ваши товары не потерялись после закрытия браузера.</p>
+      </div>
+      <button class="login-btn" (click)="openAuthModal()">Войти в аккаунт</button>
+    </div>
+
+    @if (items().length === 0) {
+    <div class="empty-state">
+      <svg lucideHeart size="64" strokeWidth="1.5"></svg>
+      <h2>Здесь пока ничего нет</h2>
+      <p>Перейдите в каталог и добавьте товары, которые вам понравились.</p>
+      <a routerLink="/catalog" class="go-to-catalog-btn">Перейти к покупкам</a>
+    </div>
+    } @else {
+    <div class="wishlist-grid">
+      @for (item of items(); track item.id) {
+      <a class="product-card" [routerLink]="['/product', item.productId]">
+
+        <div class="product-badges">
+          @if (item.isNew) {
+          <span class="new-badge">Новинка</span>
+          }
+          @if (item.discount) {
+          <span class="discount-badge">–{{ item.discount }}%</span>
+          }
+        </div>
+
+        <div class="wishlist-btn"
+             (click)="$event.preventDefault(); $event.stopPropagation(); removeFromWishlist(item.productId)">
+          <svg lucideHeart size="18" strokeWidth="2.5" class="filled"></svg>
+        </div>
+
+        <div class="wishlist-btn"
+             (click)="$event.preventDefault(); $event.stopPropagation(); removeFromWishlist(item.productId)">
+          <svg lucideHeart size="18" strokeWidth="2.5" class="filled"></svg>
+        </div>
+
+        <div class="product-image">
+          @if (item.productImage) {
+          <img [src]="item.productImage" [alt]="item.productName" loading="lazy" class="real-img" />
+          } @else {
+          <div class="image-placeholder" [style.background]="item.gradient">
+            <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
+          </div>
+          }
+        </div>
+
+        <div class="product-info">
+          <span class="product-brand">{{ item.brandName || 'Нет бренда' }}</span>
+          <h3 class="product-name">{{ item.productName }}</h3>
+
+          <div class="rating-row">
+            @for (star of [1,2,3,4,5]; track star) {
+            <svg lucideStar [size]="13" [strokeWidth]="0"
+                 [class.filled-star]="star <= item.averageRating"
+                 [class.empty-star]="star > item.averageRating">
+            </svg>
+            }
+            <span class="reviews-count">({{ item.reviewsCount }})</span>
+          </div>
+
+          <div class="price-row">
+            <span class="current-price">
+              {{ (item.discountPrice || item.price) | currency:'₽':'symbol':'1.0-0' }}
+            </span>
+            @if (item.discountPrice && item.discountPrice < item.price) {
+            <span class="old-price">{{ item.price | currency:'₽':'symbol':'1.0-0' }}</span>
+            }
+          </div>
+
+          <div class="add-to-cart-btn"
+               (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(item.productId)">
+            <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+            В корзину
+          </div>
+        </div>
+      </a>
+      }
+    </div>
+    }
+
+  </div>
+</section>
+
+@if (showAuthModal()) {
+<app-auth-modal (close)="closeAuthModal()" (authenticated)="onAuthenticated()"></app-auth-modal>
+}
