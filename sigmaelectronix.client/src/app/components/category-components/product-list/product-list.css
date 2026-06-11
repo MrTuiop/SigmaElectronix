@@ -573,3 +573,69 @@ div.buy-button.disabled {
     text-align: left;
   }
 }
+
+/* ===== АККОРДЕОН ФИЛЬТРОВ ===== */
+.filter-section {
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color); /* Разделитель секций */
+  padding-bottom: 20px;
+}
+
+  .filter-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none; /* Запрещаем выделение текста при клике */
+  transition: opacity 0.2s;
+}
+
+  .filter-header:hover {
+    opacity: 0.8;
+  }
+
+  .filter-header h4 {
+    margin: 0; /* Убрали старый отступ, так как теперь он в filter-body */
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Анимация иконки шеврона */
+  .filter-header svg {
+    color: var(--text-muted);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+    .filter-header svg.rotated {
+      transform: rotate(180deg);
+    }
+
+/* Плавная анимация высоты через CSS Grid */
+.filter-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 14px; /* Отступ от заголовка до инпутов */
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+}
+
+  .filter-body.collapsed-body {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none; /* Чтобы нельзя было кликнуть на скрытые инпуты */
+  }
+
+/* Обязательный контейнер, чтобы контент обрезался плавно */
+.filter-body-inner {
+  overflow: hidden;
+}

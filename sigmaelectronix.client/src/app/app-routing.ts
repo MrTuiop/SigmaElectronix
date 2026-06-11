@@ -15,6 +15,7 @@ import { ReviewsComponent } from './components/profile-components/reviews/review
 import { BonusesComponent } from './components/profile-components/bonuses/bonuses';
 import { BrandDetailComponent } from './pages/brand-detail/brand-detail';
 import { PublicWishlistComponent } from './components/public-components/public-wishlist/public-wishlist';
+import { BrandsComponent } from './pages/brands/brands';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -76,6 +77,11 @@ export const routes: Routes = [
   {
     path: 'products/:slug',
     component: ProductDetailPage
+  },
+
+  {
+    path: 'brands',
+    component: BrandsComponent // <-- НАША НОВАЯ СТРАНИЦА
   },
 
   {

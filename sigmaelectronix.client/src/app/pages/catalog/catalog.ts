@@ -58,6 +58,39 @@ export class CatalogPage implements OnInit {
     const tree = this.categoryService.categoryTree();
     this.isLoading.set(false);
 
+    // 🌟 ВИРТУАЛЬНАЯ КАТЕГОРИЯ: НОВИНКИ
+    if (slug === 'new-arrivals') {
+      this.category.set({
+        id: -2, // Специальный отрицательный ID, чтобы фронтенд понял, что это новинки
+        name: 'Новинки',
+        slug: 'new-arrivals',
+        subcategories: [] // Оставляем пустым, чтобы Angular сразу вывел список товаров (ProductListComponent)
+      });
+
+      this.breadcrumbs.set([
+        { label: 'Главная', slug: '' },
+        { label: 'Каталог', slug: 'catalog' },
+        { label: 'Новинки' }
+      ]);
+      return;
+    }
+
+    // 🔥 ВИРТУАЛЬНАЯ КАТЕГОРИЯ 2: ХИТЫ ПРОДАЖ
+    if (slug === 'best-sellers') {
+      this.category.set({
+        id: -3, // Новый специальный отрицательный ID
+        name: 'Хиты продаж',
+        slug: 'best-sellers',
+        subcategories: [] // Оставляем пустым, чтобы вывелась сетка товаров
+      });
+      this.breadcrumbs.set([
+        { label: 'Главная', slug: '' },
+        { label: 'Каталог', slug: 'catalog' },
+        { label: 'Хиты продаж' }
+      ]);
+      return;
+    }
+
     // 1. Открыт корень каталога (site.com/catalog)
     if (!slug) {
       this.category.set({
@@ -78,7 +111,6 @@ export class CatalogPage implements OnInit {
         id: result.category.id,
         name: result.category.name,
         slug: result.category.slug,
-        // Маппим реальные подкатегории (если они есть) для сетки
         subcategories: result.category.subCategories?.map((c: any) => ({
           name: c.name,
           slug: c.slug,
@@ -86,7 +118,6 @@ export class CatalogPage implements OnInit {
         })) || []
       });
 
-      // Автоматически строим хлебные крошки на основе пути в дереве!
       const crumbs: { label: string; slug?: string }[] = [
         { label: 'Главная', slug: '' },
         { label: 'Каталог', slug: 'catalog' }

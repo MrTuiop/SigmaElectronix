@@ -61,12 +61,12 @@ namespace SigmaElectronix.Server.Services
             };
         }
 
-        // 2. Получение популярных брендов для карусели на главной
+        // 2. Получение популярных брендов для карусели на главной (Случайный порядок)
         public async Task<IEnumerable<BrandSummaryDto>> GetFeaturedBrandsAsync(int count = 6)
         {
             return await _context.Brands
                 .Where(b => b.IsActive && b.IsFeatured)
-                .OrderBy(b => b.SortOrder)
+                .OrderBy(b => Guid.NewGuid()) // 🔥 ВОТ СЕКРЕТ: Случайная сортировка при каждом запросе
                 .Take(count)
                 .Select(b => new BrandSummaryDto
                 {

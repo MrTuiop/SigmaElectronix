@@ -25,7 +25,10 @@
     }
 
   .breadcrumbs .sep {
-    color: var(--border-color);
+    color: var(--text-muted);
+    opacity: 0.6; /* Делаем в тон неактивных ссылок, но чуть прозрачнее */
+    display: flex;
+    margin-top: 1px; /* Визуально центрируем иконку относительно текста */
   }
 
   .breadcrumbs .current {

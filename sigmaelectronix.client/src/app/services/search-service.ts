@@ -15,4 +15,8 @@ export class SearchService {
   getSuggestions(query: string): Observable<SearchSuggestDto> {
     return this.http.get<SearchSuggestDto>(`${this.baseUrl}/suggest?query=${query}`);
   }
+
+  getPopularTags(count: number = 5): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/popular-tags?count=${count}`);
+  }
 }

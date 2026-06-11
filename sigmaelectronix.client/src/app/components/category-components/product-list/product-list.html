@@ -7,55 +7,76 @@
     </div>
 
     <div class="filter-section">
-      <h4>Цена, ₽</h4>
-      <div class="price-range-inputs">
-        <div class="input-field">
-          <span>от</span>
-          <input type="number" [(ngModel)]="priceRange().min" (change)="resetAndLoad()" placeholder="0" />
-        </div>
-        <div class="input-field">
-          <span>до</span>
-          <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200000" />
+      <div class="filter-header" (click)="toggleFilter('price')">
+        <h4>Цена, ₽</h4>
+        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed('price')"></svg>
+      </div>
+      <div class="filter-body" [class.collapsed-body]="isCollapsed('price')">
+        <div class="filter-body-inner">
+          <div class="price-range-inputs">
+            <div class="input-field">
+              <span>от</span>
+              <input type="number" [(ngModel)]="priceRange().min" (change)="resetAndLoad()" placeholder="0" />
+            </div>
+            <div class="input-field">
+              <span>до</span>
+              <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200000" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="filter-section">
-      <h4>Бренды</h4>
-      <div class="checkbox-list">
-        @for (brand of availableBrands(); track brand.id) {
-        <label class="checkbox-label" [class.checked]="selectedBrandIds().includes(brand.id)">
-          <input type="checkbox"
-                 [checked]="selectedBrandIds().includes(brand.id)"
-                 (change)="toggleBrand(brand.id)" />
-          <span class="custom-checkbox">
-            @if (selectedBrandIds().includes(brand.id)) {
-            <svg lucideCheck size="12" strokeWidth="3"></svg>
+      <div class="filter-header" (click)="toggleFilter('brands')">
+        <h4>Бренды</h4>
+        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed('brands')"></svg>
+      </div>
+      <div class="filter-body" [class.collapsed-body]="isCollapsed('brands')">
+        <div class="filter-body-inner">
+          <div class="checkbox-list">
+            @for (brand of availableBrands(); track brand.id) {
+            <label class="checkbox-label" [class.checked]="selectedBrandIds().includes(brand.id)">
+              <input type="checkbox"
+                     [checked]="selectedBrandIds().includes(brand.id)"
+                     (change)="toggleBrand(brand.id)" />
+              <span class="custom-checkbox">
+                @if (selectedBrandIds().includes(brand.id)) {
+                <svg lucideCheck size="12" strokeWidth="3"></svg>
+                }
+              </span>
+              <span class="brand-name">{{ brand.name }}</span>
+            </label>
             }
-          </span>
-          <span class="brand-name">{{ brand.name }}</span>
-        </label>
-        }
+          </div>
+        </div>
       </div>
     </div>
 
     @for (spec of availableSpecs(); track spec.key) {
     <div class="filter-section">
-      <h4>{{ spec.key }}</h4>
-      <div class="checkbox-list">
-        @for (val of spec.values; track val) {
-        <label class="checkbox-label" [class.checked]="(selectedSpecs()[spec.key] || []).includes(val)">
-          <input type="checkbox"
-                 [checked]="(selectedSpecs()[spec.key] || []).includes(val)"
-                 (change)="toggleSpec(spec.key, val)" />
-          <span class="custom-checkbox">
-            @if ((selectedSpecs()[spec.key] || []).includes(val)) {
-            <svg lucideCheck size="12" strokeWidth="3"></svg>
+      <div class="filter-header" (click)="toggleFilter(spec.key)">
+        <h4>{{ spec.key }}</h4>
+        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed(spec.key)"></svg>
+      </div>
+      <div class="filter-body" [class.collapsed-body]="isCollapsed(spec.key)">
+        <div class="filter-body-inner">
+          <div class="checkbox-list">
+            @for (val of spec.values; track val) {
+            <label class="checkbox-label" [class.checked]="(selectedSpecs()[spec.key] || []).includes(val)">
+              <input type="checkbox"
+                     [checked]="(selectedSpecs()[spec.key] || []).includes(val)"
+                     (change)="toggleSpec(spec.key, val)" />
+              <span class="custom-checkbox">
+                @if ((selectedSpecs()[spec.key] || []).includes(val)) {
+                <svg lucideCheck size="12" strokeWidth="3"></svg>
+                }
+              </span>
+              <span class="brand-name">{{ val }}</span>
+            </label>
             }
-          </span>
-          <span class="brand-name">{{ val }}</span>
-        </label>
-        }
+          </div>
+        </div>
       </div>
     </div>
     }

@@ -89,5 +89,29 @@ namespace SigmaElectronix.Server.Services
                 Products = products
             };
         }
+
+        public async Task<List<string>> GetPopularTagsAsync(int count = 5)
+        {
+            // Берем все теги из опубликованных товаров
+            var allTags = await _context.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted && p.IsPublished && p.Tags != null && p.Tags.Any())
+                .SelectMany(p => p.Tags)
+                .Distinct() // Оставляем только уникальные
+                .ToListAsync();
+
+            if (!allTags.Any())
+            {
+                // Если тегов в базе еще нет (или мало), возвращаем дефолтные (заглушки)
+                return new List<string> { "Смартфоны", "Ноутбуки", "Наушники", "Часы", "Телевизоры" }.Take(count).ToList();
+            }
+
+            // Перемешиваем список тегов случайным образом и берем первые 'count' штук
+            var random = new Random();
+            var randomTags = allTags.OrderBy(x => random.Next()).Take(count).ToList();
+
+            // 💡 Опционально: можно сделать первую букву заглавной для красоты
+            return randomTags.Select(t => char.ToUpper(t[0]) + t.Substring(1)).ToList();
+        }
     }
 }

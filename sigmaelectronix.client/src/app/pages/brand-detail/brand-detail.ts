@@ -1,35 +1,13 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import {
-  LucideArrowLeft,
-  LucidePackage,
-  LucideShoppingCart,
-  LucideFolder,
-  LucideChevronRight,
-  LucideHeart,
-  LucideStar
-} from '@lucide/angular';
+// Удалили кучу иконок корзины и звездочек, оставили только нужные странице бренда
+import { LucideArrowLeft, LucidePackage, LucideFolder, LucideChevronRight } from '@lucide/angular';
 import { BrandService } from '../../services/brand-service';
 import { BrandShowcaseDto } from '../../models/brand-models';
 import { WishlistService } from '../../services/wishlist-service';
-
-// 🎯 Делаем гибкий интерфейс, чтобы он не конфликтовал с другими файлами
-export interface UiProduct {
-  id: number;
-  name: string;
-  slug: string;
-  price: number;
-  discountPrice?: number;
-  mainImageUrl?: string;
-  averageRating?: number;
-  reviewsCount?: number;
-  inWishlist: boolean;
-  isNew: boolean;
-  discount?: number;
-  gradient?: string;
-  [key: string]: any; // <-- Эта магия позволяет принимать любые другие поля без ошибок
-}
+import { ProductCardComponent, UiProduct } from '../../components/product-components/product-card/product-card';
+// Подключаем карточку (проверь путь!)
 
 @Component({
   selector: 'app-brand-detail',
@@ -37,14 +15,11 @@ export interface UiProduct {
   imports: [
     CommonModule,
     RouterModule,
-    CurrencyPipe, // <-- Обязательно добавляем для символа ₽
     LucideArrowLeft,
     LucidePackage,
-    LucideShoppingCart,
     LucideFolder,
     LucideChevronRight,
-    LucideHeart,
-    LucideStar
+    ProductCardComponent // <-- Добавили карточку
   ],
   templateUrl: './brand-detail.html',
   styleUrl: './brand-detail.css'
@@ -52,11 +27,11 @@ export interface UiProduct {
 export class BrandDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private brandService = inject(BrandService);
-  private wishlistService = inject(WishlistService); // <-- Инжектим сервис
+  private wishlistService = inject(WishlistService);
   private cdr = inject(ChangeDetectorRef);
 
   brand: BrandShowcaseDto | null = null;
-  uiProducts: UiProduct[] = []; // <-- Массив обработанных товаров
+  uiProducts: UiProduct[] = [];
 
   loading = true;
   error: string | null = null;
@@ -75,14 +50,14 @@ export class BrandDetailComponent implements OnInit {
   loadBrand(slug: string): void {
     this.loading = true;
     this.error = null;
-    this.cdr.detectChanges(); // <-- Говорим Angular обновить экран (показать спиннер)
+    this.cdr.detectChanges();
 
     this.brandService.getBrandBySlug(slug).subscribe({
       next: (data) => {
         this.brand = data;
 
-        // Маппим товары
-        this.uiProducts = (data.featuredProducts || []).map((p: any) => ({
+        // 🚀 Добавили .slice(0, 8), чтобы оставить максимум 8 товаров (2 строки)
+        this.uiProducts = (data.featuredProducts || []).slice(0, 8).map((p: any) => ({
           ...p,
           inWishlist: this.wishlistService.isInWishlist(p.id),
           isNew: p.isNew || false,
@@ -91,27 +66,15 @@ export class BrandDetailComponent implements OnInit {
         } as UiProduct));
 
         this.loading = false;
-        this.cdr.detectChanges(); // <-- Говорим Angular, что данные пришли, можно рисовать витрину
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Ошибка загрузки страницы бренда', err);
         this.error = 'Не удалось загрузить информацию о бренде.';
         this.loading = false;
-        this.cdr.detectChanges(); // <-- Говорим Angular нарисовать ошибку
+        this.cdr.detectChanges();
       }
     });
-  }
-
-  // ===== МЕТОДЫ ДЛЯ КАРТОЧЕК ТОВАРОВ =====
-
-  toggleWishlist(product: UiProduct): void {
-    this.wishlistService.toggleItem(product.id).subscribe();
-    product.inWishlist = !product.inWishlist; // локальное обновление для UI
-  }
-
-  addToCart(product: UiProduct): void {
-    // Вызов сервиса корзины
-    console.log('Добавлено в корзину:', product.name);
   }
 
   private calcDiscount(p: any): number | undefined {
@@ -124,10 +87,10 @@ export class BrandDetailComponent implements OnInit {
   private getGradient(productId: number): string {
     if (!this.gradientCache.has(productId)) {
       const gradients = [
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%)',
-        'linear-gradient(135deg, #1e293b 0%, #64748b 100%)',
-        'linear-gradient(135deg, #0f172a 0%, #334155 100%)'
+        'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+        'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        'linear-gradient(135deg, #064e3b 0%, #10b981 100%)',
+        'linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%)',
       ];
       this.gradientCache.set(productId, gradients[Math.floor(Math.random() * gradients.length)]);
     }

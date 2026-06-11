@@ -1,0 +1,71 @@
+<div class="brands-page">
+  <section class="page-hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">Производители</h1>
+        <p class="hero-subtitle">
+          Мы работаем только с проверенными мировыми брендами, чтобы гарантировать
+          вам высочайшее качество и надежность каждой покупки.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="brands-list-section">
+    <div class="container">
+
+      @if (loading()) {
+      <div class="brands-grid">
+        @for (s of skeletonArray; track $index) {
+        <div class="brand-card skeleton-card">
+          <div class="skeleton-logo"></div>
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line desc"></div>
+          <div class="skeleton-line desc short"></div>
+        </div>
+        }
+      </div>
+      }
+
+      @if (error()) {
+      <div class="error-container">
+        <svg lucideSearch size="48" strokeWidth="1.5"></svg>
+        <h3>Упс, что-то пошло не так</h3>
+        <p>{{ error() }}</p>
+        <button class="retry-btn" (click)="loadAllBrands()">Попробовать снова</button>
+      </div>
+      }
+
+      @if (!loading() && !error()) {
+      <div class="brands-grid">
+        @for (brand of brands(); track brand.id) {
+        <a [routerLink]="['/brands', brand.slug]" class="brand-card">
+          <div class="card-logo-wrapper">
+            @if (brand.logoUrl) {
+            <img [src]="brand.logoUrl" [alt]="brand.name" class="brand-logo" loading="lazy">
+            } @else {
+            <svg lucidePackage size="32" class="fallback-icon"></svg>
+            }
+          </div>
+
+          <div class="card-info">
+            <h3 class="brand-name">{{ brand.name }}</h3>
+            <p class="brand-desc">
+              {{ brand.shortDescription || 'Официальный производитель электроники и аксессуаров.' }}
+            </p>
+          </div>
+
+          <div class="card-footer">
+            <span class="products-count">{{ brand.productsCount }} товаров</span>
+            <div class="arrow-btn">
+              <svg lucideArrowRight size="18"></svg>
+            </div>
+          </div>
+        </a>
+        }
+      </div>
+      }
+
+    </div>
+  </section>
+</div>

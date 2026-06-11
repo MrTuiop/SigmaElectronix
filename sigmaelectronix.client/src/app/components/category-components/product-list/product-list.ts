@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
-  LucideSlidersHorizontal, LucideStar, LucideHeart, LucideShoppingCart, LucideCheck
+  LucideSlidersHorizontal, LucideStar, LucideHeart, LucideShoppingCart, LucideCheck,
+  LucideChevronDown
 } from '@lucide/angular';
 import { CartService } from '../../../services/cart-service';
 import { WishlistService } from '../../../services/wishlist-service';
@@ -23,7 +24,7 @@ interface UiProduct extends ProductListDto {
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink,
-    LucideStar, LucideHeart, LucideShoppingCart, LucideCheck
+    LucideStar, LucideHeart, LucideShoppingCart, LucideCheck, LucideChevronDown
   ],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
@@ -56,29 +57,51 @@ export class ProductListComponent implements OnInit, OnChanges {
 
   private gradientCache = new Map<number, string>();
 
+  // === СИГНАЛЫ ДЛЯ АККОРДЕОНА ФИЛЬТРОВ ===
+  collapsedFilters = signal<Record<string, boolean>>({});
+
+  toggleFilter(key: string): void {
+    this.collapsedFilters.update(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  }
+
+  isCollapsed(key: string): boolean {
+    return !!this.collapsedFilters()[key];
+  }
+
   ngOnInit(): void {
     this.resetAndLoad();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['categoryId']) {
+      // Маршрутизатор виртуальных сортировок
+      if (this.categoryId === -2) {
+        this.sortBy.set('new');       // Для новинок принудительно ставим "новые"
+      } else if (this.categoryId === -3) {
+        this.sortBy.set('popular');   // Для хитов принудительно ставим "популярные"
+      } else {
+        this.sortBy.set('popular');   // Для обычных категорий тоже популярные по умолчанию
+      }
       this.loadFiltersAndProducts();
     }
   }
 
   // 1. Загружаем доступные фильтры для этой категории
   loadFiltersAndProducts(): void {
-    this.productService.getFilters(this.categoryId).subscribe({
+    // ЗАЩИТА: На бэкенд передаем undefined, если id отрицательный (виртуальный)
+    const dbCategoryId = (this.categoryId && this.categoryId > 0) ? this.categoryId : undefined;
+
+    this.productService.getFilters(dbCategoryId).subscribe({
       next: (filters) => {
-        // Устанавливаем доступные бренды и цены из БД
         this.availableBrands.set(filters.brands);
         this.priceRange.set({ min: filters.minPrice, max: filters.maxPrice });
 
-        // Превращаем словарь в массив для удобного вывода в HTML
         const specsArray = Object.entries(filters.specifications).map(([key, values]) => ({ key, values }));
         this.availableSpecs.set(specsArray);
 
-        // Очищаем старый выбор и грузим товары
         this.selectedBrandIds.set([]);
         this.selectedSpecs.set({});
         this.resetAndLoad();
@@ -173,10 +196,11 @@ export class ProductListComponent implements OnInit, OnChanges {
       pageSize: this.pageSize,
       minPrice: this.priceRange().min,
       maxPrice: this.priceRange().max,
-      categoryId: this.categoryId && this.categoryId > 0 ? this.categoryId : undefined,
+      // ЗАЩИТА: Аналогично не отправляем -2 на сервер
+      categoryId: (this.categoryId && this.categoryId > 0) ? this.categoryId : undefined,
       sortBy: this.sortBy(),
       brandIds: this.selectedBrandIds().length > 0 ? this.selectedBrandIds() : undefined,
-      specifications: Object.keys(this.selectedSpecs()).length > 0 ? this.selectedSpecs() : undefined // ПЕРЕДАЕМ ХАРАКТЕРИСТИКИ
+      specifications: Object.keys(this.selectedSpecs()).length > 0 ? this.selectedSpecs() : undefined
     };
 
     // Отправляем запрос
@@ -206,9 +230,16 @@ export class ProductListComponent implements OnInit, OnChanges {
 
   clearFilters(): void {
     this.selectedBrandIds.set([]);
-    this.selectedSpecs.set({}); // <-- Добавили очистку характеристик!
+    this.selectedSpecs.set({});
     this.priceRange.set({ min: 0, max: 200000 });
-    this.sortBy.set('popular');
+
+    // Возвращаем правильную сортировку после сброса
+    if (this.categoryId === -2) {
+      this.sortBy.set('new');
+    } else {
+      this.sortBy.set('popular');
+    }
+
     this.resetAndLoad();
   }
 

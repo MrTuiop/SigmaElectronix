@@ -4,8 +4,8 @@
     <nav class="breadcrumbs">
       @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
       @if (!last) {
-      <a [routerLink]="['/', crumb.slug || '']">{{ crumb.label }}</a>
-      <svg lucideChevronRight size="14" strokeWidth="2.5" class="sep"></svg>
+      <a [routerLink]="'/' + (crumb.slug || '')">{{ crumb.label }}</a>
+      <svg lucideChevronRight size="16" strokeWidth="2" class="sep"></svg>
       } @else {
       <span class="current">{{ crumb.label }}</span>
       }

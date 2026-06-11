@@ -1,0 +1,58 @@
+<a class="product-card" [routerLink]="['/products', product.slug]">
+  <div class="product-badges">
+    @if (product.isNew) {
+    <span class="new-badge">Новинка</span>
+    }
+    @if (product.discount) {
+    <span class="discount-badge">–{{ product.discount }}%</span>
+    }
+  </div>
+
+  <div class="wishlist-btn" (click)="$event.preventDefault(); $event.stopPropagation(); toggleWishlist(product)">
+    <svg lucideHeart size="18" strokeWidth="2.5" [class.filled]="product.inWishlist"></svg>
+  </div>
+
+  <div class="product-image">
+    @if (product.mainImageUrl) {
+    <img [src]="product.mainImageUrl" [alt]="product.name" loading="lazy" class="real-img" />
+    } @else {
+    <div class="image-placeholder" [style.background]="product.gradient || 'var(--card-bg)'">
+      <svg lucidePackage size="40" strokeWidth="1.5" class="ph-icon"></svg>
+    </div>
+    }
+  </div>
+
+  <div class="product-info">
+    <span class="product-brand">{{ product.brand?.name || brandName || 'Brand' }}</span>
+    <h3 class="product-name">{{ product.name }}</h3>
+
+    <div class="rating-row">
+      @for (star of [1,2,3,4,5]; track star) {
+      <svg lucideStar [size]="13" [strokeWidth]="0"
+           [class.filled-star]="star <= (product.averageRating || 5)"
+           [class.empty-star]="star > (product.averageRating || 5)">
+      </svg>
+      }
+      <span class="reviews-count">({{ product.reviewsCount || 0 }})</span>
+    </div>
+
+    <div class="price-row">
+      <span class="current-price">{{ (product.discountPrice || product.price) | currency:'₽':'symbol':'1.0-0' }}</span>
+      @if (product.discountPrice && product.discountPrice < product.price) {
+      <span class="old-price">{{ product.price | currency:'₽':'symbol':'1.0-0' }}</span>
+      }
+    </div>
+
+    <div class="add-to-cart-btn"
+         [class.in-cart]="isInCart(product.id)"
+         (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+      @if (isInCart(product.id)) {
+      <svg lucideCheck size="18" strokeWidth="3"></svg>
+      В корзине
+      } @else {
+      <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
+      В корзину
+      }
+    </div>
+  </div>
+</a>

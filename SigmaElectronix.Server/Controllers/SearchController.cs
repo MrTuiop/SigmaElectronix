@@ -22,5 +22,12 @@ namespace SigmaElectronix.Server.Controllers
             var result = await _searchService.GetSuggestionsAsync(query);
             return Ok(result);
         }
+
+        [HttpGet("popular-tags")]
+        public async Task<ActionResult<List<string>>> GetPopularTags([FromQuery] int count = 5)
+        {
+            var tags = await _searchService.GetPopularTagsAsync(count);
+            return Ok(tags);
+        }
     }
 }

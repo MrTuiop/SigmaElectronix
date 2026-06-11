@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router'; // <-- 1. ДОБАВИЛ Router
 import { LucideSearch } from '@lucide/angular';
@@ -14,7 +14,7 @@ import { SearchSuggestDto } from '../../../models/search-models';
   templateUrl: './search-bar.html',
   styleUrls: ['./search-bar.css'],
 })
-export class SearchBarComponent {
+export class SearchBarComponent implements OnInit{
   private searchService = inject(SearchService);
   private router = inject(Router); // <-- 2. ИНЖЕКТИРУЕМ РОУТЕР
 
@@ -27,13 +27,7 @@ export class SearchBarComponent {
   isDropdownOpen = signal(false);
   isLoading = signal(false);
 
-  quickTags = signal([
-    'Смартфоны',
-    'Ноутбуки RTX',
-    'AirPods Pro',
-    'PlayStation 5',
-    'Мониторы 4K',
-  ]);
+  quickTags = signal<string[]>([]);
 
   hoverTimeout: any;
 
@@ -63,6 +57,24 @@ export class SearchBarComponent {
       error: (err) => {
         console.error('Ошибка поиска:', err);
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.searchService.getPopularTags(10).subscribe({
+      next: (tags) => {
+        if (tags && tags.length > 0) {
+          this.quickTags.set(tags);
+        } else {
+          // Если бэкенд почему-то ничего не вернул, ставим запасные (Fallback)
+          this.quickTags.set(['Смартфоны', 'Ноутбуки', 'Наушники', 'Игры', 'Аксессуары']);
+        }
+      },
+      error: (err) => {
+        console.error('Ошибка при загрузке популярных тегов:', err);
+        // Запасной вариант при ошибке сервера
+        this.quickTags.set(['Смартфоны', 'Ноутбуки', 'Наушники', 'Игры', 'Аксессуары']);
       }
     });
   }

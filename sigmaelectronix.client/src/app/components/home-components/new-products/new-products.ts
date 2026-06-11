@@ -1,27 +1,21 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck } from '@lucide/angular';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { LucideArrowRight } from '@lucide/angular';
 import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
 import { WishlistService } from '../../../services/wishlist-service';
-import { CartService } from '../../../services/cart-service';
-import { ToastService } from '../../../services/toast';
-
-interface UiProduct extends ProductListDto {
-  inWishlist: boolean;
-  discount?: number;
-  gradient?: string;
-}
+import { ProductCardComponent, UiProduct } from '../../product-components/product-card/product-card';
+// Подключаем нашу новую умную карточку и интерфейс! (Проверь путь, если он отличается)
 
 @Component({
   selector: 'app-new-products',
   standalone: true,
   imports: [
     CommonModule,
-    CurrencyPipe,
     RouterModule,
-    LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck
+    LucideArrowRight,
+    ProductCardComponent // <-- Добавили карточку в imports
   ],
   templateUrl: './new-products.html',
   styleUrl: './new-products.css',
@@ -30,9 +24,6 @@ export class NewProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
   private wishlistService = inject(WishlistService);
-  private cartService = inject(CartService);
-  private toastService = inject(ToastService); // <-- сервис уведомлений
-  private router = inject(Router);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -40,10 +31,12 @@ export class NewProductsComponent implements OnInit {
 
   private gradientCache = new Map<number, string>();
 
+  // Формируем список продуктов для карточек
   products = computed<UiProduct[]>(() =>
     this.productService.newArrivals().slice(0, 4).map(p => ({
       ...p,
       inWishlist: this.wishlistService.isInWishlist(p.id),
+      isNew: true, // Для новинок всегда принудительно ставим true
       discount: this.calcDiscount(p),
       gradient: this.getGradient(p.id)
     }))
@@ -70,41 +63,6 @@ export class NewProductsComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
-  }
-
-  toggleWishlist(product: UiProduct): void {
-    this.wishlistService.toggleItem(product.id).subscribe({
-      next: () => {
-        const nowInWishlist = this.wishlistService.isInWishlist(product.id);
-        if (nowInWishlist) {
-          this.toastService.success('Добавлено в избранное');
-        } else {
-          this.toastService.info('Удалено из избранного');
-        }
-      },
-      error: () => this.toastService.error('Не удалось обновить избранное')
-    });
-  }
-
-  addToCart(product: any): void {
-    if (this.isInCart(product.id)) {
-      this.router.navigate(['/cart']);
-      return;
-    }
-
-    const price = product.discountPrice || product.price;
-    this.cartService.addItem({
-      productId: product.id,
-      quantity: 1,
-      price: price
-    }).subscribe({
-      next: () => this.toastService.success('Товар добавлен в корзину'),
-      error: () => this.toastService.error('Ошибка при добавлении в корзину')
-    });
-  }
-
-  isInCart(productId: number): boolean {
-    return this.cartService.isInCart(productId);
   }
 
   private calcDiscount(p: ProductListDto): number | undefined {

@@ -1,0 +1,86 @@
+import { Component, Input, inject } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import {
+  LucideHeart,
+  LucideShoppingCart,
+  LucideStar,
+  LucidePackage,
+  LucideCheck
+} from '@lucide/angular';
+import { WishlistService } from '../../../services/wishlist-service';
+import { CartService } from '../../../services/cart-service';
+import { ProductListDto } from '../../../models/brand-models';
+import { ToastService } from '../../../services/toast';
+
+// Экспортируем интерфейс отсюда, чтобы родители его использовали
+export interface UiProduct extends ProductListDto {
+  inWishlist: boolean;
+  isNew?: boolean;
+  discount?: number;
+  gradient?: string;
+  [key: string]: any;
+}
+
+@Component({
+  selector: 'app-product-card',
+  standalone: true,
+  imports: [
+    CommonModule,
+    CurrencyPipe,
+    RouterModule,
+    LucideHeart,
+    LucideShoppingCart,
+    LucideStar,
+    LucidePackage,
+    LucideCheck
+  ],
+  templateUrl: './product-card.html',
+  styleUrl: './product-card.css'
+})
+export class ProductCardComponent {
+  @Input({ required: true }) product!: UiProduct;
+  @Input() brandName?: string; // Опционально: если хотим явно передать имя бренда
+
+  private wishlistService = inject(WishlistService);
+  private cartService = inject(CartService);
+  private toastService = inject(ToastService);
+  private router = inject(Router);
+
+  toggleWishlist(product: UiProduct): void {
+    this.wishlistService.toggleItem(product.id).subscribe({
+      next: () => {
+        // Локальное обновление для мгновенной реакции UI
+        product.inWishlist = !product.inWishlist;
+
+        if (product.inWishlist) {
+          this.toastService.success('Добавлено в избранное');
+        } else {
+          this.toastService.info('Удалено из избранного');
+        }
+      },
+      error: () => this.toastService.error('Не удалось обновить избранное')
+    });
+  }
+
+  addToCart(product: UiProduct): void {
+    if (this.isInCart(product.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    const price = product.discountPrice || product.price;
+    this.cartService.addItem({
+      productId: product.id,
+      quantity: 1,
+      price: price
+    }).subscribe({
+      next: () => this.toastService.success('Товар добавлен в корзину'),
+      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    });
+  }
+
+  isInCart(productId: number): boolean {
+    return this.cartService.isInCart(productId);
+  }
+}
