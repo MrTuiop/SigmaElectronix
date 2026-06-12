@@ -33,6 +33,7 @@ export interface ProductListDto {
   reviewsCount: number;
   isPublished: boolean;
   isNew: boolean;
+  createdAt: string;
 }
 
 // Детальная карточка товара
@@ -50,6 +51,7 @@ export interface ProductDetailDto {
   categoryId: number;
   categoryName: string;
   specifications: Record<string, string>;
+  tags: string[];
   averageRating: number;
   reviewsCount: number;
   images: ProductImageDto[];
@@ -75,6 +77,7 @@ export interface CreateProductDto {
   brandId: number;
   categoryId: number;
   specifications: Record<string, string>;
+  tags: string[];
   isPublished: boolean;
 }
 

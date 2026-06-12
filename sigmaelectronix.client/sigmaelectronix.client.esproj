@@ -13,6 +13,9 @@
     <Folder Include="src\app\components\auth-components\" />
     <Folder Include="src\app\components\profile-components\" />
     <Folder Include="src\app\components\header-components\" />
+    <Folder Include="src\app\components\manager-components\" />
+    <Folder Include="src\app\components\ui-components\" />
     <Folder Include="src\app\pages\public-wishlist\" />
+    <Folder Include="src\app\layouts\" />
   </ItemGroup>
 </Project>

@@ -18,7 +18,9 @@ namespace SigmaElectronix.Server.DTOs.ProductDTOs
         public BrandSummaryDto Brand { get; set; } = null!;
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
+        public bool IsPublished { get; set; } = true;
         public Dictionary<string, string> Specifications { get; set; } = new();
+        public List<string> Tags { get; set; } = new();
         public double AverageRating { get; set; }
         public int ReviewsCount { get; set; }
         public List<ProductImageDto> Images { get; set; } = new();

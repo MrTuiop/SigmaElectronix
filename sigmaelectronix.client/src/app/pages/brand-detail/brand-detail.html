@@ -102,16 +102,6 @@
         }
       </div>
 
-      <div class="view-all-wrapper">
-        <a [routerLink]="['/catalog']"
-           [queryParams]="{ brandId: brand?.id }"
-           class="view-all-btn">
-          {{ brand?.bannerButtonText || 'Смотреть все товары бренда' }}
-          <span class="count-badge">{{ brand?.totalProductsCount }}</span>
-          <svg lucideArrowRight size="20"></svg>
-        </a>
-      </div>
-
     </section>
     }
 

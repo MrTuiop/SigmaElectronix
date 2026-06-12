@@ -3,24 +3,24 @@
     <h1 class="checkout-title">Оформление заказа</h1>
 
     <div class="checkout-layout">
-      <!-- ЛЕВАЯ ЧАСТЬ: ШАГИ -->
       <div class="checkout-main">
-        <!-- ШАГ 1: КОНТАКТНЫЕ ДАННЫЕ -->
         <div class="checkout-step" id="step-contact">
           <div class="step-header">
             <span class="step-number">1</span>
             <h2>Контактные данные</h2>
           </div>
-          @if (isLoggedIn()) {
+
+          @if (authService.isAuthenticated()) {
           <div class="logged-in-info">
-            <p>Вы вошли как <strong>{{ userData().name }}</strong></p>
+            <p>Вы вошли как <strong>{{ profileService.user()?.firstName }}</strong></p>
             <p>Данные подставлены из вашего профиля. Можете изменить.</p>
           </div>
           } @else {
           <div class="not-logged-in">
-            <p>У вас уже есть аккаунт? <a href="/login" class="link">Войти</a></p>
+            <p>У вас уже есть аккаунт? <a routerLink="/login" class="link">Войти</a></p>
           </div>
           }
+
           <div class="form-grid">
             <div class="form-group">
               <label>
@@ -43,7 +43,6 @@
           </div>
         </div>
 
-        <!-- ШАГ 2: ДОСТАВКА -->
         <div class="checkout-step" id="step-delivery">
           <div class="step-header">
             <span class="step-number">2</span>
@@ -75,15 +74,15 @@
               </div>
             </label>
           </div>
-          @if (deliveryMethod() === 'courier') {
+
+          @if (deliveryMethod() === 'courier' || deliveryMethod() === 'post') {
           <div class="delivery-address-field">
             <label>Адрес доставки</label>
-            <input type="text" [(ngModel)]="deliveryAddress" />
+            <input type="text" [(ngModel)]="deliveryAddress" placeholder="Город, улица, дом, квартира" />
           </div>
           }
         </div>
 
-        <!-- ШАГ 3: ОПЛАТА -->
         <div class="checkout-step" id="step-payment">
           <div class="step-header">
             <span class="step-number">3</span>
@@ -116,13 +115,11 @@
           </div>
         </div>
 
-        <!-- ШАГ 4: ПРОМОКОД И БОНУСЫ -->
         <div class="checkout-step" id="step-discounts">
           <div class="step-header">
             <span class="step-number">4</span>
             <h2>Промокод и бонусы</h2>
           </div>
-          <!-- Промокод -->
           <div class="promo-section">
             <div class="promo-input-group">
               <svg lucideTag size="16" strokeWidth="2.5" class="promo-icon"></svg>
@@ -147,7 +144,7 @@
             <p class="promo-hint">Попробуйте: SIGMA20, WELCOME10</p>
           </div>
 
-          <!-- Бонусные баллы -->
+          @if (authService.isAuthenticated()) {
           <div class="bonuses-section">
             <div class="bonus-info">
               <svg lucideGift size="18" strokeWidth="2"></svg>
@@ -168,11 +165,11 @@
             </div>
             }
           </div>
+          }
         </div>
 
-        <!-- КНОПКА ЗАВЕРШЕНИЯ -->
         <div class="checkout-submit">
-          <button class="place-order-btn" (click)="placeOrder()">
+          <button class="place-order-btn" (click)="placeOrder()" [disabled]="cartService.cart()?.items?.length === 0">
             <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
             Оформить заказ
           </button>
@@ -180,22 +177,25 @@
         </div>
       </div>
 
-      <!-- ПРАВАЯ ЧАСТЬ: ИТОГ ЗАКАЗА (SIDEBAR) -->
       <aside class="checkout-sidebar">
         <div class="sidebar-card">
           <h3>Ваш заказ</h3>
           <div class="sidebar-items">
-            @for (item of items(); track item.id) {
+            @for (item of cartService.cart()?.items; track item.id) {
             <div class="sidebar-item">
-              <div class="sidebar-item-image" [style.background]="item.gradient">
-                <!-- иконки пропустим для краткости -->
+              <div class="sidebar-item-image">
+                <img [src]="item.productImage || '/assets/placeholder.jpg'" alt="{{ item.productName }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
               </div>
               <div class="sidebar-item-details">
-                <span class="sidebar-item-name">{{ item.name }}</span>
+                <span class="sidebar-item-name">{{ item.productName }}</span>
                 <span class="sidebar-item-qty">× {{ item.quantity }}</span>
               </div>
-              <span class="sidebar-item-price">{{ (item.price * item.quantity) | currency:'₽':'symbol':'1.0-0' }}</span>
+              <span class="sidebar-item-price">{{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}</span>
             </div>
+            }
+
+            @if (cartService.cart()?.items?.length === 0 || !cartService.cart()) {
+            <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Ваша корзина пуста</p>
             }
           </div>
 

@@ -110,6 +110,10 @@ export class ProductService {
       .pipe(catchError(this.handleError));
   }
 
+  togglePublishStatus(id: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${id}/toggle-status`, {});
+  }
+
   // Сброс кэшированных списков (например, при выходе)
   clearCache(): void {
     this.featuredProducts.set([]);

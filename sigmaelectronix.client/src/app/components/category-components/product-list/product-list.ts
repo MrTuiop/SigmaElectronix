@@ -58,17 +58,22 @@ export class ProductListComponent implements OnInit, OnChanges {
   private gradientCache = new Map<number, string>();
 
   // === СИГНАЛЫ ДЛЯ АККОРДЕОНА ФИЛЬТРОВ ===
-  collapsedFilters = signal<Record<string, boolean>>({});
+  expandedFilters = signal<string[]>(['price', 'brands']);
 
-  toggleFilter(key: string): void {
-    this.collapsedFilters.update(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  toggleFilter(key: string) {
+    this.expandedFilters.update(filters => {
+      if (filters.includes(key)) {
+        // Если фильтр был открыт — закрываем (удаляем из массива)
+        return filters.filter(f => f !== key);
+      } else {
+        // Если был закрыт — открываем (добавляем в массив)
+        return [...filters, key];
+      }
+    });
   }
 
-  isCollapsed(key: string): boolean {
-    return !!this.collapsedFilters()[key];
+  isExpanded(key: string): boolean {
+    return this.expandedFilters().includes(key);
   }
 
   ngOnInit(): void {

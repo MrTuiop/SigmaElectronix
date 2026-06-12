@@ -153,5 +153,17 @@ namespace SigmaElectronix.Server.Controllers
                 return StatusCode(500, new { message = "Ошибка при загрузке фильтров", error = ex.Message });
             }
         }
+
+        // POST: api/products/5/toggle-status
+        [HttpPost("{id:int}/toggle-status")]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> ToggleStatus(int id)
+        {
+            var success = await _productService.TogglePublishStatusAsync(id);
+            if (!success)
+                return NotFound(new { message = "Товар не найден" });
+
+            return Ok(new { message = "Статус изменен" });
+        }
     }
 }

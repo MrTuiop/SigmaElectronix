@@ -1,0 +1,365 @@
+<div class="manager-card">
+
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucidePackage size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Каталог товаров</h2>
+        <p class="subtitle">Управление ассортиментом, ценами и характеристиками</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить товар
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по названию или характеристикам..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Всего товаров: <strong>{{ totalCount() }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table" (scroll)="onTableScroll($event)">
+
+    @if (loading() && pageNumber() === 1) {
+    <app-spinner message="Загружаем товары..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th (click)="toggleSort('name')" class="sortable-th">
+            <div class="th-content">
+              Товар
+              @if (currentSort() === 'name_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'name_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('brand')" class="sortable-th">
+            <div class="th-content">
+              Бренд
+              @if (currentSort() === 'brand_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'brand_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('category')" class="sortable-th">
+            <div class="th-content">
+              Категория
+              @if (currentSort() === 'category_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'category_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('price')" class="sortable-th">
+            <div class="th-content">
+              Цена
+              @if (currentSort() === 'price_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'price_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('date')" class="sortable-th">
+            <div class="th-content">
+              Добавлен
+              @if (currentSort() === 'date_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'date_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('status')" class="sortable-th">
+            <div class="th-content">
+              Статус
+              @if (currentSort() === 'status_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'status_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products(); track product.id) {
+        <tr [class.unpublished]="!product.isPublished">
+          <td>
+            <div class="product-cell-content">
+              <div class="img-preview">
+                @if (product.mainImageUrl) {
+                <img [src]="product.mainImageUrl" alt="">
+                } @else {
+                <svg lucidePackage size="20" color="#9ca3af" strokeWidth="1.5"></svg>
+                }
+              </div>
+              <div class="product-meta">
+                <span class="p-name">{{ product.name }}</span>
+                <span class="p-slug">/{{ product.slug }}</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="brand-tag">{{ product.brand?.name || '—' }}</span>
+          </td>
+
+          <td>
+            <span class="cat-tag">{{ product.categoryName }}</span>
+          </td>
+
+          <td>
+            <div class="price-cell">
+              <span class="final-price">{{ product.finalPrice | number }} ₽</span>
+              @if (product.discountPrice) {
+              <span class="old-price">{{ product.price | number }} ₽</span>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="date-cell">
+              <span class="p-date">{{ product.createdAt | date:'dd.MM.yyyy' }}</span>
+              @if (product.isNew) {
+              <span class="badge badge-new">Новинка</span>
+              }
+            </div>
+          </td>
+          <td>
+            @if (product.isPublished) {
+            <span class="badge badge-success">Опубликован</span>
+            } @else {
+            <span class="badge badge-gray">Скрыт</span>
+            }
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn toggle" (click)="togglePublish(product)" [title]="product.isPublished ? 'Скрыть товар' : 'Опубликовать товар'">
+                @if (product.isPublished) { <svg lucideEye size="16" strokeWidth="1.5"></svg> }
+                @else { <svg lucideEyeOff size="16" strokeWidth="1.5"></svg> }
+              </button>
+              <button class="action-btn edit" (click)="editProduct(product)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteProduct(product.id, product.name)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="7" class="empty-row">Товары не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+
+    @if (isLoadingMore()) {
+    <div class="load-more-spinner">
+      <app-spinner message=""></app-spinner>
+    </div>
+    }
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <div class="wizard-container">
+
+    <div class="wizard-stepper">
+      <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+        <span class="step-num">1</span><span class="step-text">База</span>
+      </div>
+      <div class="step-line" [class.filled]="currentStep() > 1"></div>
+      <div class="step" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+        <span class="step-num">2</span><span class="step-text">Цены и Статус</span>
+      </div>
+      <div class="step-line" [class.filled]="currentStep() > 2"></div>
+      <div class="step" [class.active]="currentStep() === 3">
+        <span class="step-num">3</span><span class="step-text">Характеристики</span>
+      </div>
+    </div>
+
+    <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+
+      @if (currentStep() === 1) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 1: Основная информация</h3>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Название товара *</label>
+            <input type="text" formControlName="name" placeholder="Apple iPhone 15 Pro 256GB Titanium">
+          </div>
+
+          <div class="form-group full-width">
+            <label>Системный путь (Slug) *</label>
+            <input type="text" formControlName="slug" class="mono-input">
+          </div>
+
+          <div class="form-group full-width">
+            <label>Поисковые теги (через запятую)</label>
+            <input type="text" formControlName="tagsText" placeholder="Например: игровой, мощный, 120гц">
+          </div>
+
+          <div class="form-group relative">
+            <label>Категория товара *</label>
+
+            <div class="custom-search-select" (click)="openCategorySearch()">
+              <input type="text"
+                     [value]="isCatDropdownOpen() ? categorySearch() : selectedCatDisplay()"
+                     (input)="onCatSearch($event)"
+                     (blur)="closeCategorySearch()"
+                     placeholder="Поиск или выбор категории..."
+                     class="search-input"
+                     autocomplete="off">
+              <svg lucideChevronDown size="16" class="select-icon"></svg>
+            </div>
+
+            @if (isCatDropdownOpen()) {
+            <div class="dropdown-options animate-fade">
+              @for (group of filteredGroupedCategories(); track group.groupName) {
+              <div class="optgroup-label">{{ group.groupName }}</div>
+              @for (cat of group.categories; track cat.id) {
+              <div class="option-item" (click)="selectCategory(cat.id, cat.displayPath)">
+                {{ cat.displayPath }}
+              </div>
+              }
+              } @empty {
+              <div class="empty-option">Категории не найдены</div>
+              }
+            </div>
+            }
+          </div>
+
+          <div class="form-group relative">
+            <label>Бренд *</label>
+
+            <div class="custom-search-select" (click)="openBrandSearch()">
+              <input type="text"
+                     [value]="isBrandDropdownOpen() ? brandSearch() : selectedBrandDisplay()"
+                     (input)="onBrandSearch($event)"
+                     (blur)="closeBrandSearch()"
+                     placeholder="Поиск или выбор бренда..."
+                     class="search-input"
+                     autocomplete="off">
+              <svg lucideChevronDown size="16" class="select-icon"></svg>
+            </div>
+
+            @if (isBrandDropdownOpen()) {
+            <div class="dropdown-options animate-fade">
+              @for (brand of filteredBrands(); track brand.id) {
+              <div class="option-item" (click)="selectBrand(brand.id, brand.name)">
+                {{ brand.name }}
+              </div>
+              } @empty {
+              <div class="empty-option">Бренды не найдены</div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (currentStep() === 2) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 2: Финансы и Статус</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Базовая цена (₽) *</label>
+            <input type="number" formControlName="price" placeholder="99990">
+          </div>
+
+          <div class="form-group">
+            <label>Цена по скидке (₽)</label>
+            <input type="number" formControlName="discountPrice" placeholder="Оставьте пустым, если нет скидки">
+          </div>
+
+          <div class="form-group full-width">
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="isPublished">
+              <span class="slider"></span>
+              <span class="toggle-label">Опубликовать товар (Сделать видимым для клиентов)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (currentStep() === 3) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 3: Описание и Характеристики</h3>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Краткое описание (Выводится в карточках)</label>
+            <textarea formControlName="shortDescription" rows="2"></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Полное описание (На странице товара)</label>
+            <textarea formControlName="fullDescription" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="specs-builder">
+          <div class="specs-header">
+            <h4>Спецификации (Конструктор)</h4>
+            <button type="button" class="btn-text" (click)="addSpecification()">
+              <svg lucideListPlus size="16" strokeWidth="1.5"></svg> Добавить строку
+            </button>
+          </div>
+
+          <datalist id="spec-keys-list">
+            @for (key of availableSpecKeys(); track key) {
+            <option [value]="key"></option>
+            }
+          </datalist>
+
+          <div formArrayName="specifications" class="specs-list">
+            @for (spec of specsArray.controls; track spec; let i = $index) {
+            <div [formGroupName]="i" class="spec-row">
+
+              <input type="text" formControlName="key" list="spec-keys-list" placeholder="Свойство (напр: Цвет)" autocomplete="off">
+
+              <datalist [id]="'spec-vals-list-' + i">
+                @for (val of getValuesForSpecKey(spec.get('key')?.value); track val) {
+                <option [value]="val"></option>
+                }
+              </datalist>
+
+              <input type="text" formControlName="value" [attr.list]="'spec-vals-list-' + i" placeholder="Значение (напр: Черный)" autocomplete="off">
+
+              <button type="button" class="btn-icon-danger" (click)="removeSpecification(i)">
+                <svg lucideX size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <div class="wizard-footer">
+        @if (currentStep() > 1) {
+        <button type="button" class="btn btn-secondary" (click)="prevStep()">Назад</button>
+        } @else { <div></div> }
+
+        @if (currentStep() < 3) {
+        <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="!isStepValid(currentStep())">Далее</button>
+        } @else {
+        <button type="submit" class="btn btn-success" [disabled]="productForm.invalid || loading()">
+          <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить товар
+        </button>
+        }
+      </div>
+
+    </form>
+  </div>
+  }
+</div>

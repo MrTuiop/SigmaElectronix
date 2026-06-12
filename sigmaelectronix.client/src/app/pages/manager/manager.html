@@ -1,0 +1,73 @@
+<div class="manager-container">
+
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed()">
+    <div class="sidebar-header">
+      <div class="logo-area">
+        <span class="logo-icon">Σ</span>
+        @if (!isSidebarCollapsed()) {
+        <span class="logo-text">Sigma Workspace</span>
+        }
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/manager/dashboard" routerLinkActive="active" class="nav-item">
+        <svg lucideLayoutDashboard size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Обзор</span> }
+      </a>
+
+      <div class="nav-divider">Каталог</div>
+
+      <a routerLink="/manager/products" routerLinkActive="active" class="nav-item">
+        <svg lucidePackage size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Товары</span> }
+      </a>
+
+      <a routerLink="/manager/categories" routerLinkActive="active" class="nav-item">
+        <svg lucideFolderTree size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Категории</span> }
+      </a>
+
+      <a routerLink="/manager/brands" routerLinkActive="active" class="nav-item">
+        <svg lucideAward size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Бренды</span> }
+      </a>
+
+      <div class="nav-divider">Управление</div>
+
+      <a routerLink="/manager/orders" routerLinkActive="active" class="nav-item">
+        <svg lucideUsers size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Заказы</span> }
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()">
+        <svg lucideLogOut size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Выйти</span> }
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <button class="icon-btn" (click)="toggleSidebar()">
+        <svg lucideMenu size="24" strokeWidth="1.5"></svg>
+      </button>
+
+      <div class="header-right">
+        <div class="user-profile">
+          <img src="/assets/avatar-placeholder.png" alt="Manager" class="avatar">
+          <div class="user-info">
+            <span class="user-name">Иван Менеджер</span>
+            <span class="user-role">Контент-отдел</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

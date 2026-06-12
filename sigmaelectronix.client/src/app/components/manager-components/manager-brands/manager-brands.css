@@ -1,0 +1,519 @@
+.manager-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.title-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrap {
+  width: 48px;
+  height: 48px;
+  background-color: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-block h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* === Кнопки === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+  .btn-secondary:hover {
+    background-color: #e5e7eb;
+  }
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+  .btn-success:hover {
+    background-color: #059669;
+  }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* === Таблица === */
+.table-container {
+  position: relative;
+  overflow-x: auto;
+}
+
+.manager-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+  .manager-table th {
+    background-color: #f9fafb;
+    color: #4b5563;
+    font-weight: 600;
+    padding: 14px 16px;
+    border-bottom: 2px solid #e5e7eb;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .manager-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #4b5563;
+    vertical-align: middle;
+  }
+
+  .manager-table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+
+.logo-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+
+  .logo-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+.no-logo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af;
+  background-color: #f3f4f6;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.slug-badge {
+  background-color: #f1f5f9;
+  color: #334155;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.count-indicator {
+  font-weight: 600;
+  color: #111827;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-purple {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+
+.badge-gray {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.badge-success {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+  .action-btn.edit {
+    color: #3b82f6;
+  }
+
+    .action-btn.edit:hover {
+      background-color: #eff6ff;
+    }
+
+  .action-btn.delete {
+    color: #ef4444;
+  }
+
+    .action-btn.delete:hover {
+      background-color: #fdf2f2;
+    }
+
+.text-right {
+  text-align: right;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-dark {
+  color: #111827;
+}
+
+/* === Пошаговый Контент-Мастер (Wizard) === */
+.wizard-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  background-color: #f9fafb;
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.step-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.step.active {
+  color: #667eea;
+}
+
+  .step.active .step-num {
+    border-color: #667eea;
+    background-color: #667eea;
+    color: white;
+  }
+
+.step.completed {
+  color: #10b981;
+}
+
+  .step.completed .step-num {
+    border-color: #10b981;
+    background-color: #10b981;
+    color: white;
+  }
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e5e7eb;
+  margin: 0 16px;
+}
+
+  .step-line.filled {
+    background-color: #10b981;
+  }
+
+.form-step-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+  .form-step-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+.step-desc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.form-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+  .form-group-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .form-group-field input[type="text"],
+  .form-group-field input[type="number"],
+  .form-group-field textarea {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+    .form-group-field input:focus,
+    .form-group-field textarea:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+.input-with-prefix {
+  display: flex;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f9fafb;
+}
+
+  .input-with-prefix .prefix {
+    padding: 10px 12px;
+    color: #6b7280;
+    font-size: 14px;
+    border-right: 1px solid #d1d5db;
+    user-select: none;
+  }
+
+  .input-with-prefix input {
+    flex: 1;
+    border: none !important;
+    background-color: #fff;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+  }
+
+.input-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 2px;
+}
+
+/* Переключатель тумблер */
+.checkbox-row {
+  margin-top: 8px;
+}
+
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+  .toggle-switch input {
+    display: none;
+  }
+
+.slider {
+  width: 40px;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 20px;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+  .slider::before {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: white;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+  }
+
+input:checked + .slider {
+  background-color: #7c3aed;
+}
+
+  input:checked + .slider::before {
+    transform: translateX(20px);
+  }
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+/* Пагинация */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pag-btn {
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #4b5563;
+}
+
+  .pag-btn:hover:not(:disabled) {
+    background-color: #f9fafb;
+  }
+
+  .pag-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+.pag-info {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+/* Анимации */
+.animate-fade {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

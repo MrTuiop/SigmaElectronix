@@ -160,6 +160,7 @@ namespace SigmaElectronix.Server.Services
                 BrandId = dto.BrandId,
                 CategoryId = dto.CategoryId,
                 Specifications = dto.Specifications ?? new Dictionary<string, string>(),
+                Tags = dto.Tags ?? new List<string>(),
                 IsPublished = dto.IsPublished,
                 CreatedAt = DateTime.UtcNow
             };
@@ -190,6 +191,7 @@ namespace SigmaElectronix.Server.Services
             product.BrandId = dto.BrandId;
             product.CategoryId = dto.CategoryId;
             product.Specifications = dto.Specifications ?? new Dictionary<string, string>();
+            product.Tags = dto.Tags ?? new List<string>();
             product.IsPublished = dto.IsPublished;
 
             await _context.SaveChangesAsync();
@@ -219,6 +221,7 @@ namespace SigmaElectronix.Server.Services
         public async Task<PagedResult<ProductListDto>> GetAllProductsAdminAsync(ProductFilterDto filter)
         {
             var query = _context.Products
+                .Where(p => !p.IsDeleted)
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
                 .Include(p => p.Images)
@@ -371,9 +374,21 @@ namespace SigmaElectronix.Server.Services
             {
                 "price_asc" => query.OrderBy(p => p.DiscountPrice ?? p.Price),
                 "price_desc" => query.OrderByDescending(p => p.DiscountPrice ?? p.Price),
+                "name_asc" => query.OrderBy(p => p.Name),
+                "name_desc" => query.OrderByDescending(p => p.Name),
+                "date_asc" => query.OrderBy(p => p.CreatedAt),
+                "date_desc" => query.OrderByDescending(p => p.CreatedAt),
+
+                // 👇 ДОБАВЛЕНЫ НОВЫЕ СОРТИРОВКИ:
+                "brand_asc" => query.OrderBy(p => p.Brand != null ? p.Brand.Name : ""),
+                "brand_desc" => query.OrderByDescending(p => p.Brand != null ? p.Brand.Name : ""),
+                "category_asc" => query.OrderBy(p => p.Category != null ? p.Category.Name : ""),
+                "category_desc" => query.OrderByDescending(p => p.Category != null ? p.Category.Name : ""),
+                "status_desc" => query.OrderByDescending(p => p.IsPublished), // Опубликованные сверху
+                "status_asc" => query.OrderBy(p => p.IsPublished),          // Скрытые сверху
+
                 "rating" => query.OrderByDescending(p => p.AverageRating).ThenByDescending(p => p.ReviewsCount),
                 "popular" => query.OrderByDescending(p => p.ReviewsCount),
-                "name" => query.OrderBy(p => p.Name),
                 _ => query.OrderByDescending(p => p.CreatedAt) // newest
             };
         }
@@ -425,7 +440,9 @@ namespace SigmaElectronix.Server.Services
                     // Если у BrandDto есть LogoUrl, добавьте его сюда
                 } : null!,
 
+                IsPublished = p.IsPublished,
                 Specifications = p.Specifications ?? new Dictionary<string, string>(),
+                Tags = p.Tags ?? new List<string>(),
                 AverageRating = p.AverageRating,
                 ReviewsCount = p.ReviewsCount,
 
@@ -475,6 +492,7 @@ namespace SigmaElectronix.Server.Services
 
                 // 🎯 Устанавливаем флаг "Новинка" на основе даты создания
                 IsNew = p.CreatedAt >= thresholdDate,
+                CreatedAt = p.CreatedAt,
 
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                               ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty
@@ -514,6 +532,18 @@ namespace SigmaElectronix.Server.Services
             FindChildren(categoryId);
 
             return result;
+        }
+
+        public async Task<bool> TogglePublishStatusAsync(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null || product.IsDeleted) return false;
+
+            // Просто инвертируем текущий статус
+            product.IsPublished = !product.IsPublished;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

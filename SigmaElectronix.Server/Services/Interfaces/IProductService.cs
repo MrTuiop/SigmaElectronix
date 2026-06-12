@@ -21,5 +21,6 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<bool> RestoreProductAsync(int id);
         Task<PagedResult<ProductListDto>> GetAllProductsAdminAsync(ProductFilterDto filter);
         Task<CategoryFilterDto> GetAvailableFiltersAsync(int? categoryId);
+        Task<bool> TogglePublishStatusAsync(int id);
     }
 }

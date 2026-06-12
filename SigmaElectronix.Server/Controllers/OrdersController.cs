@@ -31,6 +31,7 @@ namespace SigmaElectronix.Server.Controllers
         // POST /api/orders
         // ============================================
         [HttpPost]
+        [AllowAnonymous]
         [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

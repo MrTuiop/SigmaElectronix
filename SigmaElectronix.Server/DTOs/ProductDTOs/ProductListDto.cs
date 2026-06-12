@@ -19,6 +19,6 @@ namespace SigmaElectronix.Server.DTOs.ProductDTOs
         public bool IsPublished { get; set; }
 
         public bool IsNew { get; set; }
-
+        public DateTime CreatedAt { get; set; }
     }
 }

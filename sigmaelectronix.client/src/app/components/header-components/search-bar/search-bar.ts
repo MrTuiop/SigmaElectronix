@@ -62,7 +62,7 @@ export class SearchBarComponent implements OnInit{
   }
 
   ngOnInit(): void {
-    this.searchService.getPopularTags(10).subscribe({
+    this.searchService.getPopularTags(7).subscribe({
       next: (tags) => {
         if (tags && tags.length > 0) {
           this.quickTags.set(tags);

@@ -9,9 +9,9 @@
     <div class="filter-section">
       <div class="filter-header" (click)="toggleFilter('price')">
         <h4>Цена, ₽</h4>
-        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed('price')"></svg>
+        <svg lucideChevronDown size="18" [class.rotated]="isExpanded('price')"></svg>
       </div>
-      <div class="filter-body" [class.collapsed-body]="isCollapsed('price')">
+      <div class="filter-body" [class.collapsed-body]="!isExpanded('price')">
         <div class="filter-body-inner">
           <div class="price-range-inputs">
             <div class="input-field">
@@ -30,9 +30,9 @@
     <div class="filter-section">
       <div class="filter-header" (click)="toggleFilter('brands')">
         <h4>Бренды</h4>
-        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed('brands')"></svg>
+        <svg lucideChevronDown size="18" [class.rotated]="isExpanded('brands')"></svg>
       </div>
-      <div class="filter-body" [class.collapsed-body]="isCollapsed('brands')">
+      <div class="filter-body" [class.collapsed-body]="!isExpanded('brands')">
         <div class="filter-body-inner">
           <div class="checkbox-list">
             @for (brand of availableBrands(); track brand.id) {
@@ -57,9 +57,9 @@
     <div class="filter-section">
       <div class="filter-header" (click)="toggleFilter(spec.key)">
         <h4>{{ spec.key }}</h4>
-        <svg lucideChevronDown size="18" [class.rotated]="isCollapsed(spec.key)"></svg>
+        <svg lucideChevronDown size="18" [class.rotated]="isExpanded(spec.key)"></svg>
       </div>
-      <div class="filter-body" [class.collapsed-body]="isCollapsed(spec.key)">
+      <div class="filter-body" [class.collapsed-body]="!isExpanded(spec.key)">
         <div class="filter-body-inner">
           <div class="checkbox-list">
             @for (val of spec.values; track val) {

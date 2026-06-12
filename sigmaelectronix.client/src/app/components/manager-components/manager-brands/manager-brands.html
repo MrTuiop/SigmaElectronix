@@ -1,0 +1,253 @@
+<div class="manager-card">
+
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideAward size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Управление брендами</h2>
+        <p class="subtitle">Просмотр, каталогизация и создание брендовых витрин</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить бренд
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeCreateMode()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="table-container">
+    @if (loading()) {
+    <div class="loader-overlay">Загрузка брендов...</div>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Лого</th>
+          <th>Название</th>
+          <th>URL Путь (Slug)</th>
+          <th>Товаров</th>
+          <th>Популярный</th>
+          <th>Статус</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (brand of brands(); track brand.id) {
+        <tr>
+          <td>
+            <div class="logo-preview">
+              @if (brand.logoUrl) {
+              <img [src]="brand.logoUrl" [alt]="brand.name">
+              } @else {
+              <span class="no-logo">{{ brand.name.substring(0,2).toUpperCase() }}</span>
+              }
+            </div>
+          </td>
+          <td class="font-semibold text-dark">{{ brand.name }}</td>
+          <td><code class="slug-badge">/brands/{{ brand.slug }}</code></td>
+          <td>
+            <span class="count-indicator">{{ brand.productsCount }} шт.</span>
+          </td>
+          <td>
+            @if (brand.isFeatured) {
+            <span class="badge badge-purple">Да (На главной)</span>
+            } @else {
+            <span class="badge badge-gray">Нет</span>
+            }
+          </td>
+          <td>
+            <span class="badge badge-success">
+              <svg lucideEye size="14" strokeWidth="1.5"></svg> Активен
+            </span>
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn edit" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteBrand(brand.id, brand.name)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="7" class="empty-row">Ни одного бренда еще не добавлено.</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+    <div class="pagination">
+      <button class="pag-btn" [disabled]="pageNumber() === 1" (click)="changePage(pageNumber() - 1)">
+        <svg lucideChevronLeft size="18" strokeWidth="1.5"></svg>
+      </button>
+      <span class="pag-info">Страница {{ pageNumber() }} из {{ totalPages() }}</span>
+      <button class="pag-btn" [disabled]="pageNumber() === totalPages()" (click)="changePage(pageNumber() + 1)">
+        <svg lucideChevronRight size="18" strokeWidth="1.5"></svg>
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  @if (viewMode() === 'create') {
+  <div class="wizard-container">
+
+    <div class="wizard-stepper">
+      <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+        <span class="step-num">1</span>
+        <span class="step-text">База и Системные</span>
+      </div>
+      <div class="step-line" [class.filled]="currentStep() > 1"></div>
+      <div class="step" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+        <span class="step-num">2</span>
+        <span class="step-text">Оформление витрины</span>
+      </div>
+      <div class="step-line" [class.filled]="currentStep() > 2"></div>
+      <div class="step" [class.active]="currentStep() === 3">
+        <span class="step-num">3</span>
+        <span class="step-text">SEO Настройки</span>
+      </div>
+    </div>
+
+    <form [formGroup]="brandForm" (ngSubmit)="saveBrand()" class="wizard-form">
+
+      @if (currentStep() === 1) {
+      <div class="form-step-card animate-fade">
+        <h3><svg lucideSparkles size="18" strokeWidth="1.5"></svg> Шаг 1: Основные сведения</h3>
+        <p class="step-desc">Введите базовое название. Системный путь (URL) сгенерируется автоматически.</p>
+
+        <div class="form-grid">
+          <div class="form-group-field">
+            <label>Название бренда *</label>
+            <input type="text" formControlName="name" placeholder="Например: Apple, Xiaomi, Sony">
+            @if (brandForm.get('name')?.touched && brandForm.get('name')?.invalid) {
+            <span class="error-msg">Название обязательно (минимум 2 символа)</span>
+            }
+          </div>
+
+          <div class="form-group-field">
+            <label>URL Путь (Slug) *</label>
+            <div class="input-with-prefix">
+              <span class="prefix">/brands/</span>
+              <input type="text" formControlName="slug" placeholder="apple">
+            </div>
+            <p class="input-hint">Только латиница, цифры и дефис.</p>
+          </div>
+
+          <div class="form-group-field full-width">
+            <label>Описание бренда *</label>
+            <textarea formControlName="description" rows="5" placeholder="Краткая история, особенности продукции, позиционирование..."></textarea>
+          </div>
+
+          <div class="form-group-field">
+            <label>Порядок сортировки</label>
+            <input type="number" formControlName="sortOrder">
+          </div>
+
+          <div class="checkbox-row full-width">
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="isFeatured">
+              <span class="slider"></span>
+              <span class="toggle-label">Рекомендовать бренд (Выводить плиткой на главной странице)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (currentStep() === 2) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 2: Кастомизация витрины бренда</h3>
+        <p class="step-desc">Здесь настраиваются медиа-ресурсы для индивидуальной страницы бренда.</p>
+
+        <div class="form-grid">
+          <div class="form-group-field">
+            <label>Ссылка на логотип (Logo URL)</label>
+            <input type="text" formControlName="logoUrl" placeholder="/images/brands/apple-logo.png">
+          </div>
+
+          <div class="form-group-field">
+            <label>Большое изображение обложки (Hero Image URL)</label>
+            <input type="text" formControlName="heroImageUrl" placeholder="/images/brands/apple-banner.jpg">
+          </div>
+
+          <div class="form-group-field">
+            <label>Главный заголовок баннера (Hero Title)</label>
+            <input type="text" formControlName="heroTitle" placeholder="Apple: Думай иначе">
+          </div>
+
+          <div class="form-group-field">
+            <label>Подзаголовок баннера (Hero Subtitle)</label>
+            <input type="text" formControlName="heroSubtitle" placeholder="Вся экосистема оригинальных устройств в Sigma">
+          </div>
+
+          <div class="form-group-field">
+            <label>Текст на кнопке баннера</label>
+            <input type="text" formControlName="bannerButtonText" placeholder="Перейти к экосистеме">
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (currentStep() === 3) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 3: Поисковая оптимизация (SEO)</h3>
+        <p class="step-desc">Заполните мета-теги, чтобы поисковые роботы (Google, Яндекс) правильно индексировали витрину.</p>
+
+        <div class="form-grid">
+          <div class="form-group-field full-width">
+            <label>SEO Заголовок страницы (Meta Title)</label>
+            <input type="text" formControlName="seoTitle" placeholder="Купить технику Apple в интернет-магазине Sigma | Цены, Гарантия">
+          </div>
+
+          <div class="form-group-field full-width">
+            <label>SEO Описание (Meta Description)</label>
+            <textarea formControlName="seoDescription" rows="3" placeholder="Широкий ассортимент электроники Apple. Оригинальная продукция, выгодные бонусные программы и быстрая доставка..."></textarea>
+          </div>
+
+          <div class="form-group-field full-width">
+            <label>Ключевые слова (Keywords, через запятую)</label>
+            <input type="text" formControlName="seoKeywords" placeholder="apple, iphone, macbook, купить айфон, оригинальный apple">
+          </div>
+        </div>
+      </div>
+      }
+
+      <div class="wizard-footer">
+        @if (currentStep() > 1) {
+        <button type="button" class="btn btn-secondary" (click)="prevStep()">
+          <svg lucideArrowLeft size="16" strokeWidth="1.5"></svg> Назад
+        </button>
+        } @else {
+        <div></div> }
+
+        @if (currentStep() < 3) {
+        <button type="button" class="btn btn-primary" [disabled]="currentStep() === 1 && brandForm.get('name')?.invalid" (click)="nextStep()">
+          Далее <svg lucideArrowRight size="16" strokeWidth="1.5"></svg>
+        </button>
+        } @else {
+        <button type="submit" class="btn btn-success" [disabled]="brandForm.invalid || loading()">
+          <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить и опубликовать
+        </button>
+        }
+      </div>
+
+    </form>
+  </div>
+  }
+
+</div>

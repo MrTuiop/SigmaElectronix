@@ -91,17 +91,28 @@ namespace SigmaElectronix.Server.Services
             // 3. Строим дерево
             List<CategoryTreeDto> BuildTree(int? parentId)
             {
-                return lookup[parentId]
+                var nodes = lookup[parentId]
                     .Select(c => new CategoryTreeDto
                     {
                         Id = c.Id,
                         Name = c.Name,
                         Slug = c.Slug,
                         ImageUrl = c.ImageUrl,
-                        ProductsCount = c.ProductsCount,
+                        ProductsCount = c.ProductsCount, // Базовое количество
                         SubCategories = BuildTree(c.Id)
                     })
                     .ToList();
+
+                // 🚀 АГРЕГАЦИЯ: Добавляем к текущей категории количество товаров из всех её подкатегорий
+                foreach (var node in nodes)
+                {
+                    if (node.SubCategories != null && node.SubCategories.Any())
+                    {
+                        node.ProductsCount += node.SubCategories.Sum(s => s.ProductsCount);
+                    }
+                }
+
+                return nodes;
             }
 
             return BuildTree(null);

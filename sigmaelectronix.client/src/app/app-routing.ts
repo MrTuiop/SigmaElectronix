@@ -16,81 +16,70 @@ import { BonusesComponent } from './components/profile-components/bonuses/bonuse
 import { BrandDetailComponent } from './pages/brand-detail/brand-detail';
 import { PublicWishlistComponent } from './components/public-components/public-wishlist/public-wishlist';
 import { BrandsComponent } from './pages/brands/brands';
+import { ManagerPage } from './pages/manager/manager';
+import { ManagerCategoriesComponent } from './components/manager-components/manager-categories/manager-categories';
+import { ManagerProductsComponent } from './components/manager-components/manager-products/manager-products';
+import { ManagerBrandsComponent } from './components/manager-components/manager-brands/manager-brands';
+import { MainLayout } from './layouts/main-layout/main-layout';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
-  // Главная страница
+  // ==========================================
+  // 1. АДМИНСКАЯ ЧАСТЬ (Макет Менеджера)
+  // ==========================================
+  {
+    path: 'manager',
+    component: ManagerPage, // Выступает как Layout для админки (со своим сайдбаром)
+    // canActivate: [AdminGuard],
+    children: [
+      { path: '', redirectTo: 'products', pathMatch: 'full' },
+      { path: 'products', component: ManagerProductsComponent },
+      { path: 'categories', component: ManagerCategoriesComponent },
+      { path: 'brands', component: ManagerBrandsComponent },
+    ]
+  },
+
+  // ==========================================
+  // 2. КЛИЕНТСКАЯ ЧАСТЬ (Главный макет магазина)
+  // ==========================================
   {
     path: '',
-    component: HomePage,
-    title: 'SigmaElectronix | Магазин электроники' // Опционально: меняет заголовок вкладки браузера
-  },
-
-  // Страница аккаунта (будет доступна по адресу /projects/sigmaelectronix/account)
-  {
-    path: 'profile',
-    component: ProfilePage,
-    title: 'Мой аккаунт',
+    component: MainLayout, // Выступает как Layout (с Header и Footer)
     children: [
-      { path: '', redirectTo: 'details', pathMatch: 'full' },
-      { path: 'details', component: ProfileDetailsComponent },
-      { path: 'orders', component: OrdersHistoryComponent },
-      { path: 'wishlist', component: WishlistComponent },
-      { path: 'addresses', component: AddressesComponent },
-      { path: 'notifications', component: NotificationsComponent },
-      { path: 'reviews', component: ReviewsComponent },
-      { path: 'bonuses', component: BonusesComponent },
-    ],
+      {
+        path: '',
+        component: HomePage,
+        title: 'SigmaElectronix | Магазин электроники'
+      },
+      {
+        path: 'profile',
+        component: ProfilePage,
+        title: 'Мой аккаунт',
+        children: [
+          { path: '', redirectTo: 'details', pathMatch: 'full' },
+          { path: 'details', component: ProfileDetailsComponent },
+          { path: 'orders', component: OrdersHistoryComponent },
+          { path: 'wishlist', component: WishlistComponent },
+          { path: 'addresses', component: AddressesComponent },
+          { path: 'notifications', component: NotificationsComponent },
+          { path: 'reviews', component: ReviewsComponent },
+          { path: 'bonuses', component: BonusesComponent },
+        ],
+      },
+      { path: 'wishlist', component: PublicWishlistComponent, title: 'Мое избранное' },
+      { path: 'cart', component: CartPage, title: 'Корзина' },
+      { path: 'checkout', component: CheckoutPage, title: 'Оформление заказа' },
+      { path: 'catalog', component: CatalogPage, title: 'Каталог' },
+      { path: 'catalog/:categorySlug', component: CatalogPage },
+      { path: 'products/:slug', component: ProductDetailPage },
+      { path: 'brands', component: BrandsComponent, title: 'Бренды' },
+      { path: 'brands/:slug', component: BrandDetailComponent }
+    ]
   },
 
-  {
-    path: 'wishlist',
-    component: PublicWishlistComponent,
-    title: 'Мое избранное'
-  },
-
-  // Страница корзины (будет доступна по адресу /projects/sigmaelectronix/cart)
-  {
-    path: 'cart',
-    component: CartPage,
-    title: 'Корзина'
-  },
-
-  // Страница оформления заказа (будет доступна по адресу /projects/sigmaelectronix/cart)
-  {
-    path: 'checkout',
-    component: CheckoutPage,
-    title: 'Корзина'
-  },
-
-  {
-    path: 'catalog',
-    component: CatalogPage,
-    title: 'Каталог'
-  },
-
-  {
-    path: 'catalog/:categorySlug',
-    component: CatalogPage
-  },
-
-  {
-    path: 'products/:slug',
-    component: ProductDetailPage
-  },
-
-  {
-    path: 'brands',
-    component: BrandsComponent // <-- НАША НОВАЯ СТРАНИЦА
-  },
-
-  {
-    path: 'brands/:slug',
-    component: BrandDetailComponent
-  },
-
-  // Fallback-роут: если пользователь введет абракадабру в адресную строку,
-  // его автоматически перекинет на главную
+  // ==========================================
+  // 3. ОШИБКИ 404
+  // ==========================================
   {
     path: '**',
     redirectTo: ''

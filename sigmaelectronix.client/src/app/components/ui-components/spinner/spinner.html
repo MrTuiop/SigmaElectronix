@@ -1,0 +1,8 @@
+<div class="spinner-overlay" [class.fixed]="fixed">
+  <div class="spinner-container">
+    <div class="loader"></div>
+    @if (message) {
+    <span class="spinner-text">{{ message }}</span>
+    }
+  </div>
+</div>

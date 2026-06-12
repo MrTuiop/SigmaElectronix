@@ -1,0 +1,190 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideFolderTree size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Структура каталога</h2>
+        <p class="subtitle">Управление разделами, подкатегориями и меню</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Создать категорию
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к категориям
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="tree-container">
+    @if (loading()) { <div class="loader-overlay">Загрузка структуры...</div> }
+
+    <div class="tree-header">
+      <div class="col-name">Название и структура</div>
+      <div class="col-slug">Системный путь (Slug)</div>
+      <div class="col-stats">Счетчики</div>
+      <div class="col-actions text-right">Действия</div>
+    </div>
+
+    <div class="tree-body">
+      @if (categoryTree().length === 0 && !loading()) {
+      <div class="empty-state">Категорий пока нет. Создайте первую корневую категорию.</div>
+      }
+
+      @for (node of categoryTree(); track node.id) {
+      <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node, level: 0 }"></ng-container>
+      }
+    </div>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <div class="form-container animate-fade">
+    <div class="form-banner">
+      <h3>{{ isEditing() ? 'Редактирование категории' : 'Новая категория' }}</h3>
+      <p>Заполните данные. Категория автоматически появится в главном MegaMenu.</p>
+    </div>
+
+    <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="classic-form">
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label>Название категории *</label>
+          <input type="text" formControlName="name" placeholder="Например: Ноутбуки">
+        </div>
+        <div class="form-group flex-1">
+          <label>URL Путь (Slug) *</label>
+          <div class="input-with-prefix">
+            <span class="prefix">/catalog/</span>
+            <input type="text" formControlName="slug" placeholder="laptops">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1 relative">
+          <label>Родительская категория</label>
+
+          <div class="custom-search-select" (click)="openParentSearch()">
+            <input type="text"
+                   [value]="isParentDropdownOpen() ? parentSearch() : selectedParentDisplay()"
+                   (input)="onParentSearch($event)"
+                   (blur)="closeParentSearch()"
+                   placeholder="Найти родительскую категорию..."
+                   class="search-input"
+                   autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+
+          @if (isParentDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            <!-- 👇 Новая стилизованная кнопка "Сделать корневой" -->
+            <div class="option-item root-option" (click)="selectParent(null, 'Без родителя (Корневая)')">
+              <div class="root-option-content">
+                <svg lucideFolderTree size="16" strokeWidth="2"></svg>
+                <span>Без родителя (Корневая)</span>
+              </div>
+            </div>
+
+            @for (cat of filteredParents(); track cat.id) {
+            <div class="option-item" (click)="selectParent(cat.id, cat.displayPath)">
+              {{ cat.displayPath }}
+            </div>
+            }
+            @if (filteredParents().length === 0) {
+            <div class="empty-option">Категории не найдены</div>
+            }
+          </div>
+          }
+          <p class="input-hint">Если не выбрано, категория станет главным разделом в меню.</p>
+        </div>
+
+        <div class="form-group flex-1">
+          <label>Иконка / Изображение (URL)</label>
+          <div class="input-with-icon">
+            <svg lucideImage size="18" class="input-icon" strokeWidth="1.5"></svg>
+            <input type="text" formControlName="imageUrl" placeholder="/assets/icons/laptop.svg">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success" [disabled]="categoryForm.invalid || loading()">
+          <svg lucideCheck size="16" strokeWidth="1.5"></svg>
+          {{ isEditing() ? 'Сохранить изменения' : 'Создать категорию' }}
+        </button>
+      </div>
+    </form>
+  </div>
+  }
+</div>
+
+<ng-template #treeNode let-node let-level="level">
+  <div class="tree-row" [class.is-root]="level === 0">
+    <div class="col-name" [style.padding-left.px]="level * 32">
+
+      @if (level > 0) {
+      <div class="tree-line" [style.left.px]="(level - 1) * 32"></div>
+      }
+
+      <div class="node-content">
+        @if (node.subCategories && node.subCategories.length > 0) {
+        <button class="expand-btn" (click)="toggleNode(node.id)">
+          @if (isNodeExpanded(node.id)) {
+          <svg lucideChevronDown size="16" strokeWidth="1.5"></svg>
+          } @else {
+          <svg lucideChevronRight size="16" strokeWidth="1.5"></svg>
+          }
+        </button>
+        } @else {
+        <span class="expand-placeholder"></span>
+        }
+
+        <svg lucideFolder size="18" class="folder-icon" [class.root-icon]="level === 0" strokeWidth="1.5"></svg>
+        <span class="node-title">{{ node.name }}</span>
+      </div>
+    </div>
+
+    <div class="col-slug">
+      <code class="slug-badge">{{ node.slug }}</code>
+    </div>
+
+    <div class="col-stats">
+      <div class="badges-group">
+        <span class="badge badge-purple" title="Количество товаров">
+          📦 {{ node.productsCount }}
+        </span>
+        @if (node.subCategories && node.subCategories.length > 0) {
+        <span class="badge badge-gray" title="Вложенные категории">
+          📂 {{ node.subCategories.length }}
+        </span>
+        }
+      </div>
+    </div>
+
+    <div class="col-actions text-right">
+      <div class="actions-cell">
+        <button class="action-btn edit" title="Редактировать" (click)="openEditMode(node)">
+          <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+        </button>
+        <button class="action-btn delete" title="Удалить" (click)="deleteCategory(node.id, node.name)">
+          <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (node.subCategories && node.subCategories.length > 0 && isNodeExpanded(node.id)) {
+  <div class="children-container">
+    @for (child of node.subCategories; track child.id) {
+    <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child, level: level + 1 }"></ng-container>
+    }
+  </div>
+  }
+</ng-template>
