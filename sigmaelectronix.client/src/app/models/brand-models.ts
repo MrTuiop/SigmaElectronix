@@ -40,9 +40,10 @@ export interface BrandListDto {
   slug: string;
   logoUrl?: string;
   heroImageUrl?: string;
-  shortDescription: string;   // первые 150 символов Description
+  shortDescription: string;
   productsCount: number;
   isFeatured: boolean;
+  isActive: boolean; // <--- ДОБАВЬ ЭТУ СТРОЧКУ
 }
 
 export interface BrandImageDto {
@@ -96,13 +97,8 @@ export interface CreateBrandDto {
   heroTitle?: string;
   heroSubtitle?: string;
   bannerButtonText?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  seoKeywords?: string;
   isFeatured: boolean;
   isActive: boolean;
-  sortOrder: number;
 }
 
-// UpdateBrandDto идентичен CreateBrandDto в вашем коде
 export type UpdateBrandDto = CreateBrandDto;

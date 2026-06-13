@@ -24,8 +24,8 @@
 .icon-wrap {
   width: 48px;
   height: 48px;
-  background-color: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background-color: rgba(124, 58, 237, 0.1); /* Прозрачный #7c3aed */
+  color: #7c3aed;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -45,7 +45,7 @@
   color: #6b7280;
 }
 
-/* === Кнопки === */
+/* === Кнопки (Без градиентов) === */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -60,31 +60,31 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: #7c3aed; /* Заменили background-color на background */
   color: white;
 }
 
-  .btn-primary:hover {
-    opacity: 0.9;
+  .btn-primary:hover:not(:disabled) {
+    background: #6d28d9; /* И здесь тоже */
     transform: translateY(-1px);
   }
 
 .btn-secondary {
-  background-color: #f3f4f6;
+  background: #f3f4f6;
   color: #374151;
 }
 
-  .btn-secondary:hover {
-    background-color: #e5e7eb;
+  .btn-secondary:hover:not(:disabled) {
+    background: #e5e7eb;
   }
 
 .btn-success {
-  background-color: #10b981;
+  background: #10b981; /* Заменили background-color на background */
   color: white;
 }
 
-  .btn-success:hover {
-    background-color: #059669;
+  .btn-success:hover:not(:disabled) {
+    background: #059669; /* И здесь тоже */
   }
 
 .btn:disabled {
@@ -279,13 +279,14 @@
   font-weight: 500;
 }
 
+/* Фиолетовые активные шаги */
 .step.active {
-  color: #667eea;
+  color: #7c3aed;
 }
 
   .step.active .step-num {
-    border-color: #667eea;
-    background-color: #667eea;
+    border-color: #7c3aed;
+    background-color: #7c3aed;
     color: white;
   }
 
@@ -369,8 +370,8 @@
 
     .form-group-field input:focus,
     .form-group-field textarea:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
     }
 
 .input-with-prefix {
@@ -404,14 +405,19 @@
   color: #9ca3af;
 }
 
+/* 🚀 Красный текст ошибок валидации */
 .error-msg {
   font-size: 12px;
+  font-weight: 500;
   color: #ef4444;
   margin-top: 2px;
 }
 
 /* Переключатель тумблер */
 .checkbox-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 8px;
 }
 
@@ -504,6 +510,151 @@ input:checked + .slider {
 /* Анимации */
 .animate-fade {
   animation: fadeIn 0.25s ease-out;
+}
+
+/* === СТИЛИ ОШИБОК ДЛЯ ПОЛЕЙ ВВОДА === */
+.input-error,
+.input-with-prefix.input-error {
+  border-color: #ef4444 !important; /* Красная рамка */
+}
+
+  /* Красное свечение при фокусе на поле с ошибкой */
+  .input-error:focus,
+  textarea.input-error:focus,
+  .input-with-prefix.input-error:focus-within {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  }
+
+/* === ОТОБРАЖЕНИЕ СКРЫТЫХ БРЕНДОВ === */
+tr.unpublished td {
+  opacity: 0.6;
+}
+
+  tr.unpublished td .actions-cell {
+    opacity: 1; /* Кнопки действий оставляем яркими */
+  }
+
+/* === СТИЛИ НОВЫХ КНОПОК === */
+.action-btn.toggle {
+  color: #9ca3af; /* Серый цвет для кнопок в покое */
+}
+
+  .action-btn.toggle:hover {
+    color: #111827; /* Темнеют при наведении */
+  }
+
+/* Желтая заливка для активной звезды */
+.star-filled {
+  fill: #f59e0b;
+  color: #f59e0b;
+}
+
+/* === ТУЛБАР ПОИСКА === */
+.list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none; /* 👈 ВОТ ЭТО РЕШАЕТ ПРОБЛЕМУ С КЛИКОМ */
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 16px 10px 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+  .search-box input:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  }
+
+.stats-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* === СОРТИРУЕМЫЕ ЗАГОЛОВКИ === */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+  .sortable-th:hover {
+    background-color: #f3f4f6 !important;
+  }
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+  .th-content svg {
+    color: #7c3aed;
+  }
+
+/* Лоадер над таблицей (если его нет) */
+.loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+/* === БЕСКОНЕЧНЫЙ СКРОЛЛ И ТАБЛИЦА === */
+.scrollable-table {
+  max-height: 65vh; /* Высота, после которой появится скролл */
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  position: relative;
+}
+
+/* Прилипающая шапка */
+.manager-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f9fafb;
+  z-index: 10;
+  box-shadow: 0 1px 0 #e5e7eb; /* Линия-разделитель снизу */
+}
+
+/* Лоадер при скролле вниз */
+.load-more-spinner {
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  background: white;
 }
 
 @keyframes fadeIn {

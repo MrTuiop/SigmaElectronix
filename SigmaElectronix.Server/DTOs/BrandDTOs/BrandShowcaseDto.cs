@@ -18,10 +18,6 @@ namespace SigmaElectronix.Server.DTOs.BrandDTOs
         public string? HeroSubtitle { get; set; }
         public string? BannerButtonText { get; set; }
 
-        // SEO (для Angular Universal / meta tags)
-        public string? SeoTitle { get; set; }
-        public string? SeoDescription { get; set; }
-
         // Галерея
         public IEnumerable<BrandImageDto> Images { get; set; } = new List<BrandImageDto>();
 

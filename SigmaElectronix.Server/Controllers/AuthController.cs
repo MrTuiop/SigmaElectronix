@@ -45,5 +45,15 @@ namespace SigmaElectronix.Server.Controllers
 
             return Ok(new { accessToken = token });
         }
+
+        [HttpGet("check-username")]
+        public async Task<IActionResult> CheckUsername([FromQuery] string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return Ok(new { isAvailable = false });
+
+            var isAvailable = await _authService.IsUsernameAvailableAsync(username);
+            return Ok(new { isAvailable });
+        }
     }
 }

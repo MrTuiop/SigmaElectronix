@@ -193,12 +193,20 @@
         <div class="form-grid">
           <div class="form-group full-width">
             <label>Название товара *</label>
-            <input type="text" formControlName="name" placeholder="Apple iPhone 15 Pro 256GB Titanium">
+            <input type="text" formControlName="name" placeholder="Apple iPhone 15 Pro 256GB Titanium"
+                   [class.input-error]="productForm.get('name')?.invalid && productForm.get('name')?.touched">
+            @if (productForm.get('name')?.invalid && productForm.get('name')?.touched) {
+            <span class="error-msg">Название обязательно (минимум 3 символа)</span>
+            }
           </div>
 
           <div class="form-group full-width">
             <label>Системный путь (Slug) *</label>
-            <input type="text" formControlName="slug" class="mono-input">
+            <input type="text" formControlName="slug" class="mono-input"
+                   [class.input-error]="productForm.get('slug')?.invalid && productForm.get('slug')?.touched">
+            @if (productForm.get('slug')?.invalid && productForm.get('slug')?.touched) {
+            <span class="error-msg">Обязательное поле для формирования URL</span>
+            }
           </div>
 
           <div class="form-group full-width">
@@ -211,21 +219,25 @@
 
             <div class="custom-search-select" (click)="openCategorySearch()">
               <input type="text"
+                     [class.input-error]="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched"
                      [value]="isCatDropdownOpen() ? categorySearch() : selectedCatDisplay()"
                      (input)="onCatSearch($event)"
-                     (blur)="closeCategorySearch()"
+                     (blur)="closeCategorySearch(); productForm.get('categoryId')?.markAsTouched()"
                      placeholder="Поиск или выбор категории..."
                      class="search-input"
                      autocomplete="off">
               <svg lucideChevronDown size="16" class="select-icon"></svg>
             </div>
+            @if (productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched) {
+            <span class="error-msg">Пожалуйста, выберите категорию из списка</span>
+            }
 
             @if (isCatDropdownOpen()) {
             <div class="dropdown-options animate-fade">
               @for (group of filteredGroupedCategories(); track group.groupName) {
               <div class="optgroup-label">{{ group.groupName }}</div>
               @for (cat of group.categories; track cat.id) {
-              <div class="option-item" (click)="selectCategory(cat.id, cat.displayPath)">
+              <div class="option-item" (mousedown)="selectCategory(cat.id, cat.displayPath)">
                 {{ cat.displayPath }}
               </div>
               }
@@ -241,19 +253,23 @@
 
             <div class="custom-search-select" (click)="openBrandSearch()">
               <input type="text"
+                     [class.input-error]="productForm.get('brandId')?.invalid && productForm.get('brandId')?.touched"
                      [value]="isBrandDropdownOpen() ? brandSearch() : selectedBrandDisplay()"
                      (input)="onBrandSearch($event)"
-                     (blur)="closeBrandSearch()"
+                     (blur)="closeBrandSearch(); productForm.get('brandId')?.markAsTouched()"
                      placeholder="Поиск или выбор бренда..."
                      class="search-input"
                      autocomplete="off">
               <svg lucideChevronDown size="16" class="select-icon"></svg>
             </div>
+            @if (productForm.get('brandId')?.invalid && productForm.get('brandId')?.touched) {
+            <span class="error-msg">Пожалуйста, выберите бренд из списка</span>
+            }
 
             @if (isBrandDropdownOpen()) {
             <div class="dropdown-options animate-fade">
               @for (brand of filteredBrands(); track brand.id) {
-              <div class="option-item" (click)="selectBrand(brand.id, brand.name)">
+              <div class="option-item" (mousedown)="selectBrand(brand.id, brand.name)">
                 {{ brand.name }}
               </div>
               } @empty {
@@ -272,7 +288,11 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Базовая цена (₽) *</label>
-            <input type="number" formControlName="price" placeholder="99990">
+            <input type="number" formControlName="price" placeholder="99990"
+                   [class.input-error]="productForm.get('price')?.invalid && productForm.get('price')?.touched">
+            @if (productForm.get('price')?.invalid && productForm.get('price')?.touched) {
+            <span class="error-msg">Укажите цену товара (минимум 1 ₽)</span>
+            }
           </div>
 
           <div class="form-group">
@@ -297,8 +317,12 @@
 
         <div class="form-grid">
           <div class="form-group full-width">
-            <label>Краткое описание (Выводится в карточках)</label>
-            <textarea formControlName="shortDescription" rows="2"></textarea>
+            <label>Краткое описание (Выводится в карточках) *</label>
+            <textarea formControlName="shortDescription" rows="2"
+                      [class.input-error]="productForm.get('shortDescription')?.invalid && productForm.get('shortDescription')?.touched"></textarea>
+            @if (productForm.get('shortDescription')?.invalid && productForm.get('shortDescription')?.touched) {
+            <span class="error-msg">Краткое описание обязательно</span>
+            }
           </div>
 
           <div class="form-group full-width">
@@ -325,7 +349,8 @@
             @for (spec of specsArray.controls; track spec; let i = $index) {
             <div [formGroupName]="i" class="spec-row">
 
-              <input type="text" formControlName="key" list="spec-keys-list" placeholder="Свойство (напр: Цвет)" autocomplete="off">
+              <input type="text" formControlName="key" list="spec-keys-list" placeholder="Свойство (напр: Цвет)" autocomplete="off"
+                     [class.input-error]="spec.get('key')?.invalid && spec.get('key')?.touched">
 
               <datalist [id]="'spec-vals-list-' + i">
                 @for (val of getValuesForSpecKey(spec.get('key')?.value); track val) {
@@ -333,7 +358,8 @@
                 }
               </datalist>
 
-              <input type="text" formControlName="value" [attr.list]="'spec-vals-list-' + i" placeholder="Значение (напр: Черный)" autocomplete="off">
+              <input type="text" formControlName="value" [attr.list]="'spec-vals-list-' + i" placeholder="Значение (напр: Черный)" autocomplete="off"
+                     [class.input-error]="spec.get('value')?.invalid && spec.get('value')?.touched">
 
               <button type="button" class="btn-icon-danger" (click)="removeSpecification(i)">
                 <svg lucideX size="16" strokeWidth="1.5"></svg>

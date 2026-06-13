@@ -7,7 +7,7 @@ namespace SigmaElectronix.Server.Services.Interfaces
     {
         // === Для покупателей ===
         // Вывод всех брендов (например, на страницу "Все бренды")
-        Task<PagedResult<BrandListDto>> GetBrandsAsync(int pageNumber = 1, int pageSize = 20);
+        Task<PagedResult<BrandListDto>> GetBrandsAsync(int pageNumber = 1, int pageSize = 20, string? searchQuery = null, string? sortBy = null);
 
         // Популярные бренды для карусели на главной странице (IsFeatured = true)
         Task<IEnumerable<BrandSummaryDto>> GetFeaturedBrandsAsync(int count = 6);
@@ -19,5 +19,8 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<BrandSummaryDto> CreateBrandAsync(CreateBrandDto dto);
         Task<BrandSummaryDto?> UpdateBrandAsync(int id, UpdateBrandDto dto);
         Task<bool> DeleteBrandAsync(int id);
+
+        Task<bool> ToggleActiveStatusAsync(int id);
+        Task<bool> ToggleFeaturedStatusAsync(int id);
     }
 }

@@ -8,6 +8,7 @@ import {
   LucideChevronRight, LucideChevronDown, LucideSave, LucideX,
   LucideImage, LucideFolder, LucideCheck
 } from '@lucide/angular';
+import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 
 @Component({
   selector: 'app-manager-categories',
@@ -17,7 +18,8 @@ import {
     ReactiveFormsModule,
     LucideFolderTree, LucidePlus, LucideTrash2, LucideEdit2,
     LucideChevronRight, LucideChevronDown, LucideSave, LucideX,
-    LucideImage, LucideFolder, LucideCheck
+    LucideImage, LucideFolder, LucideCheck,
+    SpinnerComponent
   ],
   templateUrl: './manager-categories.html',
   styleUrl: './manager-categories.css'
@@ -48,20 +50,43 @@ export class ManagerCategoriesComponent implements OnInit {
   selectedParentDisplay = signal('');
 
   // Вычисляем доступных родителей для выпадающего списка
+  // Вычисляем доступных родителей для выпадающего списка
   filteredParents = computed(() => {
     const search = this.parentSearch().toLowerCase().trim();
-    // Исключаем саму категорию (чтобы она не могла стать родителем самой себе)
-    const available = this.allCategories().filter(c => c.id !== this.editingId());
+    const all = this.allCategories(); // Берем полный список
+
+    // 1. Исключаем саму редактируемую категорию
+    const available = all.filter(c => c.id !== this.editingId());
 
     let options = available.map(cat => {
       let pathNames: string[] = [];
       let current: any = cat;
+      let hasEditedItemInPath = false;
+
       while (current) {
         pathNames.unshift(current.name);
-        current = available.find(c => c.id === current.parentCategoryId);
+
+        // Запоминаем, если в цепочке родителей есть та категория, которую мы сейчас редактируем
+        if (this.editingId() && current.parentCategoryId === this.editingId()) {
+          hasEditedItemInPath = true;
+        }
+
+        // Ищем следующего родителя в ПОЛНОМ списке (all), а не в урезанном
+        current = all.find(c => c.id === current.parentCategoryId);
       }
-      return { id: cat.id, displayPath: pathNames.join(' → ') };
+      return {
+        id: cat.id,
+        displayPath: pathNames.join(' → '),
+        level: pathNames.length,
+        hasEditedItemInPath
+      };
     });
+
+    // 2. ОГРАНИЧЕНИЕ И ЗАЩИТА:
+    options = options.filter(o =>
+      o.level < 3 && // Разрешаем выбирать только 1-й (корневой) и 2-й уровни. 3-й уровень отсекается!
+      !o.hasEditedItemInPath // Защита от бесконечного цикла (нельзя положить родителя внутрь своего же ребенка)
+    );
 
     if (search) {
       options = options.filter(o => o.displayPath.toLowerCase().includes(search));

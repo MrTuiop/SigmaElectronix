@@ -186,3 +186,34 @@
   padding: 8px 12px;
   border-radius: 8px;
 }
+
+/* Контейнер для поля + текста ошибки */
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Красная обводка и фон для инпута с ошибкой */
+.input-group.has-error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.02);
+}
+
+  .input-group.has-error:focus-within {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  }
+
+  /* Красная иконка внутри ошибочного поля */
+  .input-group.has-error svg {
+    color: #ef4444;
+  }
+
+/* Текст ошибки под полем */
+.field-error {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 14px;
+  animation: fadeIn 0.2s ease;
+}

@@ -100,5 +100,14 @@ namespace SigmaElectronix.Server.Services
             if (!string.IsNullOrEmpty(value))
                 claims.Add(new Claim(type, value));
         }
+
+        public async Task<bool> IsUsernameAvailableAsync(string username)
+        {
+            // Ищем пользователя с таким логином
+            var user = await _userManager.FindByNameAsync(username);
+
+            // Если user равен null, значит логин свободен (return true)
+            return user == null;
+        }
     }
 }

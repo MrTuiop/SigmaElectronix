@@ -10,5 +10,6 @@
         public string ShortDescription { get; set; } = string.Empty; // первые 150 символов Description
         public int ProductsCount { get; set; }
         public bool IsFeatured { get; set; }
+        public bool IsActive { get; set; }
     }
 }

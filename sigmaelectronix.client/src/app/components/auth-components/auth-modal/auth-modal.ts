@@ -13,6 +13,8 @@ import {
   LucideEyeOff
 } from '@lucide/angular';
 import { ToastService } from '../../../services/toast';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-auth-modal',
@@ -33,12 +35,21 @@ import { ToastService } from '../../../services/toast';
 })
 export class AuthModalComponent {
   private authService = inject(AuthService);
-  private toastService = inject(ToastService); // <-- внедряем
+  private toastService = inject(ToastService);
 
   @Output() close = new EventEmitter<void>();
   @Output() authenticated = new EventEmitter<void>();
 
   isLogin = signal(true);
+
+  // === Флаги для включения красной подсветки ===
+  loginSubmitted = signal(false);
+  regSubmitted = signal(false);
+
+  // === Локальные ошибки для конкретных полей ===
+  loginErrorMsg = signal('');
+  regLoginErrorMsg = signal('');
+  regPasswordErrorMsg = signal('');
 
   // Поля входа
   login = signal('');
@@ -54,18 +65,54 @@ export class AuthModalComponent {
   showRegPassword = signal(false);
   showRegConfirmPassword = signal(false);
 
+  private usernameSubject = new Subject<string>();
+
+  constructor() {
+    // Подписываемся на поток ввода логина
+    this.usernameSubject.pipe(
+      debounceTime(500), // Ждем 500мс после последнего нажатия клавиши
+      distinctUntilChanged(), // Не делаем запрос, если текст не изменился
+      switchMap(username => {
+        if (!username.trim()) return of(null); // Если пусто - ничего не делаем
+        return this.authService.checkUsername(username); // Идем на сервер
+      })
+    ).subscribe(res => {
+      // res придет, когда сервер ответит
+      if (res && !res.isAvailable) {
+        this.regLoginErrorMsg.set('Этот логин уже занят. Выберите другой.');
+      }
+    });
+  }
+
+  onUsernameInput(value: string): void {
+    this.regLoginErrorMsg.set(''); // Сразу убираем ошибку, пока человек печатает
+    this.usernameSubject.next(value); // Отправляем новое значение в наш "ждущий" поток
+  }
+
   toggleMode(): void {
     this.isLogin.update(v => !v);
+    // Сбрасываем ошибки при переключении
+    this.loginSubmitted.set(false);
+    this.regSubmitted.set(false);
+    this.clearErrors();
   }
 
   closeModal(): void {
     this.close.emit();
   }
 
+  clearErrors(): void {
+    this.loginErrorMsg.set('');
+    this.regLoginErrorMsg.set('');
+    this.regPasswordErrorMsg.set('');
+  }
+
   onSubmitLogin(): void {
+    this.loginSubmitted.set(true);
+    this.clearErrors();
+
     if (!this.login().trim() || !this.password().trim()) {
-      this.toastService.error('Заполните все поля');
-      return;
+      return; // Останавливаем отправку, HTML сам подсветит пустые поля
     }
 
     this.authService.login({
@@ -78,24 +125,26 @@ export class AuthModalComponent {
         this.toastService.success('Успешный вход!');
       },
       error: (err: Error) => {
-        this.toastService.error(err.message);
+        this.loginErrorMsg.set('Неверный логин или пароль');
       }
     });
   }
 
   onSubmitRegister(): void {
+    this.regSubmitted.set(true);
+    this.clearErrors();
+
     const { regLogin, regPhone, regPassword, regConfirmPassword, regEmail } = this;
 
     if (!regLogin().trim() || !regPhone().trim() || !regPassword().trim() || !regConfirmPassword().trim()) {
-      this.toastService.error('Заполните обязательные поля (логин, телефон, пароль)');
-      return;
+      return; // HTML подсветит красным
     }
     if (regPassword() !== regConfirmPassword()) {
-      this.toastService.error('Пароли не совпадают');
+      this.regPasswordErrorMsg.set('Пароли не совпадают');
       return;
     }
     if (regPassword().length < 6) {
-      this.toastService.error('Пароль должен содержать минимум 6 символов');
+      this.regPasswordErrorMsg.set('Пароль должен содержать минимум 6 символов');
       return;
     }
 
@@ -107,24 +156,22 @@ export class AuthModalComponent {
     }).subscribe({
       next: (res) => {
         // После успешной регистрации сразу авторизуемся
-        this.authService.login({
-          usernameOrEmail: regLogin().trim(),
-          password: regPassword()
-        }).subscribe({
+        this.authService.login({ usernameOrEmail: regLogin().trim(), password: regPassword() }).subscribe({
           next: () => {
             this.authenticated.emit();
             this.closeModal();
-            this.toastService.success('Успешная регистрация и вход!');
-          },
-          error: (loginErr: Error) => {
-            // Регистрация прошла, но войти не удалось — переключаем на форму входа
-            this.toastService.error('Регистрация прошла, но не удалось войти: ' + loginErr.message);
-            this.toggleMode();
+            this.toastService.success('Успешная регистрация!');
           }
         });
       },
       error: (err: Error) => {
-        this.toastService.error(err.message);
+        const msg = err.message.toLowerCase();
+        // Перехватываем ошибку уникальности от ASP.NET Identity
+        if (msg.includes('taken') || msg.includes('существу') || msg.includes('duplicate') || msg.includes('занят')) {
+          this.regLoginErrorMsg.set('Этот логин уже занят. Выберите другой.');
+        } else {
+          this.toastService.error(err.message);
+        }
       }
     });
   }
@@ -133,5 +180,11 @@ export class AuthModalComponent {
     if (field === 'login') this.showPassword.update(v => !v);
     else if (field === 'reg') this.showRegPassword.update(v => !v);
     else if (field === 'confirm') this.showRegConfirmPassword.update(v => !v);
+  }
+
+  onOverlayMouseDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeModal();
+    }
   }
 }

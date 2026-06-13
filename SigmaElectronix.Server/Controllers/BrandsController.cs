@@ -22,9 +22,13 @@ namespace SigmaElectronix.Server.Controllers
 
             // GET: api/brands?pageNumber=1&pageSize=20
             [HttpGet]
-            public async Task<IActionResult> GetBrands([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+            public async Task<IActionResult> GetBrands(
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 20,
+                [FromQuery] string? searchQuery = null,
+                [FromQuery] string? sortBy = null)
             {
-                var result = await _brandService.GetBrandsAsync(pageNumber, pageSize);
+                var result = await _brandService.GetBrandsAsync(pageNumber, pageSize, searchQuery, sortBy);
                 return Ok(result);
             }
 
@@ -87,6 +91,34 @@ namespace SigmaElectronix.Server.Controllers
                 }
 
                 return NoContent(); // 204 No Content - стандарт для успешного удаления
+            }
+
+            // PATCH: api/brands/5/toggle-active
+            [HttpPatch("{id:int}/toggle-active")]
+            [Authorize(Roles = "Admin,Manager")]
+            public async Task<IActionResult> ToggleActive(int id)
+            {
+                var success = await _brandService.ToggleActiveStatusAsync(id);
+                if (!success)
+                {
+                    return NotFound(new { message = "Бренд не найден" });
+                }
+
+                return NoContent(); // 204 No Content - успешное выполнение без возврата тела
+            }
+
+            // PATCH: api/brands/5/toggle-featured
+            [HttpPatch("{id:int}/toggle-featured")]
+            [Authorize(Roles = "Admin,Manager")]
+            public async Task<IActionResult> ToggleFeatured(int id)
+            {
+                var success = await _brandService.ToggleFeaturedStatusAsync(id);
+                if (!success)
+                {
+                    return NotFound(new { message = "Бренд не найден" });
+                }
+
+                return NoContent(); // 204 No Content
             }
         }
     }

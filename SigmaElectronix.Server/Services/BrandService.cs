@@ -22,13 +22,32 @@ namespace SigmaElectronix.Server.Services
         }
 
         // 1. Получение списка всех активных брендов с пагинацией
-        public async Task<PagedResult<BrandListDto>> GetBrandsAsync(int pageNumber = 1, int pageSize = 20)
+        public async Task<PagedResult<BrandListDto>> GetBrandsAsync(int pageNumber = 1, int pageSize = 20, string? searchQuery = null, string? sortBy = null)
         {
-            var query = _context.Brands
-                .Where(b => b.IsActive)
-                .OrderBy(b => b.SortOrder)
-                .ThenBy(b => b.Name)
-                .AsNoTracking();
+            var query = _context.Brands.AsQueryable();
+
+            // 1. ПОИСК
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var search = searchQuery.ToLower();
+                query = query.Where(b => b.Name.ToLower().Contains(search) || b.Description.ToLower().Contains(search));
+            }
+
+            // 2. СОРТИРОВКА
+            query = sortBy?.ToLower() switch
+            {
+                "name_desc" => query.OrderByDescending(b => b.Name),
+                "status_asc" => query.OrderBy(b => b.IsActive),
+                "status_desc" => query.OrderByDescending(b => b.IsActive),
+                "featured_asc" => query.OrderBy(b => b.IsFeatured),
+                "featured_desc" => query.OrderByDescending(b => b.IsFeatured),
+
+                // 👇 ДОБАВЛЕНА СОРТИРОВКА ПО КОЛИЧЕСТВУ ТОВАРОВ
+                "count_asc" => query.OrderBy(b => b.Products.Count(p => !p.IsDeleted && p.IsPublished)),
+                "count_desc" => query.OrderByDescending(b => b.Products.Count(p => !p.IsDeleted && p.IsPublished)),
+
+                _ => query.OrderBy(b => b.Name) // "name_asc" по умолчанию
+            };
 
             var totalCount = await query.CountAsync();
 
@@ -42,14 +61,12 @@ namespace SigmaElectronix.Server.Services
                     Slug = b.Slug,
                     LogoUrl = b.LogoUrl,
                     HeroImageUrl = b.HeroImageUrl,
-                    // Обрезаем описание до 150 символов для превью в списке
-                    ShortDescription = b.Description.Length > 150
-                        ? b.Description.Substring(0, 147) + "..."
-                        : b.Description,
-                    // Считаем только живые опубликованные товары бренда
+                    ShortDescription = b.Description.Length > 150 ? b.Description.Substring(0, 147) + "..." : b.Description,
                     ProductsCount = _context.Products.Count(p => p.BrandId == b.Id && !p.IsDeleted && p.IsPublished),
-                    IsFeatured = b.IsFeatured
+                    IsFeatured = b.IsFeatured,
+                    IsActive = b.IsActive
                 })
+                .AsNoTracking()
                 .ToListAsync();
 
             return new PagedResult<BrandListDto>
@@ -66,7 +83,7 @@ namespace SigmaElectronix.Server.Services
         {
             return await _context.Brands
                 .Where(b => b.IsActive && b.IsFeatured)
-                .OrderBy(b => Guid.NewGuid()) // 🔥 ВОТ СЕКРЕТ: Случайная сортировка при каждом запросе
+                .OrderBy(b => Guid.NewGuid()) // Случайная сортировка при каждом запросе
                 .Take(count)
                 .Select(b => new BrandSummaryDto
                 {
@@ -129,8 +146,6 @@ namespace SigmaElectronix.Server.Services
                 HeroTitle = brand.HeroTitle,
                 HeroSubtitle = brand.HeroSubtitle,
                 BannerButtonText = brand.BannerButtonText,
-                SeoTitle = brand.SeoTitle,
-                SeoDescription = brand.SeoDescription,
                 Images = brand.Images.Select(i => new BrandImageDto
                 {
                     Id = i.Id,
@@ -171,12 +186,8 @@ namespace SigmaElectronix.Server.Services
                 HeroTitle = dto.HeroTitle,
                 HeroSubtitle = dto.HeroSubtitle,
                 BannerButtonText = dto.BannerButtonText,
-                SeoTitle = dto.SeoTitle,
-                SeoDescription = dto.SeoDescription,
-                SeoKeywords = dto.SeoKeywords,
                 IsFeatured = dto.IsFeatured,
-                IsActive = dto.IsActive,
-                SortOrder = dto.SortOrder
+                IsActive = dto.IsActive
             };
 
             _context.Brands.Add(brand);
@@ -215,12 +226,8 @@ namespace SigmaElectronix.Server.Services
             brand.HeroTitle = dto.HeroTitle;
             brand.HeroSubtitle = dto.HeroSubtitle;
             brand.BannerButtonText = dto.BannerButtonText;
-            brand.SeoTitle = dto.SeoTitle;
-            brand.SeoDescription = dto.SeoDescription;
-            brand.SeoKeywords = dto.SeoKeywords;
             brand.IsFeatured = dto.IsFeatured;
             brand.IsActive = dto.IsActive;
-            brand.SortOrder = dto.SortOrder;
 
             await _context.SaveChangesAsync();
 
@@ -239,10 +246,6 @@ namespace SigmaElectronix.Server.Services
             var brand = await _context.Brands.FindAsync(id);
             if (brand == null) return false;
 
-            // Так как у нас нет флага IsDeleted в модели Brand (судя по файлам),
-            // мы можем либо просто деактивировать его (IsActive = false), либо удалить физически,
-            // предварительно проверив, нет ли привязанных товаров. 
-            // Сделаем безопасное удаление через проверку зависимостей:
             var hasProducts = await _context.Products.AnyAsync(p => p.BrandId == id && !p.IsDeleted);
             if (hasProducts)
             {
@@ -262,15 +265,13 @@ namespace SigmaElectronix.Server.Services
         private string GenerateSlug(string text)
         {
             string str = text.ToLowerInvariant();
-            // Делаем базовую замену пробелов и спецсимволов. 
-            // Так как бренды электроники в основном на английском (Apple, Samsung), регулярка очистит всё лишнее.
             str = Regex.Replace(str, @"[^a-z0-9\s-]", "");
             str = Regex.Replace(str, @"\s+", " ").Trim();
             str = Regex.Replace(str, @"\s", "-");
             return str;
         }
 
-        // Маппинг товара в ProductListDto (аналогично вашему методу из ProductService)
+        // Маппинг товара в ProductListDto
         private ProductListDto MapProductToListDto(Product p)
         {
             return new ProductListDto
@@ -285,8 +286,30 @@ namespace SigmaElectronix.Server.Services
                 AverageRating = p.AverageRating,
                 ReviewsCount = p.ReviewsCount,
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
-                              ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty
+                               ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty
             };
+        }
+
+        // 7. Переключение статуса активности (Опубликован / Скрыт)
+        public async Task<bool> ToggleActiveStatusAsync(int id)
+        {
+            var brand = await _context.Brands.FindAsync(id);
+            if (brand == null) return false;
+
+            brand.IsActive = !brand.IsActive; // Меняем на противоположный
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // 8. Переключение статуса "Популярный" (На главной)
+        public async Task<bool> ToggleFeaturedStatusAsync(int id)
+        {
+            var brand = await _context.Brands.FindAsync(id);
+            if (brand == null) return false;
+
+            brand.IsFeatured = !brand.IsFeatured; // Меняем на противоположный
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -42,6 +42,11 @@
     </nav>
 
     <div class="sidebar-footer">
+      <a routerLink="/" class="back-store-btn">
+        <svg lucideStore size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>В магазин</span> }
+      </a>
+
       <button class="logout-btn" (click)="logout()">
         <svg lucideLogOut size="20" strokeWidth="1.5"></svg>
         @if (!isSidebarCollapsed()) { <span>Выйти</span> }

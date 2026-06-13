@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, Injector } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, catchError, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -63,6 +63,13 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this.token() !== null;
+  }
+
+  checkUsername(username: string): Observable<{ isAvailable: boolean }> {
+    const params = new HttpParams().set('username', username);
+    return this.http.get<{ isAvailable: boolean }>(`${this.baseUrl}/check-username`, { params }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   private handleError(error: HttpErrorResponse) {

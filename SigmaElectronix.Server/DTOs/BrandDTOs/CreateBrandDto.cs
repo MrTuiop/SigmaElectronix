@@ -12,12 +12,7 @@
         public string? HeroSubtitle { get; set; }
         public string? BannerButtonText { get; set; }
 
-        public string? SeoTitle { get; set; }
-        public string? SeoDescription { get; set; }
-        public string? SeoKeywords { get; set; }
-
         public bool IsFeatured { get; set; }
         public bool IsActive { get; set; } = true;
-        public int SortOrder { get; set; }
     }
 }

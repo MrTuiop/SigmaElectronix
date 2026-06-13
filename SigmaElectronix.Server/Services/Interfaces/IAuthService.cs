@@ -6,5 +6,6 @@ namespace SigmaElectronix.Server.Services.Interfaces
     {
         Task<IEnumerable<string>> RegisterAsync(RegisterUserDto dto);
         Task<string?> LoginAsync(LoginUserDto dto);
+        Task<bool> IsUsernameAvailableAsync(string username);
     }
 }

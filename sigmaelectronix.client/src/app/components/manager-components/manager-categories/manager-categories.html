@@ -24,7 +24,7 @@
 
   @if (viewMode() === 'list') {
   <div class="tree-container">
-    @if (loading()) { <div class="loader-overlay">Загрузка структуры...</div> }
+    @if (loading()) { <app-spinner message="Загружаем структуру..."></app-spinner> }
 
     <div class="tree-header">
       <div class="col-name">Название и структура</div>
@@ -56,14 +56,31 @@
       <div class="form-row">
         <div class="form-group flex-1">
           <label>Название категории *</label>
-          <input type="text" formControlName="name" placeholder="Например: Ноутбуки">
+          <input type="text" formControlName="name" placeholder="Например: Ноутбуки"
+                 [class.input-error]="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">
+
+          @if (categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched) {
+          <div class="error-text">
+            @if (categoryForm.get('name')?.errors?.['required']) { Обязательное поле }
+            @if (categoryForm.get('name')?.errors?.['minlength']) { Минимум 2 символа }
+          </div>
+          }
         </div>
+
         <div class="form-group flex-1">
           <label>URL Путь (Slug) *</label>
-          <div class="input-with-prefix">
+          <div class="input-with-prefix"
+               [class.input-error]="categoryForm.get('slug')?.invalid && categoryForm.get('slug')?.touched">
             <span class="prefix">/catalog/</span>
             <input type="text" formControlName="slug" placeholder="laptops">
           </div>
+
+          @if (categoryForm.get('slug')?.invalid && categoryForm.get('slug')?.touched) {
+          <div class="error-text">
+            @if (categoryForm.get('slug')?.errors?.['required']) { Обязательное поле }
+            @if (categoryForm.get('slug')?.errors?.['pattern']) { Только латиница, цифры и дефис }
+          </div>
+          }
         </div>
       </div>
 

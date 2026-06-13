@@ -93,6 +93,8 @@
   border-radius: 12px;
   overflow: hidden;
   position: relative;
+  /* Добавь вот эту строчку: */
+  min-height: 300px;
 }
 
 /* Настраиваем сетку для идеального выравнивания колонок */
@@ -486,6 +488,33 @@
   text-align: center;
   color: #9ca3af;
   font-size: 13px;
+}
+
+/* === СОСТОЯНИЕ ВЫКЛЮЧЕННОЙ КНОПКИ === */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none; /* Запрещаем любые эффекты при наведении */
+  filter: grayscale(20%); /* Делаем цвет чуть более тусклым */
+}
+
+/* === СТИЛИ ОШИБОК ДЛЯ ФОРМЫ === */
+.input-error,
+.input-with-prefix.input-error {
+  border-color: #ef4444 !important; /* Красная рамка */
+}
+
+  .input-error:focus,
+  .input-with-prefix.input-error:focus-within {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  }
+
+.error-text {
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {

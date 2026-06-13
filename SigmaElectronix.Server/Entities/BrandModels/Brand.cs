@@ -18,15 +18,9 @@ namespace SigmaElectronix.Server.Entities.BrandModels
         public string? HeroSubtitle { get; set; }       // Подзаголовок
         public string? BannerButtonText { get; set; }   // "Смотреть товары"
 
-        // SEO
-        public string? SeoTitle { get; set; }
-        public string? SeoDescription { get; set; }
-        public string? SeoKeywords { get; set; }
-
         // Статус
         public bool IsFeatured { get; set; } = false;   // Показывать на главной в "Бренды"
         public bool IsActive { get; set; } = true;      // Активен ли бренд
-        public int SortOrder { get; set; } = 0;         // Порядок отображения
 
         // Навигационные свойства
         public ICollection<Product> Products { get; set; } = new List<Product>();
