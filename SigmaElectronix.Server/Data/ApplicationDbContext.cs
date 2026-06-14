@@ -52,6 +52,7 @@ namespace SigmaElectronix.Server.Data
         public DbSet<City> Cities { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoreInventory> StoreInventories { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
         // Адреса пользователей
         public DbSet<Address> Addresses { get; set; }
@@ -298,6 +299,50 @@ namespace SigmaElectronix.Server.Data
                 entity.HasOne(si => si.Product)
                     .WithMany() // Навигационное свойство из Product к инвентарю мы не делали, оставляем пустым
                     .HasForeignKey(si => si.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<StoreInventory>(entity =>
+            {
+                // Создаем уникальный индекс: один и тот же товар в одном магазине может упоминаться только 1 раз
+                entity.HasIndex(si => new { si.StoreId, si.ProductId }).IsUnique();
+
+                entity.HasOne(si => si.Store)
+                    .WithMany(s => s.Inventory)
+                    .HasForeignKey(si => si.StoreId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(si => si.Product)
+                    .WithMany()
+                    .HasForeignKey(si => si.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // 🚀 МАГИЯ POSTGRESQL ДЛЯ ОПТИМИСТИЧНОЙ БЛОКИРОВКИ (ЗАЩИТА ОТ ГОНКИ)
+                // EF Core создаст скрытое (shadow) свойство xmin и будет проверять его при обновлениях
+                entity.Property<uint>("Version").IsRowVersion();
+            });
+
+            // 🆕 Настройки для истории движений склада
+            modelBuilder.Entity<InventoryTransaction>(entity =>
+            {
+                entity.HasKey(it => it.Id);
+
+                // 🚀 Сохраняем Enum как строку (varchar)
+                entity.Property(it => it.TransactionType)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.Property(it => it.ReferenceId).HasMaxLength(100);
+
+                // Связи
+                entity.HasOne(it => it.Store)
+                    .WithMany()
+                    .HasForeignKey(it => it.StoreId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(it => it.Product)
+                    .WithMany()
+                    .HasForeignKey(it => it.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

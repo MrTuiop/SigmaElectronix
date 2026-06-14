@@ -21,6 +21,10 @@ import { ManagerCategoriesComponent } from './components/manager-components/mana
 import { ManagerProductsComponent } from './components/manager-components/manager-products/manager-products';
 import { ManagerBrandsComponent } from './components/manager-components/manager-brands/manager-brands';
 import { MainLayout } from './layouts/main-layout/main-layout';
+import { ManagerReviewsComponent } from './components/manager-components/manager-reviews/manager-reviews';
+import { ManagerStoresComponent } from './components/manager-components/manager-stores/manager-stores';
+import { ManagerCitiesComponent } from './components/manager-components/manager-cities/manager-cities';
+import { ManagerRegionsComponent } from './components/manager-components/manager-regions/manager-regions';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -36,6 +40,14 @@ export const routes: Routes = [
       { path: 'products', component: ManagerProductsComponent },
       { path: 'categories', component: ManagerCategoriesComponent },
       { path: 'brands', component: ManagerBrandsComponent },
+      {
+        path: 'reviews',
+        component: ManagerReviewsComponent,
+        title: 'Модерация отзывов'
+      },
+      { path: 'stores', component: ManagerStoresComponent },
+      { path: 'cities', component: ManagerCitiesComponent },
+      { path: 'regions', component: ManagerRegionsComponent }
     ]
   },
 

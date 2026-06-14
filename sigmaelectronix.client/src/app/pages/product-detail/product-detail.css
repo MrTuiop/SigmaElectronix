@@ -4,19 +4,36 @@
 }
 
 .breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 24px;
   font-size: 14px;
   color: var(--text-muted);
+  flex-wrap: wrap;
 }
 
   .breadcrumbs a {
     color: var(--text-muted);
     text-decoration: none;
+    transition: color 0.2s;
   }
 
     .breadcrumbs a:hover {
       color: var(--primary-color);
     }
+
+  .breadcrumbs .sep {
+    color: var(--text-muted);
+    opacity: 0.6;
+    display: flex;
+    margin-top: 1px;
+  }
+
+  .breadcrumbs .current {
+    color: var(--text-main);
+    font-weight: 600;
+  }
 
 .product-layout {
   display: grid;

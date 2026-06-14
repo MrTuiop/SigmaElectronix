@@ -1,0 +1,114 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">
+        <svg lucideMessageSquare size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Модерация отзывов</h2>
+        <p class="subtitle">Новые отзывы, ожидающие проверки перед публикацией</p>
+      </div>
+    </div>
+    <button class="btn btn-secondary" (click)="loadReviews()">Обновить список</button>
+  </div>
+
+  <div class="table-container">
+    @if (loading()) {
+    <app-spinner message="Загружаем отзывы..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Покупатель</th>
+          <th>Оценка</th>
+          <th>Текст отзыва</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (review of reviews(); track review.id) {
+        <tr>
+          <td>
+            <div class="date-cell">
+              <span class="p-date">{{ review.createdAt | date:'dd.MM.yyyy' }}</span>
+              <span class="p-time">{{ review.createdAt | date:'HH:mm' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="cat-brand-cell">
+              <span class="brand-tag">{{ review.userName }}</span>
+              <span class="cat-tag">Товар ID: {{ review.productId }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="rating-badge" [class.high]="review.rating >= 4" [class.low]="review.rating <= 2">
+              <svg lucideStar size="14" class="star-icon"></svg>
+              <span>{{ review.rating }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="review-text-cell">
+              <strong>{{ review.title }}</strong>
+              <p>{{ review.comment }}</p>
+            </div>
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn success" (click)="approveReview(review.id)" title="Одобрить">
+                <svg lucideCheck size="18" strokeWidth="2"></svg>
+              </button>
+              <button class="action-btn reply" (click)="openReplyModal(review)" title="Одобрить с ответом магазина">
+                <svg lucideMessageSquare size="18" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteReview(review.id)" title="Отклонить (Удалить)">
+                <svg lucideTrash2 size="18" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="5" class="empty-row">Нет новых отзывов, ожидающих модерации.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isModalOpen()) {
+<div class="modal-overlay" (click)="closeReplyModal()">
+  <div class="modal-content animate-fade" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Ответ от лица магазина</h3>
+      <button class="close-btn" (click)="closeReplyModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="review-preview">
+        <strong>{{ selectedReview()?.userName }} ({{ selectedReview()?.rating }}⭐):</strong>
+        <p>{{ selectedReview()?.comment }}</p>
+      </div>
+
+      <p class="modal-subtitle">После сохранения ответа отзыв будет автоматически <strong>одобрен</strong> и опубликован.</p>
+
+      <div class="form-group">
+        <label>Текст ответа:</label>
+        <textarea rows="4"
+                  [ngModel]="adminResponse()"
+                  (ngModelChange)="adminResponse.set($event)"
+                  placeholder="Спасибо за ваш отзыв! Мы рады, что вам понравилось..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeReplyModal()">Отмена</button>
+      <button class="btn btn-primary" (click)="submitReplyAndApprove()" [disabled]="!adminResponse().trim() || loading()">
+        Опубликовать с ответом
+      </button>
+    </div>
+  </div>
+</div>
+}

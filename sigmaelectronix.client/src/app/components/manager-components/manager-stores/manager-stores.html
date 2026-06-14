@@ -1,0 +1,203 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideMapPin size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Магазины и склады</h2>
+        <p class="subtitle">Управление розничной сетью и пунктами выдачи</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить точку
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по названию или городу..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Всего точек: <strong>{{ filteredStores().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем список..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Магазин / Код</th>
+          <th>Город и Адрес</th>
+          <th>Контакты</th>
+          <th>Тип</th>
+          <th>Статус</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (store of filteredStores(); track store.id) {
+        <tr [class.unpublished]="!store.isActive">
+
+          <td>
+            <div class="store-cell">
+              <span class="p-name">{{ store.name }}</span>
+              <span class="p-slug">{{ store.code }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="store-cell">
+              <span class="city-name">{{ store.cityName }}</span>
+              <span class="address-text">{{ store.fullAddress }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="contacts-cell">
+              <div class="contact-line">
+                <svg lucidePhone size="12"></svg> {{ store.phone }}
+              </div>
+              <div class="contact-line">
+                <svg lucideMapPin size="12"></svg> {{ store.workingHours }}
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge" [ngClass]="{
+              'badge-retail': store.type === 'Retail',
+              'badge-pickup': store.type === 'PickupPoint',
+              'badge-warehouse': store.type === 'Warehouse',
+              'badge-service': store.type === 'ServiceCenter'
+            }">
+              {{ getTypeLabel(store.type) }}
+            </span>
+          </td>
+
+          <td>
+            @if (store.isActive) {
+            <span class="badge badge-success">Работает</span>
+            } @else {
+            <span class="badge badge-gray">Закрыт</span>
+            }
+          </td>
+
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn toggle" (click)="toggleStatus(store)" [title]="store.isActive ? 'Закрыть магазин' : 'Открыть магазин'">
+                @if (store.isActive) { <svg lucideEye size="16" strokeWidth="1.5"></svg> }
+                @else { <svg lucideEyeOff size="16" strokeWidth="1.5"></svg> }
+              </button>
+              <button class="action-btn edit" (click)="editStore(store)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+
+        </tr>
+        } @empty {
+        <tr><td colspan="6" class="empty-row">Магазины не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="storeForm" (ngSubmit)="saveStore()" class="animate-fade">
+    <div class="form-step-card">
+      <h3>{{ isEditing() ? 'Редактирование точки' : 'Новая точка продаж' }}</h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Название магазина *</label>
+          <input type="text" formControlName="name" placeholder="Например: Sigma ТЦ Галерея"
+                 [class.input-error]="storeForm.get('name')?.invalid && storeForm.get('name')?.touched">
+        </div>
+        <div class="form-group">
+          <label>Код (ID для системы) *</label>
+          <input type="text" formControlName="code" class="mono-input" placeholder="Например: MOW-GAL-1"
+                 [class.input-error]="storeForm.get('code')?.invalid && storeForm.get('code')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Тип точки *</label>
+          <select formControlName="type">
+            @for (type of storeTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label>ID Города *</label>
+          <input type="number" formControlName="cityId" placeholder="ID города в БД"
+                 [class.input-error]="storeForm.get('cityId')?.invalid && storeForm.get('cityId')?.touched">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Полный адрес *</label>
+          <input type="text" formControlName="fullAddress" placeholder="г. Москва, Лиговский пр., 30а"
+                 [class.input-error]="storeForm.get('fullAddress')?.invalid && storeForm.get('fullAddress')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Широта (Latitude) *</label>
+          <input type="number" step="0.000001" formControlName="latitude"
+                 [class.input-error]="storeForm.get('latitude')?.invalid && storeForm.get('latitude')?.touched">
+        </div>
+        <div class="form-group">
+          <label>Долгота (Longitude) *</label>
+          <input type="number" step="0.000001" formControlName="longitude"
+                 [class.input-error]="storeForm.get('longitude')?.invalid && storeForm.get('longitude')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Телефон *</label>
+          <input type="text" formControlName="phone" placeholder="+7 (999) 000-00-00"
+                 [class.input-error]="storeForm.get('phone')?.invalid && storeForm.get('phone')?.touched">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" formControlName="email" placeholder="store@sigma.ru">
+        </div>
+
+        <div class="form-group">
+          <label>Режим работы *</label>
+          <input type="text" formControlName="workingHours" placeholder="Ежедневно с 10:00 до 22:00"
+                 [class.input-error]="storeForm.get('workingHours')?.invalid && storeForm.get('workingHours')?.touched">
+        </div>
+
+        <div class="form-group flex-center-y">
+          <label class="toggle-switch mt-4">
+            <input type="checkbox" formControlName="isActive">
+            <span class="slider"></span>
+            <span class="toggle-label">Точка активна (Отображается на сайте)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+      <button type="submit" class="btn btn-success" [disabled]="storeForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить
+      </button>
+    </div>
+  </form>
+  }
+</div>

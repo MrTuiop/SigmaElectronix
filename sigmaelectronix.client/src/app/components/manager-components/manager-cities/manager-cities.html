@@ -1,0 +1,140 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideMap size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Города</h2>
+        <p class="subtitle">Управление списком городов и их координатами</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить город
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по городу или региону..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Всего городов: <strong>{{ filteredCities().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем список..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Город</th>
+          <th>Регион</th>
+          <th>Координаты</th>
+          <th>Часовой пояс</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (city of filteredCities(); track city.id) {
+        <tr>
+          <td>
+            <span class="city-name">{{ city.name }}</span>
+          </td>
+          <td>
+            <span class="badge badge-region">{{ city.regionName }}</span>
+          </td>
+          <td>
+            <div class="coords-cell">
+              <span class="coord">Lat: {{ city.latitude }}</span>
+              <span class="coord">Lon: {{ city.longitude }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="timezone-cell">
+              <svg lucideGlobe size="14"></svg>
+              <span>{{ city.timeZone || 'Не указан' }}</span>
+            </div>
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn edit" (click)="editCity(city)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteCity(city.id, city.name)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="5" class="empty-row">Города не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="cityForm" (ngSubmit)="saveCity()" class="animate-fade">
+    <div class="form-step-card">
+      <h3>{{ isEditing() ? 'Редактирование города' : 'Новый город' }}</h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Название города *</label>
+          <input type="text" formControlName="name" placeholder="Например: Екатеринбург"
+                 [class.input-error]="cityForm.get('name')?.invalid && cityForm.get('name')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Регион *</label>
+          <select formControlName="regionId" [class.input-error]="cityForm.get('regionId')?.invalid && cityForm.get('regionId')?.touched">
+            <option [ngValue]="null" disabled selected>-- Выберите регион --</option>
+            @for (region of regions(); track region.id) {
+            <option [value]="region.id">{{ region.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Широта (Latitude) *</label>
+          <input type="number" step="0.000001" formControlName="latitude"
+                 [class.input-error]="cityForm.get('latitude')?.invalid && cityForm.get('latitude')?.touched">
+        </div>
+        <div class="form-group">
+          <label>Долгота (Longitude) *</label>
+          <input type="number" step="0.000001" formControlName="longitude"
+                 [class.input-error]="cityForm.get('longitude')?.invalid && cityForm.get('longitude')?.touched">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Часовой пояс (необязательно)</label>
+          <input type="text" formControlName="timeZone" placeholder="Например: Europe/Moscow" class="mono-input">
+          <span class="hint">Помогает корректно рассчитывать время работы магазинов в этом городе.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+      <button type="submit" class="btn btn-success" [disabled]="cityForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить город
+      </button>
+    </div>
+  </form>
+  }
+</div>

@@ -16,7 +16,7 @@
         @if (!isSidebarCollapsed()) { <span>Обзор</span> }
       </a>
 
-      <div class="nav-divider">Каталог</div>
+      <div class="nav-divider">Витрина и Каталог</div>
 
       <a routerLink="/manager/products" routerLinkActive="active" class="nav-item">
         <svg lucidePackage size="20" strokeWidth="1.5"></svg>
@@ -33,11 +33,52 @@
         @if (!isSidebarCollapsed()) { <span>Бренды</span> }
       </a>
 
-      <div class="nav-divider">Управление</div>
+      <div class="nav-divider">Склад и Магазины</div>
+
+      <a routerLink="/manager/stores" routerLinkActive="active" class="nav-item">
+        <svg lucideStore size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Точки продаж</span> }
+      </a>
+
+      <a routerLink="/manager/inventory" routerLinkActive="active" class="nav-item">
+        <svg lucideBoxes size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Остатки товаров</span> }
+      </a>
+
+      <a routerLink="/manager/transfers" routerLinkActive="active" class="nav-item">
+        <svg lucideTruck size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Поступления</span> }
+      </a>
+
+      <div class="nav-divider">География</div>
+
+      <a routerLink="/manager/cities" routerLinkActive="active" class="nav-item">
+        <svg lucideMapPin size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Города</span> }
+      </a>
+
+      <a routerLink="/manager/regions" routerLinkActive="active" class="nav-item">
+        <svg lucideGlobe size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Регионы</span> }
+      </a>
+
+      <div class="nav-divider">Продажи и Клиенты</div>
 
       <a routerLink="/manager/orders" routerLinkActive="active" class="nav-item">
         <svg lucideUsers size="20" strokeWidth="1.5"></svg>
         @if (!isSidebarCollapsed()) { <span>Заказы</span> }
+      </a>
+
+      <a routerLink="/manager/reviews" routerLinkActive="active" class="nav-item">
+        <svg lucideMessageSquare size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Отзывы</span> }
+      </a>
+
+      <div class="nav-divider">Маркетинг</div>
+
+      <a routerLink="/manager/coupons" routerLinkActive="active" class="nav-item">
+        <svg lucideTicket size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Купоны и Скидки</span> }
       </a>
     </nav>
 
@@ -62,10 +103,12 @@
 
       <div class="header-right">
         <div class="user-profile">
-          <img src="/assets/avatar-placeholder.png" alt="Manager" class="avatar">
+          <img [src]="managerAvatar()" alt="Manager" class="avatar">
+
           <div class="user-info">
-            <span class="user-name">Иван Менеджер</span>
-            <span class="user-role">Контент-отдел</span>
+            <span class="user-name">{{ managerName() }}</span>
+
+            <span class="user-role">{{ managerRoleDisplay() }}</span>
           </div>
         </div>
       </div>

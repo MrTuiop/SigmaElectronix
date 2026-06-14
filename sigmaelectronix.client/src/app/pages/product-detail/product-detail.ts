@@ -24,6 +24,7 @@ import { ProductListDto } from '../../models/brand-models';
 import { ReviewDto } from '../../models/review-models'; // Убедись в правильности пути
 import { AuthModalComponent } from '../../components/auth-components/auth-modal/auth-modal';
 import { ConfirmModalComponent } from '../../components/shared-components/confirm-modal/confirm-modal';
+import { CategoryService } from '../../services/category-service';
 
 @Component({
   selector: 'app-product-detail',
@@ -53,7 +54,9 @@ export class ProductDetailPage implements OnInit {
   private toastService = inject(ToastService);
   public authService = inject(AuthService); // <-- Делаем public для HTML
   private reviewService = inject(ReviewService);
+  private categoryService = inject(CategoryService);
 
+  breadcrumbs = signal<{ label: string; slug?: string }[]>([]);
   product = signal<ProductDetailDto | null>(null);
   relatedProducts = signal<ProductListDto[]>([]);
   reviews = signal<ReviewDto[]>([]); // <-- Сигнал для отзывов
@@ -197,9 +200,11 @@ export class ProductDetailPage implements OnInit {
         this.activeImageIndex.set(0);
         this.quantity.set(1);
 
+        // 🌟 Генерируем хлебные крошки
+        this.buildBreadcrumbs(data);
+
         // Загружаем отзывы и похожие товары
         this.loadReviews(data.id);
-
         this.productService.getRelatedProducts(data.id, 4).subscribe({
           next: (related) => this.relatedProducts.set(related)
         });
@@ -209,6 +214,53 @@ export class ProductDetailPage implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  private buildBreadcrumbs(product: any): void {
+    const tree = this.categoryService.categoryTree();
+
+    const generate = (categories: any[]) => {
+      const crumbs: { label: string; slug?: string }[] = [
+        { label: 'Главная', slug: '' },
+        { label: 'Каталог', slug: 'catalog' }
+      ];
+
+      // Ищем категорию товара в дереве по ID или Названию
+      const result = this.findCategoryInTree(categories, product.categoryId, product.categoryName);
+
+      if (result) {
+        // Добавляем всех родителей (например: Электроника)
+        result.path.forEach(p => crumbs.push({ label: p.name, slug: `catalog/${p.slug}` }));
+        // Добавляем саму категорию (например: Смартфоны)
+        crumbs.push({ label: result.category.name, slug: `catalog/${result.category.slug}` });
+      } else if (product.categoryName) {
+        // Резервный вариант
+        crumbs.push({ label: product.categoryName, slug: 'catalog' });
+      }
+
+      // Добавляем название самого товара
+      crumbs.push({ label: product.name });
+      this.breadcrumbs.set(crumbs);
+    };
+
+    if (tree.length === 0) {
+      this.categoryService.loadTree().subscribe(loadedTree => generate(loadedTree));
+    } else {
+      generate(tree);
+    }
+  }
+
+  private findCategoryInTree(categories: any[], id: number, name: string, path: any[] = []): { category: any, path: any[] } | null {
+    for (const cat of categories) {
+      if ((id && cat.id === id) || (name && cat.name === name)) {
+        return { category: cat, path };
+      }
+      if (cat.subCategories && cat.subCategories.length > 0) {
+        const found = this.findCategoryInTree(cat.subCategories, id, name, [...path, cat]);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 
   // ==========================================
@@ -470,4 +522,18 @@ export class ProductDetailPage implements OnInit {
     actionType: 'none' as 'review' | 'comment' | 'none',
     targetId: 0
   });
+
+  // Склонение слова "отзыв" в зависимости от числа
+  getReviewWord(count: number | undefined): string {
+    if (count === undefined) return 'отзывов';
+
+    const value = Math.abs(count) % 100;
+    const num = count % 10;
+
+    if (value > 10 && value < 20) return 'отзывов'; // 11-19 отзывов
+    if (num > 1 && num < 5) return 'отзыва';        // 2-4 отзыва
+    if (num === 1) return 'отзыв';                  // 1 отзыв
+
+    return 'отзывов';                               // 0, 5-9 отзывов
+  }
 }

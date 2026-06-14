@@ -8,11 +8,14 @@
     }
     @else if (product()) {
     <nav class="breadcrumbs">
-      <a routerLink="/">Главная</a>
-      <span> / </span>
-      <a [routerLink]="['/catalog', product()?.categoryId]">{{ product()?.categoryName || 'Категория' }}</a>
-      <span> / </span>
-      <span>{{ product()?.name }}</span>
+      @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+      @if (!last) {
+      <a [routerLink]="'/' + (crumb.slug || '')">{{ crumb.label }}</a>
+      <svg lucideChevronRight size="16" strokeWidth="2" class="sep"></svg>
+      } @else {
+      <span class="current">{{ crumb.label }}</span>
+      }
+      }
     </nav>
 
     <div class="product-layout">
@@ -61,7 +64,7 @@
             }
           </div>
           <span class="rating-value">{{ product()?.averageRating }}</span>
-          <span class="reviews-count">({{ product()?.reviewsCount }} отзывов)</span>
+          <span class="reviews-count">({{ product()?.reviewsCount }} {{ getReviewWord(product()?.reviewsCount) }})</span>
         </div>
 
         <div class="price-block">

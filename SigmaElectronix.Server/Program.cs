@@ -25,8 +25,13 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-
+builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddHostedService<OrderReservationWorker>();
+builder.Services.AddScoped<IRegionService, RegionService>();
+builder.Services.AddScoped<ICityService, CityService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IStoreInventoryService, StoreInventoryService>();
 
 // Настройка сервисов
 builder.Services.AddControllers()

@@ -1,0 +1,119 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideGlobe size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Регионы (Области)</h2>
+        <p class="subtitle">Управление списком областей и краев</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить регион
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по названию или коду..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Всего регионов: <strong>{{ filteredRegions().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем регионы..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название региона</th>
+          <th>Автомобильный код</th>
+          <th>Привязано городов</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (region of filteredRegions(); track region.id) {
+        <tr>
+          <td><span class="region-id">#{{ region.id }}</span></td>
+          <td>
+            <span class="region-name">{{ region.name }}</span>
+          </td>
+          <td>
+            @if (region.code) {
+            <span class="region-code">{{ region.code }}</span>
+            } @else {
+            <span class="empty-value">—</span>
+            }
+          </td>
+          <td>
+            <span class="badge" [ngClass]="region.citiesCount > 0 ? 'badge-active' : 'badge-gray'">
+              {{ region.citiesCount }} городов
+            </span>
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn edit" (click)="editRegion(region)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteRegion(region.id, region.name)"
+                      [disabled]="region.citiesCount > 0"
+                      [title]="region.citiesCount > 0 ? 'Нельзя удалить регион, в котором есть города' : 'Удалить'">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="5" class="empty-row">Регионы не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="regionForm" (ngSubmit)="saveRegion()" class="animate-fade">
+    <div class="form-step-card">
+      <h3>{{ isEditing() ? 'Редактирование региона' : 'Новый регион' }}</h3>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Название (Область, Край, Республика) *</label>
+          <input type="text" formControlName="name" placeholder="Например: Свердловская область"
+                 [class.input-error]="regionForm.get('name')?.invalid && regionForm.get('name')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Код региона (опционально)</label>
+          <input type="text" formControlName="code" placeholder="Например: 66, 96, 196" class="mono-input">
+          <span class="hint">Обычно используется автомобильный код субъекта.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+      <button type="submit" class="btn btn-success" [disabled]="regionForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить регион
+      </button>
+    </div>
+  </form>
+  }
+</div>

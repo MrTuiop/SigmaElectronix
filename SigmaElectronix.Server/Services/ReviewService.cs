@@ -244,17 +244,27 @@ namespace SigmaElectronix.Server.Services
             if (review.UserId != userId && !isAdmin)
                 throw new UnauthorizedAccessException("Нет прав на редактирование.");
 
+            // 🆕 Запоминаем, влиял ли отзыв на рейтинг ДО изменения, и какая была оценка
+            bool wasApproved = review.IsApproved;
+            int oldRating = review.Rating;
+
             review.Title = dto.Title;
             review.Comment = dto.Comment;
             review.Rating = dto.Rating;
 
+            // Если это обычный юзер, отправляем на модерацию снова. Админ меняет без модерации.
             if (!isAdmin) review.IsApproved = false;
 
             await _context.SaveChangesAsync();
 
-            // ⚡ ПЕРЕСЧИТЫВАЕМ РЕЙТИНГ (оценка изменилась или отзыв скрыт на повторную модерацию)
-            await UpdateProductRatingAsync(review.ProductId);
-            await _context.SaveChangesAsync();
+            // ⚡ ПЕРЕСЧИТЫВАЕМ РЕЙТИНГ ТОЛЬКО ЕСЛИ:
+            // 1. Отзыв был одобрен и его скрыли (юзер изменил отзыв)
+            // 2. ИЛИ это админ, отзыв одобрен, и он изменил саму оценку (Rating)
+            if ((wasApproved && !review.IsApproved) || (review.IsApproved && oldRating != review.Rating))
+            {
+                await UpdateProductRatingAsync(review.ProductId);
+                await _context.SaveChangesAsync();
+            }
 
             return MapToDto(review, userId);
         }
