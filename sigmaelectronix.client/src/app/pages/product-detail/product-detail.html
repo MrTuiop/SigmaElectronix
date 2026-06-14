@@ -145,6 +145,189 @@
       </table>
     </div>
 
+    <div class="reviews-section">
+      <div class="reviews-header">
+        <h2>Отзывы о товаре <span>{{ reviews().length }}</span></h2>
+      </div>
+
+      <div class="review-form-container">
+        @if (authService.isAuthenticated()) {
+        @if (hasLeftReview()) {
+        <div class="auth-prompt success-prompt">
+          <div class="prompt-icon"><svg lucideCheck size="32"></svg></div>
+          <div>
+            <h3>Вы уже оставили отзыв</h3>
+            <p>Спасибо за ваше мнение! Вы можете изменить свой отзыв ниже в списке.</p>
+          </div>
+        </div>
+        } @else {
+        <div class="write-review-box">
+          <h3>Оставьте свой отзыв</h3>
+          <div class="rating-selector">
+            <span>Ваша оценка:</span>
+            <div class="stars-interactive">
+              @for (star of [1,2,3,4,5]; track star) {
+              <svg lucideStar size="24" strokeWidth="2" [class.filled]="star <= newReviewRating()" (click)="setRating(star)"></svg>
+              }
+            </div>
+          </div>
+          <input type="text" [(ngModel)]="newReviewTitle" placeholder="Заголовок отзыва (например: Отличный товар!)" class="review-title-input" />
+          <textarea [(ngModel)]="newReviewText" placeholder="Расскажите о достоинствах и недостатках товара..." rows="4"></textarea>
+          <button class="submit-review-btn" [disabled]="isSubmittingReview() || !newReviewText().trim()" (click)="submitReview()">
+            {{ isSubmittingReview() ? 'Отправка...' : 'Отправить отзыв' }}
+          </button>
+        </div>
+        }
+        } @else {
+        <div class="auth-prompt">
+          <div class="prompt-icon"><svg lucideUser size="32"></svg></div>
+          <div>
+            <h3>Войдите, чтобы оставить отзыв</h3>
+            <p>Только зарегистрированные пользователи могут делиться впечатлениями.</p>
+          </div>
+          <button class="login-btn-outline" (click)="openAuthModal()">
+            Войти в аккаунт
+          </button>
+        </div>
+        }
+      </div>
+
+      <div class="reviews-list">
+        @if (reviews().length === 0) {
+        <div class="no-reviews">
+          <svg lucideMessageSquare size="48" strokeWidth="1.5"></svg>
+          <p>На этот товар пока нет отзывов. Станьте первым!</p>
+        </div>
+        }
+
+        @for (review of reviews(); track review.id) {
+        <div class="review-card" [class.is-mine]="review.isMine">
+
+          @if (editingReviewId() !== review.id) {
+          <div class="review-header">
+            <div class="review-author">
+              <div class="author-avatar">{{ review.userName.charAt(0) | uppercase }}</div>
+              <span class="author-name">{{ review.userName }}</span>
+            </div>
+            <div class="stars small">
+              @for (star of [1,2,3,4,5]; track star) {
+              <svg lucideStar size="14" strokeWidth="2" [class.filled]="star <= review.rating"></svg>
+              }
+            </div>
+
+            <div class="header-right">
+              <span class="review-date">{{ review.createdAt | date:'dd.MM.yyyy' }}</span>
+              @if (review.isMine || authService.isAdmin()) {
+              <button class="icon-edit-btn" (click)="startEditReview(review)" title="Редактировать">
+                <svg lucideEdit2 size="16"></svg>
+              </button>
+              <button class="icon-delete-btn" (click)="deleteReview(review.id)" title="Удалить">
+                <svg lucideTrash2 size="16"></svg>
+              </button>
+              }
+            </div>
+          </div>
+
+          <div class="review-body">
+            @if (review.title && review.title !== 'Без заголовка') {
+            <h4 class="review-body-title">{{ review.title }}</h4>
+            }
+            <p>{{ review.comment }}</p>
+          </div>
+
+          <div class="review-actions">
+            <button class="reaction-btn like" [class.active]="review.userReaction === 'Like'" (click)="reactToReview(review.id, true)">
+              <svg lucideThumbsUp size="16"></svg> {{ review.likesCount }}
+            </button>
+            <button class="reaction-btn dislike" [class.active]="review.userReaction === 'Dislike'" (click)="reactToReview(review.id, false)">
+              <svg lucideThumbsDown size="16"></svg> {{ review.dislikesCount }}
+            </button>
+
+            <div class="actions-right">
+              <button class="reply-btn" (click)="openReplyForm(review.id)">
+                <svg lucideMessageSquare size="16"></svg> Ответить
+              </button>
+
+              @if (review.comments && review.comments.length > 0) {
+              <button class="reply-btn toggle-comments-btn" (click)="toggleComments(review.id)">
+                {{ expandedReviews().has(review.id) ? 'Скрыть ответы' : 'Ответы (' + review.comments.length + ')' }}
+              </button>
+              }
+            </div>
+          </div>
+          }
+          @else {
+          <div class="write-review-box inline-edit">
+            <div class="rating-selector">
+              <span>Оценка:</span>
+              <div class="stars-interactive">
+                @for (star of [1,2,3,4,5]; track star) {
+                <svg lucideStar size="24" strokeWidth="2" [class.filled]="star <= editReviewRating()" (click)="editReviewRating.set(star)"></svg>
+                }
+              </div>
+            </div>
+            <input type="text" [(ngModel)]="editReviewTitle" class="review-title-input" />
+            <textarea [(ngModel)]="editReviewText" rows="3"></textarea>
+            <div class="edit-actions">
+              <button class="submit-review-btn" (click)="saveEditReview(review.id)">Сохранить</button>
+              <button class="cancel-btn" (click)="cancelEditReview()">Отмена</button>
+            </div>
+          </div>
+          }
+
+          @if (replyingToReviewId() === review.id) {
+          <div class="reply-form">
+            <input type="text" [(ngModel)]="newCommentText" placeholder="Напишите ваш ответ..." />
+            <button class="send-btn" (click)="submitComment(review.id)">
+              <svg lucideSend size="18"></svg>
+            </button>
+          </div>
+          }
+
+          @if (review.comments && review.comments.length > 0 && expandedReviews().has(review.id)) {
+          <div class="comments-thread">
+            @for (comment of review.comments; track comment.id) {
+            <div class="comment-item" [class.is-mine]="comment.isMine">
+              @if (editingCommentId() !== comment.id) {
+              <div class="comment-header">
+                <span class="comment-author">{{ comment.userName }}</span>
+                <div class="header-right">
+                  <span class="comment-date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
+                  @if (comment.isMine || authService.isAdmin()) {
+                  <button class="icon-edit-btn" (click)="startEditComment(comment)" title="Изменить">
+                    <svg lucideEdit2 size="14"></svg>
+                  </button>
+                  <button class="icon-delete-btn" (click)="deleteComment(comment.id)" title="Удалить">
+                    <svg lucideTrash2 size="14"></svg>
+                  </button>
+                  }
+                </div>
+              </div>
+              <p class="comment-text">{{ comment.text }}</p>
+              <div class="comment-actions">
+                <button class="reaction-btn like" [class.active]="comment.userReaction === 'Like'" (click)="reactToComment(comment.id, true)">
+                  <svg lucideThumbsUp size="14"></svg> {{ comment.likesCount }}
+                </button>
+                <button class="reaction-btn dislike" [class.active]="comment.userReaction === 'Dislike'" (click)="reactToComment(comment.id, false)">
+                  <svg lucideThumbsDown size="14"></svg> {{ comment.dislikesCount }}
+                </button>
+              </div>
+              } @else {
+              <div class="reply-form edit-comment-form">
+                <input type="text" [(ngModel)]="editCommentText" style="flex: 1; border-radius: 20px; padding: 10px 16px; border: 1px solid var(--primary-color);" />
+                <button class="send-btn" (click)="saveEditComment(comment.id)"><svg lucideCheck size="18"></svg></button>
+                <button class="send-btn cancel-icon" (click)="cancelEditComment()"><svg lucideX size="18"></svg></button>
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
     @if (relatedProducts().length > 0) {
     <div class="related-section">
       <h2>Похожие товары</h2>
@@ -176,4 +359,19 @@
     }
     }
   </div>
+  @if (showAuthModal()) {
+  <app-auth-modal (close)="closeAuthModal()"
+                  (authenticated)="onAuthenticated()">
+  </app-auth-modal>
+  }
+
+  @if (showConfirmModal()) {
+  <app-confirm-modal [title]="confirmModalConfig().title"
+                     [message]="confirmModalConfig().message"
+                     [confirmText]="confirmModalConfig().confirmText"
+                     [isDestructive]="true"
+                     (confirm)="onConfirmDelete()"
+                     (cancel)="onCancelDelete()">
+  </app-confirm-modal>
+  }
 </div>

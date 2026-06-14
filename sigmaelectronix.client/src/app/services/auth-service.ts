@@ -82,6 +82,68 @@ export class AuthService {
     return throwError(() => new Error(message));
   }
 
+  // === НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С РОЛЯМИ ===
+
+  /**
+   * Получает все роли текущего пользователя из JWT токена
+   */
+  getRoles(): string[] {
+    const currentToken = this.token();
+    if (!currentToken) return [];
+
+    const decodedToken = this.decodeJwt(currentToken);
+    if (!decodedToken) return [];
+
+    // Важно: по умолчанию ASP.NET Core записывает ClaimTypes.Role под этим длинным ключом.
+    // Иногда он может быть сокращен до 'role', поэтому проверяем оба варианта.
+    const roleClaim = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decodedToken['role'];
+
+    if (!roleClaim) return [];
+
+    // Если у юзера одна роль, токен вернет строку. Если несколько — массив строк.
+    return Array.isArray(roleClaim) ? roleClaim : [roleClaim];
+  }
+
+  /**
+   * Проверяет, есть ли у пользователя конкретная роль
+   */
+  hasRole(role: string): boolean {
+    const roles = this.getRoles();
+    return roles.includes(role);
+  }
+
+  /**
+   * Удобные хелперы для конкретных ролей
+   */
+  isAdmin(): boolean {
+    return this.hasRole('Admin');
+  }
+
+  isManager(): boolean {
+    // Обычно Админ тоже имеет права Менеджера, поэтому разрешаем обоим
+    return this.hasRole('Manager') || this.hasRole('Admin');
+  }
+
+  /**
+   * Безопасный метод для декодирования JWT токена (без сторонних библиотек)
+   */
+  private decodeJwt(token: string): any {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        window.atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Ошибка при декодировании токена', error);
+      return null;
+    }
+  }
+
   constructor() {
     // 1. Избранное загружаем ВСЕГДА (и для гостей, и для авторизованных)
     // Используем setTimeout, чтобы избежать проблемы с циклическими зависимостями или ранней инициализацией

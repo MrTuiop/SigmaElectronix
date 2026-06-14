@@ -1,0 +1,25 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="close()">
+      <svg lucideX size="20"></svg>
+    </button>
+
+    <div class="modal-header">
+      <div class="icon-wrapper" [class.destructive]="isDestructive">
+        <svg lucideAlertTriangle size="28" strokeWidth="2"></svg>
+      </div>
+      <h2 class="modal-title">{{ title }}</h2>
+    </div>
+
+    <div class="modal-body">
+      <p>{{ message }}</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="close()">{{ cancelText }}</button>
+      <button class="btn-confirm" [class.destructive]="isDestructive" (click)="onConfirm()">
+        {{ confirmText }}
+      </button>
+    </div>
+  </div>
+</div>

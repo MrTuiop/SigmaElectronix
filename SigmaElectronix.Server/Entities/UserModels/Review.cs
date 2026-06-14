@@ -20,5 +20,11 @@ namespace SigmaElectronix.Server.Entities.UserModels
         // Для ответа магазина на отзыв
         public string? AdminResponse { get; set; }
         public DateTime? AdminResponseDate { get; set; }
+
+        // 🆕 ДОБАВЛЕНО: Коллекция комментариев пользователей к этому отзыву
+        public ICollection<ReviewComment> Comments { get; set; } = new List<ReviewComment>();
+
+        // 🆕 ДОБАВЛЕНО: Коллекция лайков/дизлайков к этому отзыву
+        public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
     }
 }

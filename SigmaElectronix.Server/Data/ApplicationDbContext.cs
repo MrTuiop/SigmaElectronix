@@ -39,8 +39,10 @@ namespace SigmaElectronix.Server.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Shipment> Shipments { get; set; }
 
-        // Отзывы
+        // Отзывы и Реакции
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<ReviewComment> ReviewComments { get; set; } // 🆕 ДОБАВЛЕНО: Таблица комментариев
+        public DbSet<Reaction> Reactions { get; set; }           // 🆕 ДОБАВЛЕНО: Таблица лайков/дизлайков
 
         // Промокоды
         public DbSet<Coupon> Coupons { get; set; }
@@ -59,7 +61,7 @@ namespace SigmaElectronix.Server.Data
 
         // Статистика
         public DbSet<ProductView> ProductViews { get; set; }
-        
+
         // Список желаемого
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<WishlistItem> WishlistItems { get; set; }
@@ -360,6 +362,9 @@ namespace SigmaElectronix.Server.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ------------------------------------------------------------------
+            // 🆕 НАСТРОЙКИ ДЛЯ ОТЗЫВОВ, КОММЕНТАРИЕВ И РЕАКЦИЙ (ЛАЙКОВ)
+            // ------------------------------------------------------------------
             modelBuilder.Entity<Review>(entity =>
             {
                 entity.Property(r => r.Title).HasMaxLength(150);
@@ -372,6 +377,54 @@ namespace SigmaElectronix.Server.Data
 
                 entity.HasOne(r => r.User)
                     .WithMany(u => u.Reviews)
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 🆕 Настройки для комментариев к отзывам
+            modelBuilder.Entity<ReviewComment>(entity =>
+            {
+                entity.Property(c => c.Text).IsRequired().HasMaxLength(1000);
+
+                entity.HasOne(c => c.Review)
+                    .WithMany(r => r.Comments)
+                    .HasForeignKey(c => c.ReviewId)
+                    .OnDelete(DeleteBehavior.Cascade); // Удаляем отзыв -> удаляются все комментарии под ним
+
+                entity.HasOne(c => c.User)
+                    .WithMany() // Навигационное свойство в ApplicationUser можно не добавлять, чтобы не захламлять модель пользователя
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 🆕 Настройки для полиморфных Лайков/Дизлайков (Reaction)
+            modelBuilder.Entity<Reaction>(entity =>
+            {
+                // 🔒 Уникальный индекс: Один пользователь может поставить только один лайк/дизлайк конкретному отзыву
+                entity.HasIndex(r => new { r.UserId, r.ReviewId })
+                    .IsUnique()
+                    .HasFilter("\"ReviewId\" IS NOT NULL"); // Для PostgreSQL
+
+                // 🔒 Уникальный индекс: Один пользователь может поставить только один лайк/дизлайк конкретному комментарию
+                entity.HasIndex(r => new { r.UserId, r.CommentId })
+                    .IsUnique()
+                    .HasFilter("\"CommentId\" IS NOT NULL");
+
+                // Связь Реакция -> Отзыв
+                entity.HasOne(r => r.Review)
+                    .WithMany(review => review.Reactions)
+                    .HasForeignKey(r => r.ReviewId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Связь Реакция -> Комментарий
+                entity.HasOne(r => r.Comment)
+                    .WithMany(comment => comment.Reactions)
+                    .HasForeignKey(r => r.CommentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Связь Реакция -> Пользователь (Кто поставил)
+                entity.HasOne(r => r.User)
+                    .WithMany()
                     .HasForeignKey(r => r.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });

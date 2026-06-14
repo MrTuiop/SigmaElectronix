@@ -533,6 +533,640 @@
     background: #059669; /* Чуть темнее при наведении */
   }
 
+/* ===== СЕКЦИЯ ОТЗЫВОВ (Новое) ===== */
+.reviews-header h2 span {
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* Форма авторизации (если не вошел) */
+.auth-prompt {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-color);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+  margin-bottom: 32px;
+}
+
+.prompt-icon {
+  background: #f3f4f6;
+  padding: 16px;
+  border-radius: 50%;
+  color: var(--text-muted);
+}
+
+.auth-prompt h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.auth-prompt p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.login-btn-outline {
+  margin-left: auto;
+  padding: 10px 20px;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+  .login-btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+/* Форма написания отзыва */
+.write-review-box {
+  background: var(--bg-color);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+  .write-review-box h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+
+.rating-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.stars-interactive {
+  display: flex;
+  gap: 4px;
+  cursor: pointer;
+}
+
+  .stars-interactive svg {
+    color: #d1d5db;
+    transition: transform 0.2s;
+  }
+
+    .stars-interactive svg:hover {
+      transform: scale(1.1);
+    }
+
+    .stars-interactive svg.filled {
+      fill: #f59e0b;
+      color: #f59e0b;
+    }
+
+.write-review-box textarea {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-main);
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+  .write-review-box textarea:focus {
+    border-color: var(--primary-color);
+  }
+
+.submit-review-btn {
+  background: var(--purple-gradient);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+  .submit-review-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+/* Список отзывов */
+.no-reviews {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+  .no-reviews svg {
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.author-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.author-name {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.review-body {
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* Реакции (Лайки / Дизлайки) */
+.review-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.reaction-btn, .reply-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+  .reaction-btn:hover {
+    background: var(--card-bg);
+  }
+
+  .reaction-btn.like:hover {
+    color: #10b981;
+    border-color: #10b981;
+  }
+
+  .reaction-btn.dislike:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+  }
+
+.reply-btn {
+  margin-left: auto;
+  border: none;
+  background: none;
+}
+
+  .reply-btn:hover {
+    color: var(--primary-color);
+  }
+
+/* Форма ответа */
+.reply-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+  .reply-form input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    outline: none;
+    background: var(--bg-color);
+    color: var(--text-main);
+  }
+
+  .reply-form button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+/* Ветка комментариев */
+.comments-thread {
+  margin-left: 24px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comment-item {
+  background: var(--bg-color);
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.comment-author {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.comment-date {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.comment-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Инпут заголовка отзыва */
+.review-title-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  outline: none;
+  transition: var(--transition);
+}
+
+  .review-title-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  }
+
+/* Кнопка отправки комментария (самолетик) */
+.reply-form button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease; /* Плавный переход */
+}
+
+  .reply-form button:hover {
+    background: var(--primary-hover, #6d28d9); /* Темно-фиолетовый при наведении */
+    transform: scale(1.08) translateY(-2px); /* Слегка увеличивается и поднимается */
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+  }
+
+  .reply-form button:active {
+    transform: scale(0.95);
+  }
+
+/* ===== ПОДСВЕТКА ВЫБРАННОГО ЛАЙКА/ДИЗЛАЙКА ===== */
+.reaction-btn.like.active {
+  color: #10b981;
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.reaction-btn.dislike.active {
+  color: #ef4444;
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* ===== ИСПРАВЛЕНИЕ КНОПКИ ОТПРАВКИ (САМОЛЕТИК) ===== */
+.reply-form .send-btn {
+  background-color: var(--primary-color) !important; /* Жестко задаем цвет, если перебивалось */
+  color: white !important;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; /* Плавная анимация */
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2);
+}
+
+  .reply-form .send-btn:hover {
+    background-color: #6d28d9 !important; /* Немного темнее */
+    transform: scale(1.1) translateY(-2px) !important;
+    box-shadow: 0 6px 12px rgba(124, 58, 237, 0.3);
+  }
+
+  .reply-form .send-btn:active {
+    transform: scale(0.95) !important;
+  }
+
+  /* Кнопка отмены при редактировании коммента */
+  .reply-form .send-btn.cancel-icon {
+    background-color: #ef4444 !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+  }
+
+    .reply-form .send-btn.cancel-icon:hover {
+      background-color: #dc2626 !important;
+      box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+    }
+
+/* ===== ВЫДЕЛЕНИЕ "МОЕГО" КОММЕНТАРИЯ ===== */
+.comment-item.is-mine {
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  background: rgba(124, 58, 237, 0.02); /* Легкий фиолетовый фон */
+}
+
+  /* Приписка "(Вы)" возле имени */
+  .comment-item.is-mine .comment-author::after {
+    content: ' (Вы)';
+    color: var(--primary-color);
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+
+/* ===== ФОРМЫ РЕДАКТИРОВАНИЯ ===== */
+.inline-edit {
+  border: 1px dashed var(--primary-color);
+  margin: 10px 0;
+  padding: 16px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+  .cancel-btn:hover {
+    background: var(--bg-color);
+    color: #ef4444;
+    border-color: #ef4444;
+  }
+
+.review-body-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: var(--text-main);
+}
+
+/* ===== ФИКС КНОПКИ "ВОЙТИ" ===== */
+button.login-btn-outline {
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ===== ШАПКА ОТЗЫВА И КОММЕНТАРИЯ ===== */
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Компактная круглая кнопка редактирования */
+.icon-edit-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+  .icon-edit-btn:hover {
+    color: var(--primary-color);
+    background: rgba(124, 58, 237, 0.1);
+    transform: scale(1.05);
+  }
+
+/* ===== КНОПКИ ДЕЙСТВИЙ ===== */
+.actions-right {
+  margin-left: auto; /* Прижимает блок вправо */
+  display: flex;
+  gap: 12px;
+}
+
+/* Убираем старый отступ, так как теперь есть обертка .actions-right */
+.reply-btn {
+  margin-left: 0;
+}
+
+.toggle-comments-btn {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+  .toggle-comments-btn:hover {
+    background: rgba(124, 58, 237, 0.05);
+  }
+
+/* Плавное появление комментариев */
+.comments-thread {
+  animation: slideDown 0.3s ease-out forwards;
+  transform-origin: top;
+}
+
+/* ===== ФИКС КНОПКИ ВОЙТИ ===== */
+button.login-btn-outline {
+  margin-left: auto;
+  padding: 10px 20px;
+  border: 2px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+  button.login-btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+/* ===== ЗЕЛЕНАЯ ПЛАШКА "ВЫ УЖЕ ОСТАВИЛИ ОТЗЫВ" ===== */
+.auth-prompt.success-prompt {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+  .auth-prompt.success-prompt .prompt-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+
+/* ===== ВЫДЕЛЕНИЕ "МОЕГО" ОТЗЫВА ===== */
+.review-card.is-mine {
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  background: rgba(124, 58, 237, 0.02); /* Легкий фиолетовый фон */
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+  .review-card.is-mine .author-name::after {
+    content: ' (Ваш отзыв)';
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+
+/* ===== КОМПАКТНЫЕ КНОПКИ РЕДАКТИРОВАНИЯ КОММЕНТАРИЯ ===== */
+.edit-comment-form .send-btn {
+  width: 34px !important; /* Уменьшаем размер */
+  height: 34px !important;
+  border-radius: 10px !important; /* Делаем аккуратными квадратами со скруглениями вместо огромных кругов */
+  box-shadow: none !important; /* Убираем базовую тень, чтобы не выглядели тяжелыми */
+}
+
+  /* Уменьшаем иконки внутри, чтобы они смотрелись пропорционально */
+  .edit-comment-form .send-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Смягчаем анимацию при наведении */
+  .edit-comment-form .send-btn:hover {
+    transform: translateY(-1px) !important; /* Чуть-чуть приподнимаем, без огромного scale */
+    box-shadow: 0 4px 8px rgba(124, 58, 237, 0.2) !important;
+  }
+
+  /* Тень для кнопки отмены при наведении */
+  .edit-comment-form .send-btn.cancel-icon:hover {
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2) !important;
+  }
+
+/* Немного уменьшим отступы у самого инпута, чтобы он соответствовал компактным кнопкам */
+.edit-comment-form input {
+  padding: 8px 14px !important;
+  font-size: 14px;
+}
+
+/* Компактная круглая кнопка удаления */
+.icon-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+  .icon-delete-btn:hover {
+    color: #ef4444; /* Красный цвет */
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.05);
+  }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-prompt {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .login-btn-outline {
+    margin: 10px auto 0;
+  }
+}
+
 @media (max-width: 768px) {
   .product-layout {
     grid-template-columns: 1fr;

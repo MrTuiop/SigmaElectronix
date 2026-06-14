@@ -24,6 +24,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddHostedService<OrderReservationWorker>();
 
