@@ -1,0 +1,214 @@
+<div class="manager-card">
+
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideShoppingBag size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Управление заказами</h2>
+        <p class="subtitle">Отслеживание, сборка и отправка покупок</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'detail') {
+    <button class="btn btn-secondary" (click)="closeDetails()">
+      <svg lucideChevronLeft size="18" strokeWidth="1.5"></svg>
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по номеру или клиенту..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+    </div>
+
+    <div class="filter-box">
+      <select class="custom-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+        <option value="All">Все статусы</option>
+        @for (status of availableStatuses; track status) {
+        <option [value]="status">{{ translateStatus(status) }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="table-container">
+    @if (loading()) {
+    <app-spinner message="Загружаем заказы..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Номер заказа</th>
+          <th>Клиент</th>
+          <th>Дата</th>
+          <th>Сумма</th>
+          <th>Статус оплаты</th>
+          <th>Статус заказа</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of filteredOrders(); track order.id) {
+        <tr>
+          <td>
+            <span class="order-number">{{ order.orderNumber }}</span>
+          </td>
+          <td>
+            <div class="customer-cell">
+              <span class="c-name">{{ order.shippingFullName }}</span>
+              <span class="c-phone">{{ order.shippingPhone }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="p-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+          </td>
+          <td>
+            <span class="final-price">{{ order.totalAmount | number }} ₽</span>
+          </td>
+          <td>
+            <span class="badge" [class.badge-success]="order.paymentStatus === 'Paid'" [class.badge-warning]="order.paymentStatus === 'Pending'">
+              {{ translatePaymentStatus(order.paymentStatus) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {{ getStatusBadgeClass(order.status) }}">
+              {{ translateStatus(order.status) }}
+            </span>
+          </td>
+          <td class="text-right">
+            <button class="action-btn view-btn" (click)="openOrderDetails(order)" title="Смотреть детали">
+              <svg lucideEye size="18" strokeWidth="1.5"></svg> Открыть
+            </button>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="7" class="empty-row">Заказы не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'detail' && selectedOrder()) {
+  <div class="order-detail-view animate-fade">
+
+    <div class="detail-header-panel">
+      <div class="order-main-info">
+        <h3>Заказ {{ selectedOrder()!.orderNumber }}</h3>
+        <span class="p-date">{{ selectedOrder()!.createdAt | date:'dd MMMM yyyy, HH:mm' }}</span>
+      </div>
+
+      <div class="status-updater">
+        <label>Статус заказа:</label>
+        <div class="select-wrapper">
+          <select [ngModel]="selectedOrder()!.status" (ngModelChange)="changeOrderStatus($event)" class="status-select" [ngClass]="getStatusBadgeClass(selectedOrder()!.status)">
+            @for (status of availableStatuses; track status) {
+            <option [value]="status">{{ translateStatus(status) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-grid">
+      <div class="order-items-section">
+        <h4>Состав заказа</h4>
+        <div class="items-list">
+          @for (item of selectedOrder()!.items; track item.id) {
+          <div class="order-item-card">
+            <div class="item-img">
+              @if (item.productImageUrl) {
+              <img [src]="item.productImageUrl" alt="{{ item.productName }}">
+              } @else {
+              <div class="img-placeholder">Нет фото</div>
+              }
+            </div>
+            <div class="item-info">
+              <span class="item-name">{{ item.productName }}</span>
+              <div class="item-meta">
+                <span class="item-price">{{ item.unitPrice | number }} ₽</span>
+                <span class="item-qty">x {{ item.quantity }} шт.</span>
+              </div>
+            </div>
+            <div class="item-total">
+              {{ item.totalPrice | number }} ₽
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="order-totals">
+          <div class="total-row">
+            <span>Доставка:</span>
+            <span>{{ selectedOrder()!.shippingCost | number }} ₽</span>
+          </div>
+          @if (selectedOrder()!.discountAmount > 0) {
+          <div class="total-row discount">
+            <span>Скидка:</span>
+            <span>- {{ selectedOrder()!.discountAmount | number }} ₽</span>
+          </div>
+          }
+          <div class="total-row grand-total">
+            <span>Итого:</span>
+            <span>{{ selectedOrder()!.totalAmount | number }} ₽</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-info-section">
+
+        <div class="info-card">
+          <div class="info-card-header">
+            <svg lucideUser size="18"></svg> Клиент
+          </div>
+          <div class="info-card-body">
+            <p><strong>{{ selectedOrder()!.shippingFullName }}</strong></p>
+            <p>{{ selectedOrder()!.shippingPhone }}</p>
+            @if (selectedOrder()!.shippingEmail) {
+            <p>{{ selectedOrder()!.shippingEmail }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">
+            <svg lucideTruck size="18"></svg> Доставка
+          </div>
+          <div class="info-card-body">
+            <p>Адрес:</p>
+            <p><strong>{{ selectedOrder()!.shippingAddress }}</strong></p>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-card-header">
+            <svg lucideCreditCard size="18"></svg> Оплата
+          </div>
+          <div class="info-card-body">
+            <div class="payment-flex">
+              <span>Метод:</span>
+              <strong>{{ selectedOrder()!.paymentMethod }}</strong>
+            </div>
+            <div class="payment-flex mt-2">
+              <span>Статус:</span>
+              <span class="badge" [class.badge-success]="selectedOrder()!.paymentStatus === 'Paid'" [class.badge-warning]="selectedOrder()!.paymentStatus === 'Pending'">
+                {{ translatePaymentStatus(selectedOrder()!.paymentStatus) }}
+              </span>
+            </div>
+            @if (selectedOrder()!.paidAt) {
+            <p class="mt-2 text-muted">Оплачено: {{ selectedOrder()!.paidAt | date:'dd.MM.yyyy HH:mm' }}</p>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  }
+</div>

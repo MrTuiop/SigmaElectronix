@@ -1,0 +1,171 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideTruck size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Движение товаров</h2>
+        <p class="subtitle">Оформление поступлений и перемещений между складами</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-container">
+    <button class="tab-btn" [class.active]="activeTab() === 'receive'" (click)="setTab('receive')">
+      <svg lucideArrowDownToLine size="18"></svg>
+      Поступление от поставщика
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'transfer'" (click)="setTab('transfer')">
+      <svg lucideArrowRightLeft size="18"></svg>
+      Внутреннее перемещение
+    </button>
+  </div>
+
+  @if (activeTab() === 'receive') {
+  <div class="form-step-card animate-fade">
+    <form [formGroup]="receiveForm" (ngSubmit)="submitReceive()">
+
+      <div class="form-grid">
+        <div class="form-group full-width relative">
+          <label>Выберите товар *</label>
+          <div class="custom-search-select" (click)="openProductSearch()">
+            <input type="text"
+                   [class.input-error]="receiveForm.get('productId')?.invalid && receiveForm.get('productId')?.touched"
+                   [value]="isProductDropdownOpen() ? productSearch() : selectedProductDisplay()"
+                   (input)="onProductSearch($event)"
+                   (blur)="closeProductSearch(); receiveForm.get('productId')?.markAsTouched()"
+                   placeholder="Поиск по названию..."
+                   class="search-input" autocomplete="off">
+            <svg lucideSearch size="16" class="select-icon" *if="!selectedProductDisplay()"></svg>
+            <svg lucideChevronDown size="16" class="select-icon" *if="selectedProductDisplay()"></svg>
+          </div>
+
+          @if (receiveForm.get('productId')?.invalid && receiveForm.get('productId')?.touched) {
+          <span class="error-msg">Товар обязателен для выбора</span>
+          }
+
+          @if (isProductDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (product of filteredProducts(); track product.id) {
+            <div class="option-item" (mousedown)="selectProduct(product.id, product.name)">
+              <svg lucidePackage size="14" class="mr-2 text-gray"></svg> {{ product.name }}
+            </div>
+            } @empty {
+            <div class="empty-option">Товары не найдены</div>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Склад получения (Магазин) *</label>
+          <select formControlName="storeId" [class.input-error]="receiveForm.get('storeId')?.invalid && receiveForm.get('storeId')?.touched">
+            <option [ngValue]="null" disabled>-- Выберите точку --</option>
+            @for (store of stores(); track store.id) {
+            <option [value]="store.id">{{ store.name }}</option>
+            }
+          </select>
+          @if (receiveForm.get('storeId')?.invalid && receiveForm.get('storeId')?.touched) {
+          <span class="error-msg">Укажите склад</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Количество (шт) *</label>
+          <input type="number" formControlName="quantity" min="1" placeholder="100"
+                 [class.input-error]="receiveForm.get('quantity')?.invalid && receiveForm.get('quantity')?.touched">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Номер накладной / Документа (Необязательно)</label>
+          <input type="text" formControlName="referenceId" placeholder="Напр: ТТН-12345678">
+        </div>
+      </div>
+
+      <div class="wizard-footer justify-end mt-4">
+        <button type="submit" class="btn btn-success" [disabled]="loading()">
+          <svg lucideCheck size="16"></svg> Оформить поступление
+        </button>
+      </div>
+
+    </form>
+  </div>
+  }
+
+  @if (activeTab() === 'transfer') {
+  <div class="form-step-card animate-fade">
+    <form [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+
+      <div class="form-grid">
+        <div class="form-group full-width relative">
+          <label>Выберите товар *</label>
+          <div class="custom-search-select" (click)="openProductSearch()">
+            <input type="text"
+                   [class.input-error]="transferForm.get('productId')?.invalid && transferForm.get('productId')?.touched"
+                   [value]="isProductDropdownOpen() ? productSearch() : selectedProductDisplay()"
+                   (input)="onProductSearch($event)"
+                   (blur)="closeProductSearch(); transferForm.get('productId')?.markAsTouched()"
+                   placeholder="Поиск по названию..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (transferForm.get('productId')?.invalid && transferForm.get('productId')?.touched) {
+          <span class="error-msg">Товар обязателен для выбора</span>
+          }
+
+          @if (isProductDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (product of filteredProducts(); track product.id) {
+            <div class="option-item" (mousedown)="selectProduct(product.id, product.name)">
+              <svg lucidePackage size="14" class="mr-2 text-gray"></svg> {{ product.name }}
+            </div>
+            } @empty {
+            <div class="empty-option">Товары не найдены</div>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Откуда забираем (Отправитель) *</label>
+          <select formControlName="fromStoreId" [class.input-error]="transferForm.get('fromStoreId')?.invalid && transferForm.get('fromStoreId')?.touched">
+            <option [ngValue]="null" disabled>-- Выберите точку --</option>
+            @for (store of stores(); track store.id) {
+            <option [value]="store.id">{{ store.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Куда везем (Получатель) *</label>
+          <select formControlName="toStoreId" [class.input-error]="transferForm.get('toStoreId')?.invalid && transferForm.get('toStoreId')?.touched">
+            <option [ngValue]="null" disabled>-- Выберите точку --</option>
+            @for (store of stores(); track store.id) {
+            <option [value]="store.id">{{ store.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Количество (шт) *</label>
+          <input type="number" formControlName="quantity" min="1" placeholder="5"
+                 [class.input-error]="transferForm.get('quantity')?.invalid && transferForm.get('quantity')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Комментарий / Причина</label>
+          <input type="text" formControlName="referenceId" placeholder="Напр: Запрос с витрины">
+        </div>
+      </div>
+
+      <div class="wizard-footer justify-end mt-4">
+        <button type="submit" class="btn btn-primary" [disabled]="loading()">
+          <svg lucideArrowRightLeft size="16"></svg> Оформить перемещение
+        </button>
+      </div>
+
+    </form>
+  </div>
+  }
+</div>

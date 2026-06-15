@@ -325,12 +325,17 @@
   transition: var(--transition);
   padding: 6px 8px;
   border-radius: 10px;
+  /* === ПОЛНЫЙ ФИКС ШРИФТА === */
+  transform: translate3d(0, 0, 0); /* Заменили translateY на translate3d */
+  backface-visibility: hidden;
+  will-change: transform; /* Запрещаем браузеру удалять слой */
 }
 
   .action-item:hover {
     color: var(--primary-color);
-    transform: translateY(-1px);
     background-color: var(--bg-color);
+    /* Используем 3D трансформацию и здесь! */
+    transform: translate3d(0, -1px, 0);
   }
 
 .icon-box {

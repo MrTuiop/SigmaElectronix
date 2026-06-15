@@ -102,7 +102,7 @@ export class CheckoutPage {
           phone: user.phoneNumber || ''
         });
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   // ======= МЕТОДЫ ПРОМОКОДОВ / БОНУСОВ =======

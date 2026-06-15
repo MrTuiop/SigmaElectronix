@@ -38,7 +38,12 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<StoreDto> CreateStoreAsync(CreateStoreDto dto)
         {
-            // Проверка уникальности кода магазина
+            // 🆕 1. ПРОВЕРКА: Существует ли такой город вообще?
+            var cityExists = await _context.Cities.AnyAsync(c => c.Id == dto.CityId);
+            if (!cityExists)
+                throw new InvalidOperationException($"Город с ID {dto.CityId} не найден в базе данных. Сначала создайте город.");
+
+            // 2. Проверка уникальности кода магазина
             if (await _context.Stores.AnyAsync(s => s.Code == dto.Code))
                 throw new InvalidOperationException($"Магазин с кодом {dto.Code} уже существует.");
 
@@ -60,7 +65,6 @@ namespace SigmaElectronix.Server.Services
             _context.Stores.Add(store);
             await _context.SaveChangesAsync();
 
-            // Возвращаем DTO, загрузив город для красивого ответа
             return await GetStoreByIdAsync(store.Id) ?? MapToDto(store);
         }
 

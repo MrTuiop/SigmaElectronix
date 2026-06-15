@@ -1,0 +1,192 @@
+<div class="manager-card">
+
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideBoxes size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Остатки товаров</h2>
+        <p class="subtitle">Управление наличием, резервами и просмотр истории движения</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="tab-btn" [class.active]="viewMode() === 'store'" (click)="setMode('store')">
+      <svg lucideStore size="18" strokeWidth="1.5"></svg>
+      По магазинам / Складам
+    </button>
+    <button class="tab-btn" [class.active]="viewMode() === 'product'" (click)="setMode('product')">
+      <svg lucidePackage size="18" strokeWidth="1.5"></svg>
+      По конкретному товару
+    </button>
+  </div>
+
+  <div class="toolbar-panel">
+
+    @if (viewMode() === 'store') {
+    <div class="filter-group">
+      <label>Выберите точку продаж:</label>
+      <div class="select-wrapper">
+        <select [(ngModel)]="selectedStoreId" (change)="loadData()">
+          <option [ngValue]="null" disabled>-- Выберите склад --</option>
+          @for (store of availableStores(); track store.id) {
+          <option [ngValue]="store.id">
+            {{ store.name }} ({{ store.cityName }})
+          </option>
+          }
+        </select>
+      </div>
+    </div>
+    }
+
+    @if (viewMode() === 'product') {
+    <div class="filter-group">
+      <label>Выберите товар:</label>
+      <div class="select-wrapper">
+        <select [(ngModel)]="selectedProductId" (change)="loadData()">
+          <option [ngValue]="null" disabled>-- Выберите товар --</option>
+          @for (product of availableProducts(); track product.id) {
+          <option [ngValue]="product.id">[{{ product.id }}] {{ product.name }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    }
+
+    <div class="toolbar-actions">
+      <button class="btn btn-primary" (click)="loadData()" [disabled]="loading()">
+        <svg lucideSearch size="18" strokeWidth="1.5"></svg>
+        Показать остатки
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем остатки..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>{{ viewMode() === 'store' ? 'Товар' : 'Точка продаж' }}</th>
+          <th>Количество</th>
+          <th>Доступен для резерва</th>
+          <th>Последнее обновление</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of inventory(); track item.id) {
+        <tr>
+          <td>
+            <div class="item-main-info">
+              <span class="i-name">{{ viewMode() === 'store' ? item.productName : item.storeName }}</span>
+              <span class="i-id">ID: {{ viewMode() === 'store' ? item.productId : item.storeId }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="qty-badge"
+                 [class.danger]="item.quantity === 0"
+                 [class.warning]="item.quantity > 0 && item.quantity <= 5"
+                 [class.success]="item.quantity > 5">
+              {{ item.quantity }} шт.
+            </div>
+          </td>
+
+          <td>
+            <label class="toggle-switch">
+              <input type="checkbox" [checked]="item.isReservable" (change)="toggleReservable(item)">
+              <span class="slider"></span>
+            </label>
+          </td>
+
+          <td>
+            <span class="i-date">{{ item.lastUpdated | date:'dd.MM.yyyy HH:mm' }}</span>
+          </td>
+
+          <td class="text-right">
+            <button class="btn-text" (click)="openHistory(item)">
+              <svg lucideHistory size="16" strokeWidth="1.5"></svg>
+              История
+            </button>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="5" class="empty-row">
+            @if (!loading()) {
+            Выберите {{ viewMode() === 'store' ? 'склад' : 'товар' }} и нажмите "Показать остатки"
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (selectedHistoryItem()) {
+<div class="modal-overlay" (click)="closeHistory()">
+  <div class="modal-content animate-fade-in" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <h3>История движения товара</h3>
+        <p class="modal-subtitle">
+          {{ selectedHistoryItem()?.productName }}
+          <svg lucideArrowRight size="12" class="mx-1"></svg>
+          {{ selectedHistoryItem()?.storeName }}
+        </p>
+      </div>
+      <button class="icon-btn-close" (click)="closeHistory()">
+        <svg lucideX size="24"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      @if (isHistoryLoading()) {
+      <app-spinner message="Загрузка истории..."></app-spinner>
+      } @else {
+      <div class="history-timeline">
+        @for (tx of historyData(); track tx.id) {
+        <div class="timeline-item">
+          <div class="tx-date">
+            <span class="tx-day">{{ tx.createdAt | date:'dd.MM' }}</span>
+            <span class="tx-time">{{ tx.createdAt | date:'HH:mm' }}</span>
+          </div>
+
+          <div class="tx-icon" [style.color]="formatTransactionType(tx.transactionType).color">
+            @if (tx.quantityChange > 0) {
+            <svg lucideCheckCircle2 size="20"></svg>
+            } @else {
+            <svg lucideAlertCircle size="20"></svg>
+            }
+          </div>
+
+          <div class="tx-details">
+            <span class="tx-type" [style.color]="formatTransactionType(tx.transactionType).color">
+              {{ formatTransactionType(tx.transactionType).label }}
+            </span>
+            @if (tx.referenceId) {
+            <span class="tx-ref">Док: {{ tx.referenceId }}</span>
+            }
+          </div>
+
+          <div class="tx-amount" [class.positive]="tx.quantityChange > 0" [class.negative]="tx.quantityChange < 0">
+            {{ tx.quantityChange > 0 ? '+' : '' }}{{ tx.quantityChange }} шт.
+          </div>
+        </div>
+        } @empty {
+        <div class="empty-history">Движений по этому товару не найдено.</div>
+        }
+      </div>
+      }
+    </div>
+
+  </div>
+</div>
+}

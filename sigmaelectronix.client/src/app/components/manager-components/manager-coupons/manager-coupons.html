@@ -1,0 +1,195 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+        <svg lucideTicket size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Промокоды и скидки</h2>
+        <p class="subtitle">Управление купонами, акциями и условиями их применения</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Создать купон
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по коду или описанию..." (input)="onSearch($event)">
+    </div>
+    <div class="stats-info">
+      Всего купонов: <strong>{{ filteredCoupons().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Код / Описание</th>
+          <th>Скидка</th>
+          <th>Мин. сумма заказа</th>
+          <th>Срок действия</th>
+          <th>Использования</th>
+          <th>Статус</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (coupon of filteredCoupons(); track coupon.id) {
+        <tr [class.unpublished]="!coupon.isActive">
+          <td>
+            <div class="coupon-cell">
+              <span class="code-badge">{{ coupon.code }}</span>
+              <span class="c-desc">{{ coupon.description || 'Без описания' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="discount-cell" [class.percent]="coupon.isPercentage">
+              @if (coupon.isPercentage) {
+              <svg lucidePercent size="14"></svg> {{ coupon.discountValue }}%
+              } @else {
+              <svg lucideBanknote size="14"></svg> {{ coupon.discountValue | number }} ₽
+              }
+            </div>
+          </td>
+          <td>
+            <span class="min-order">
+              {{ coupon.minOrderAmount > 0 ? (coupon.minOrderAmount | number) + ' ₽' : 'Любая' }}
+            </span>
+          </td>
+          <td>
+            <div class="date-cell">
+              <span class="p-date">От: {{ coupon.startDate | date:'dd.MM.yyyy HH:mm' }}</span>
+              <span class="p-date">До: {{ coupon.endDate | date:'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="usage-bar-container">
+              <div class="usage-text">{{ coupon.currentUsageCount }} / {{ coupon.maxUsageCount }}</div>
+              <div class="usage-track">
+                <div class="usage-fill" [style.width.%]="(coupon.currentUsageCount / coupon.maxUsageCount) * 100"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            @if (coupon.isActive) {
+            <span class="badge badge-success">Активен</span>
+            } @else {
+            <span class="badge badge-gray">Выключен</span>
+            }
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn toggle" (click)="toggleActive(coupon)" [title]="coupon.isActive ? 'Деактивировать' : 'Включить'">
+                @if (coupon.isActive) { <svg lucideEye size="16" strokeWidth="1.5"></svg> }
+                @else { <svg lucideEyeOff size="16" strokeWidth="1.5"></svg> }
+              </button>
+              <button class="action-btn edit" (click)="editCoupon(coupon)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteCoupon(coupon.id, coupon.code)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="7" class="empty-row">Купоны не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="couponForm" (ngSubmit)="saveCoupon()" class="form-step-card animate-fade">
+    <h3>{{ editingId() ? 'Редактирование купона' : 'Создание нового купона' }}</h3>
+
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>Код купона (ПРОМОКОД) *</label>
+        <input type="text" formControlName="code" class="mono-input big-code" placeholder="Например: SUMMER2024" style="text-transform: uppercase;"
+               [class.input-error]="couponForm.get('code')?.invalid && couponForm.get('code')?.touched">
+        @if (couponForm.get('code')?.invalid && couponForm.get('code')?.touched) {
+        <span class="error-msg">Код обязателен (минимум 3 символа)</span>
+        }
+      </div>
+
+      <div class="form-group full-width">
+        <label>Внутреннее описание (Для менеджеров)</label>
+        <input type="text" formControlName="description" placeholder="Летняя распродажа электроники">
+      </div>
+
+      <div class="form-group">
+        <label>Размер скидки *</label>
+        <div class="discount-input-wrapper">
+          <input type="number" formControlName="discountValue" placeholder="500"
+                 [class.input-error]="couponForm.get('discountValue')?.invalid && couponForm.get('discountValue')?.touched">
+          <div class="discount-type-toggle">
+            <label class="radio-label">
+              <input type="radio" formControlName="isPercentage" [value]="false"> ₽ (Сумма)
+            </label>
+            <label class="radio-label">
+              <input type="radio" formControlName="isPercentage" [value]="true"> % (Процент)
+            </label>
+          </div>
+        </div>
+        @if (couponForm.get('discountValue')?.invalid && couponForm.get('discountValue')?.touched) {
+        <span class="error-msg">Укажите значение скидки больше 0</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Минимальная сумма заказа для применения (₽)</label>
+        <input type="number" formControlName="minOrderAmount" placeholder="Например: 5000">
+        <span class="help-text">Оставьте 0, если ограничений по сумме нет.</span>
+      </div>
+
+      <div class="form-group">
+        <label>Начало действия *</label>
+        <input type="datetime-local" formControlName="startDate"
+               [class.input-error]="couponForm.get('startDate')?.invalid && couponForm.get('startDate')?.touched">
+      </div>
+
+      <div class="form-group">
+        <label>Конец действия *</label>
+        <input type="datetime-local" formControlName="endDate"
+               [class.input-error]="couponForm.get('endDate')?.invalid && couponForm.get('endDate')?.touched">
+      </div>
+
+      <div class="form-group">
+        <label>Лимит использований *</label>
+        <input type="number" formControlName="maxUsageCount" placeholder="Например: 100"
+               [class.input-error]="couponForm.get('maxUsageCount')?.invalid && couponForm.get('maxUsageCount')?.touched">
+      </div>
+
+      <div class="form-group align-bottom">
+        <label class="toggle-switch">
+          <input type="checkbox" formControlName="isActive">
+          <span class="slider"></span>
+          <span class="toggle-label">Активировать купон сразу</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <div></div>
+      <button type="submit" class="btn btn-success" [disabled]="couponForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить купон
+      </button>
+    </div>
+  </form>
+  }
+</div>

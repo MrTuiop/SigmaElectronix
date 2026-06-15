@@ -1,0 +1,79 @@
+<div class="location-selector-container">
+  <span class="geo-link" (click)="openModal()">
+    <svg lucideMapPin size="14" strokeWidth="2.5"></svg> {{ selectedCityName() }}
+  </span>
+
+  @if (showConfirmPrompt()) {
+  <div class="location-prompt">
+    <div class="prompt-arrow"></div>
+    <p class="prompt-text">Ваш город — <strong>{{ selectedCityName() }}</strong>?</p>
+    <div class="prompt-actions">
+      <button class="btn-confirm" (click)="confirmDetectedCity()">
+        <svg lucideCheck size="12"></svg> Да, верно
+      </button>
+      <button class="btn-change" (click)="openModal()">
+        Сменить город
+      </button>
+    </div>
+  </div>
+  }
+
+  @if (showModal()) {
+  <div class="modal-overlay" (click)="showModal.set(false)">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="title-wrap">
+          <svg lucideBuilding size="20" class="title-icon"></svg>
+          <h2>Выбор города</h2>
+        </div>
+        <button class="close-btn" (click)="showModal.set(false)">
+          <svg lucideX size="20"></svg>
+        </button>
+      </div>
+
+      <div class="search-box">
+        <svg lucideSearch size="16" class="search-icon"></svg>
+        <input type="text"
+               placeholder="Введите название города..."
+               [ngModel]="searchQuery()"
+               (ngModelChange)="searchQuery.set($event)" />
+        @if (searchQuery()) {
+        <button class="clear-search" (click)="searchQuery.set('')">
+          <svg lucideX size="14"></svg>
+        </button>
+        }
+      </div>
+
+      <div class="modal-body nano-scroll">
+        @if (allCities().length === 0) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Загрузка списка городов...</p>
+        </div>
+        } @else if (regionNames().length === 0) {
+        <div class="empty-state">
+          <p>Город «{{ searchQuery() }}» не найден</p>
+        </div>
+        } @else {
+        @for (region of regionNames(); track region) {
+        <div class="region-block">
+          <h3 class="region-title">{{ region }}</h3>
+          <div class="cities-grid">
+            @for (city of groupedCities()[region]; track city.id) {
+            <button class="city-item-btn"
+                    [class.active]="city.name === selectedCityName()"
+                    (click)="selectCity(city)">
+              {{ city.name }}
+            </button>
+            }
+          </div>
+        </div>
+        }
+        }
+      </div>
+
+    </div>
+  </div>
+  }
+</div>

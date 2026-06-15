@@ -25,6 +25,11 @@ import { ManagerReviewsComponent } from './components/manager-components/manager
 import { ManagerStoresComponent } from './components/manager-components/manager-stores/manager-stores';
 import { ManagerCitiesComponent } from './components/manager-components/manager-cities/manager-cities';
 import { ManagerRegionsComponent } from './components/manager-components/manager-regions/manager-regions';
+import { ManagerInventoryComponent } from './components/manager-components/manager-inventory/manager-inventory';
+import { ManagerTransfersComponent } from './components/manager-components/manager-transfers/manager-transfers';
+import { ManagerOrdersComponent } from './components/manager-components/manager-orders/manager-orders';
+import { ManagerCouponsComponent } from './components/manager-components/manager-coupons/manager-coupons';
+import { PublicStoresComponent } from './pages/public-stores/public-stores';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -47,7 +52,19 @@ export const routes: Routes = [
       },
       { path: 'stores', component: ManagerStoresComponent },
       { path: 'cities', component: ManagerCitiesComponent },
-      { path: 'regions', component: ManagerRegionsComponent }
+      { path: 'regions', component: ManagerRegionsComponent },
+      { path: 'inventory', component: ManagerInventoryComponent },
+      {
+        path: 'transfers',
+        component: ManagerTransfersComponent,
+        title: 'Движение товаров'
+      },
+      { path: 'orders', component: ManagerOrdersComponent },
+      {
+        path: 'coupons',
+        component: ManagerCouponsComponent,
+        title: 'Управление купонами'
+      }
     ]
   },
 
@@ -85,7 +102,12 @@ export const routes: Routes = [
       { path: 'catalog/:categorySlug', component: CatalogPage },
       { path: 'products/:slug', component: ProductDetailPage },
       { path: 'brands', component: BrandsComponent, title: 'Бренды' },
-      { path: 'brands/:slug', component: BrandDetailComponent }
+      { path: 'brands/:slug', component: BrandDetailComponent },
+      {
+        path: 'stores',
+        component: PublicStoresComponent,
+        title: 'Наши магазины | SigmaElectronix'
+      }
     ]
   },
 

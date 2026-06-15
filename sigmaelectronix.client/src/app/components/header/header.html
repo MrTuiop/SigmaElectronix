@@ -3,9 +3,9 @@
   <div class="header-top-layer">
     <div class="container top-inner">
       <div class="top-left">
-        <span class="geo-link">
-          <svg lucideMapPin size="14" strokeWidth="2.5"></svg> Москва
-        </span>
+
+        <app-location-selector></app-location-selector>
+
         <span class="lang-link">
           <svg lucideGlobe size="14" strokeWidth="2.5"></svg> RU
         </span>
@@ -20,7 +20,7 @@
       </div>
 
       <nav class="top-center-nav">
-        <a href="#">Магазины</a>
+        <a routerLink="/stores">Магазины</a>
         <a href="#">Доставка и оплата</a>
         <a href="#">Гарантия</a>
         <a href="#">О компании</a>

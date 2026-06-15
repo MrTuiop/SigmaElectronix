@@ -1,0 +1,108 @@
+<div class="stores-container">
+  <div class="stores-header">
+    <div class="header-content">
+      <span class="badge">Наши точки</span>
+      <h1>Магазины в городе <span class="accent-city">{{ currentCityName() }}</span></h1>
+      <p class="subtitle">Приходите за покупками, забирайте интернет-заказы без очередей и получайте консультации специалистов</p>
+    </div>
+  </div>
+
+  <div class="toolbar-panel">
+    <div class="search-box">
+      <svg lucideSearch size="16" class="search-icon"></svg>
+      <input type="text"
+             [ngModel]="searchQuery()"
+             (ngModelChange)="searchQuery.set($event)"
+             placeholder="Поиск по названию или адресу..." />
+      @if (searchQuery()) {
+      <button class="clear-btn" (click)="searchQuery.set('')">✕</button>
+      }
+    </div>
+    <div class="stores-count">
+      Найдено: <strong>{{ filteredStores().length }}</strong>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="loading-state">
+    <app-spinner message="Ищем магазины поблизости..."></app-spinner>
+  </div>
+  } @else if (error()) {
+  <div class="error-state">
+    <p>{{ error() }}</p>
+    <button class="btn-retry" (click)="loadStores()">Повторить запрос</button>
+  </div>
+  } @else if (filteredStores().length === 0) {
+  <div class="empty-state">
+    <svg lucideBuilding size="48" class="empty-icon"></svg>
+    <h3>В городе {{ currentCityName() }} пока нет магазинов</h3>
+    <p>Но мы активно расширяемся! Вы можете заказать доставку в любой регион транспортной компанией.</p>
+  </div>
+  } @else {
+  <div class="stores-grid">
+    @for (store of filteredStores(); track store.id) {
+    <div class="store-card">
+      <div class="store-map-preview">
+        <div class="map-overlay">
+          <span class="store-type-badge" [attr.data-type]="store.type">
+            {{ translateType(store.type) }}
+          </span>
+        </div>
+        <div class="coord-info">
+          <svg lucideCompass size="14" class="compass-icon"></svg>
+          <span>{{ store.latitude | number:'1.4-4' }}, {{ store.longitude | number:'1.4-4' }}</span>
+        </div>
+      </div>
+
+      <div class="store-info">
+        <h3 class="store-name">{{ store.name }}</h3>
+        <span class="store-code">Код точки: {{ store.code }}</span>
+
+        <div class="info-row address-row">
+          <svg lucideMapPin size="16" class="info-icon"></svg>
+          <div class="info-text">
+            <span class="label">Адрес:</span>
+            <span class="value">{{ store.fullAddress }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <svg lucideClock size="16" class="info-icon"></svg>
+          <div class="info-text">
+            <span class="label">Режим работы:</span>
+            <span class="value highlight-time">{{ store.workingHours }}</span>
+          </div>
+        </div>
+
+        <div class="info-row">
+          <svg lucidePhone size="16" class="info-icon"></svg>
+          <div class="info-text">
+            <span class="label">Телефон:</span>
+            <a href="tel:{{ store.phone }}" class="value phone-link">{{ store.phone }}</a>
+          </div>
+        </div>
+
+        @if (store.email) {
+        <div class="info-row">
+          <svg lucideMail size="16" class="info-icon"></svg>
+          <div class="info-text">
+            <span class="label">Email:</span>
+            <span class="value">{{ store.email }}</span>
+          </div>
+        </div>
+        }
+      </div>
+
+      <div class="store-actions">
+        <a [href]="'https://yandex.ru/maps/?text=' + store.latitude + ',' + store.longitude"
+           target="_blank"
+           class="btn-route">
+          <svg lucideMapPin size="16" class="btn-icon"></svg>
+          Построить маршрут
+        </a>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
