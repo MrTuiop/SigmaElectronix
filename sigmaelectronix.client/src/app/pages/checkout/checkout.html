@@ -13,7 +13,7 @@
           @if (authService.isAuthenticated()) {
           <div class="logged-in-info">
             <p>Вы вошли как <strong>{{ profileService.user()?.firstName }}</strong></p>
-            <p>Данные подставлены из вашего профиля. Можете изменить.</p>
+            <p>Данные подставлены из вашего профиля.</p>
           </div>
           } @else {
           <div class="not-logged-in">
@@ -23,21 +23,15 @@
 
           <div class="form-grid">
             <div class="form-group">
-              <label>
-                <svg lucideUser size="16" strokeWidth="2"></svg> Имя
-              </label>
+              <label><svg lucideUser size="16" strokeWidth="2"></svg> Имя</label>
               <input type="text" [(ngModel)]="contact().name" />
             </div>
             <div class="form-group">
-              <label>
-                <svg lucideMail size="16" strokeWidth="2"></svg> Email
-              </label>
+              <label><svg lucideMail size="16" strokeWidth="2"></svg> Email</label>
               <input type="email" [(ngModel)]="contact().email" />
             </div>
             <div class="form-group">
-              <label>
-                <svg lucidePhone size="16" strokeWidth="2"></svg> Телефон
-              </label>
+              <label><svg lucidePhone size="16" strokeWidth="2"></svg> Телефон</label>
               <input type="tel" [(ngModel)]="contact().phone" />
             </div>
           </div>
@@ -65,20 +59,113 @@
                 <span>Бесплатно</span>
               </div>
             </label>
-            <label class="option-card" [class.active]="deliveryMethod() === 'post'">
-              <input type="radio" name="delivery" value="post" [(ngModel)]="deliveryMethod" hidden />
+            <label class="option-card" [class.active]="deliveryMethod() === 'delivery_service'">
+              <input type="radio" name="delivery" value="delivery_service" [(ngModel)]="deliveryMethod" hidden />
               <svg lucidePackage size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Почта России</strong>
-                <span>400 ₽</span>
+                <strong>Службы доставки</strong>
+                <span>от 400 ₽</span>
               </div>
             </label>
           </div>
 
-          @if (deliveryMethod() === 'courier' || deliveryMethod() === 'post') {
-          <div class="delivery-address-field">
+          @if (deliveryMethod() === 'courier') {
+
+          @if (authService.isAuthenticated() && profileService.addresses().length > 0) {
+          <div class="saved-addresses-grid animate-fade-in">
+            <h4>Выберите адрес доставки</h4>
+            <div class="address-cards">
+              @for (addr of profileService.addresses(); track addr.id) {
+              <label class="address-card-select" [class.active]="!isCustomAddress() && selectedSavedAddressId() === addr.id">
+                <input type="radio" name="saved_addr" [value]="addr.id"
+                       (change)="isCustomAddress.set(false); selectedSavedAddressId.set(addr.id)" hidden>
+                <div class="address-card-header">
+                  <strong>
+                    <svg lucideMapPin size="16" strokeWidth="2.5" style="margin-right: 4px; vertical-align: -3px;"></svg>
+                    {{ addr.title || 'Мой адрес' }}
+                  </strong>
+                  @if (addr.isDefault) { <span class="badge success" style="font-size: 10px; padding: 2px 6px;">По умолчанию</span> }
+                </div>
+                <p>{{ addr.city }}, {{ addr.street }}</p>
+                <p class="address-zip">Индекс: {{ addr.zip }}</p>
+              </label>
+              }
+
+              <label class="address-card-select custom-address" [class.active]="isCustomAddress()">
+                <input type="radio" name="saved_addr" value="custom"
+                       (change)="isCustomAddress.set(true)" hidden>
+                <div class="custom-icon">+</div>
+                <strong>Другой адрес</strong>
+                <p>Ввести адрес вручную</p>
+              </label>
+            </div>
+          </div>
+          }
+
+          @if (isCustomAddress() || !authService.isAuthenticated() || profileService.addresses().length === 0) {
+          <div class="delivery-address-field animate-fade-in">
             <label>Адрес доставки</label>
             <input type="text" [(ngModel)]="deliveryAddress" placeholder="Город, улица, дом, квартира" />
+          </div>
+          }
+          }
+
+          @if (deliveryMethod() === 'delivery_service') {
+          <div class="delivery-companies">
+            <label class="company-card" [class.active]="deliveryCompany() === 'cdek'">
+              <input type="radio" name="company" value="cdek" [(ngModel)]="deliveryCompany" hidden>
+              <div class="company-logo">СДЭК</div>
+            </label>
+            <label class="company-card" [class.active]="deliveryCompany() === 'pochta'">
+              <input type="radio" name="company" value="pochta" [(ngModel)]="deliveryCompany" hidden>
+              <div class="company-logo">Почта России</div>
+            </label>
+            <label class="company-card" [class.active]="deliveryCompany() === 'pek'">
+              <input type="radio" name="company" value="pek" [(ngModel)]="deliveryCompany" hidden>
+              <div class="company-logo">ПЭК</div>
+            </label>
+            <label class="company-card" [class.active]="deliveryCompany() === 'boxberry'">
+              <input type="radio" name="company" value="boxberry" [(ngModel)]="deliveryCompany" hidden>
+              <div class="company-logo">Boxberry</div>
+            </label>
+          </div>
+          <div class="delivery-address-field">
+            <label>Адрес пункта выдачи или отделения</label>
+            <input type="text" [(ngModel)]="deliveryAddress" placeholder="Город, улица, дом..." />
+          </div>
+          }
+
+          @if (deliveryMethod() === 'pickup') {
+          <div class="pickup-stores">
+            <h4>Выберите магазин для самовывоза</h4>
+
+            @if (isLoadingStores()) {
+            <div class="loading-state">
+              <p>Проверяем наличие в магазинах...</p>
+            </div>
+            } @else if (storesInCity().length === 0) {
+            <p style="color: var(--text-muted);">В вашем городе пока нет магазинов.</p>
+            } @else {
+            <div class="store-list">
+              @for (store of storesInCity(); track store.id) {
+              <label class="store-card" [class.active]="selectedStoreId() === store.id">
+                <input type="radio" name="store" [value]="store.id" [(ngModel)]="selectedStoreId" hidden>
+                <div class="store-info">
+                  <strong>{{ store.name }}</strong>
+                  <span>{{ store.fullAddress }}</span>
+                  <span>Режим: {{ store.workingHours }}</span>
+                </div>
+                <div class="store-availability">
+                  @if (isStoreAvailableToday(store.id)) {
+                  <span class="badge success">Забрать сегодня</span>
+                  } @else {
+                  <span class="badge warning">Забрать {{ getNextWeekDate() }}</span>
+                  }
+                </div>
+              </label>
+              }
+            </div>
+            }
           </div>
           }
         </div>
@@ -120,6 +207,7 @@
             <span class="step-number">4</span>
             <h2>Промокод и бонусы</h2>
           </div>
+
           <div class="promo-section">
             <div class="promo-input-group">
               <svg lucideTag size="16" strokeWidth="2.5" class="promo-icon"></svg>
@@ -127,43 +215,81 @@
                      placeholder="Введите промокод"
                      [(ngModel)]="promoCode"
                      (keyup.enter)="applyPromo()" />
-              <button class="apply-promo-btn" (click)="applyPromo()">
-                Применить
-              </button>
+              <button class="apply-promo-btn" (click)="applyPromo()">Применить</button>
             </div>
             @if (appliedPromo()) {
             <div class="applied-promo">
               <svg lucidePercent size="14" strokeWidth="2.5"></svg>
-              Промокод «{{ appliedPromo()?.code }}» ({{ appliedPromo()?.discountPercent }}%)
+              Промокод «{{ appliedPromo()?.code }}»
+              @if (appliedPromo()?.isPercentage) {
+              (-{{ appliedPromo()?.discountPercent }}%)
+              } @else {
+              (-{{ appliedPromo()?.discountValue }} ₽)
+              }
               <button class="remove-promo-btn" (click)="removePromo()">✕</button>
             </div>
             }
             @if (promoError()) {
             <p class="promo-error">{{ promoError() }}</p>
             }
-            <p class="promo-hint">Попробуйте: SIGMA20, WELCOME10</p>
           </div>
 
           @if (authService.isAuthenticated()) {
           <div class="bonuses-section">
-            <div class="bonus-info">
-              <svg lucideGift size="18" strokeWidth="2"></svg>
-              <span>У вас {{ availableBonuses() }} бонусных баллов</span>
+            <div class="bonus-card">
+              <div class="bonus-header">
+                <div class="bonus-icon-wrapper">
+                  <svg lucideGift size="24" strokeWidth="2"></svg>
+                </div>
+                <div class="bonus-text">
+                  <h4>Бонусные баллы Sigma</h4>
+                  <p>Доступно: <strong>{{ availableBonuses() }} ₽</strong></p>
+                </div>
+              </div>
+
+              @if (availableBonuses() > 0) {
+              <div class="bonus-slider-container">
+                <div class="bonus-toggle-row">
+                  <label class="toggle-switch">
+                    <input type="checkbox" [checked]="useBonuses()" (change)="toggleBonuses()">
+                    <span class="slider round"></span>
+                  </label>
+                  <span>Списать баллы для оплаты</span>
+                </div>
+
+                @if (useBonuses()) {
+                <div class="bonus-range-wrapper animate-fade-in">
+                  <div class="bonus-range-info">
+                    <span>0</span>
+                    <span class="current-val">{{ bonusesToSpend() }} ₽</span>
+                    <span>{{ maxBonusesForOrder() }}</span>
+                  </div>
+                  <input type="range"
+                         [min]="0"
+                         [max]="maxBonusesForOrder()"
+                         [value]="bonusesToSpend()"
+                         (input)="onBonusesChange($event)"
+                         class="bonus-range">
+                  <p class="bonus-hint">Баллами можно оплатить до 30% стоимости заказа.</p>
+                </div>
+                } @else {
+                <div class="bonus-earn-wrapper animate-fade-in">
+                  <div class="bonus-earn-info">
+                    <span class="sparkle-icon">✨</span>
+                    <span class="earn-text">За этот заказ мы начислим <strong>+{{ earnedBonuses() }} баллов</strong></span>
+                  </div>
+                </div>
+                }
+              </div>
+              } @else {
+              <div class="bonus-earn-wrapper">
+                <div class="bonus-earn-info">
+                  <span class="sparkle-icon">✨</span>
+                  <span class="earn-text">Совершите покупку и получите <strong>+{{ earnedBonuses() }} баллов</strong></span>
+                </div>
+              </div>
+              }
             </div>
-            <label class="bonus-toggle">
-              <input type="checkbox" [checked]="useBonuses()" (change)="toggleBonuses()" />
-              Списать баллы (1 балл = 1 ₽)
-            </label>
-            @if (useBonuses()) {
-            <div class="bonus-input-group">
-              <label>Сумма списания (макс. {{ maxBonusesForOrder() }} баллов)</label>
-              <input type="number"
-                     [value]="bonusesToSpend()"
-                     (input)="onBonusesChange($event)"
-                     min="0"
-                     [max]="maxBonusesForOrder()" />
-            </div>
-            }
           </div>
           }
         </div>
@@ -173,24 +299,46 @@
             <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
             Оформить заказ
           </button>
-          <p class="agree-text">Нажимая кнопку, вы соглашаетесь с условиями</p>
+          <p class="agree-text">Нажимая кнопку, вы соглашаетесь с условиями обработки данных</p>
         </div>
       </div>
 
       <aside class="checkout-sidebar">
         <div class="sidebar-card">
+
+          <div class="estimated-date-card">
+            <div class="ed-icon">
+              <svg lucideCalendar size="20" strokeWidth="2"></svg>
+            </div>
+            <div class="ed-text">
+              <span>Ориентировочная дата получения:</span>
+              <strong>{{ estimatedDeliveryDate() }}</strong>
+            </div>
+          </div>
+
           <h3>Ваш заказ</h3>
           <div class="sidebar-items">
             @for (item of cartService.cart()?.items; track item.id) {
             <div class="sidebar-item">
-              <div class="sidebar-item-image">
-                <img [src]="item.productImage || '/assets/placeholder.jpg'" alt="{{ item.productName }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+              <div class="sidebar-item-main">
+                <div class="sidebar-item-image">
+                  <img [src]="item.productImage || '/assets/placeholder.jpg'" alt="{{ item.productName }}">
+                </div>
+                <div class="sidebar-item-details">
+                  <span class="sidebar-item-name">{{ item.productName }}</span>
+                  <div class="sidebar-item-price-row">
+                    <span class="sidebar-item-price">{{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+                    <span class="sidebar-item-qty">× {{ item.quantity }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="sidebar-item-details">
-                <span class="sidebar-item-name">{{ item.productName }}</span>
-                <span class="sidebar-item-qty">× {{ item.quantity }}</span>
+
+              @if (getItemStockInfo(item); as stockInfo) {
+              <div class="sidebar-item-stock" [ngClass]="stockInfo.status">
+                <div class="stock-dot"></div>
+                {{ stockInfo.text }}
               </div>
-              <span class="sidebar-item-price">{{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+              }
             </div>
             }
 

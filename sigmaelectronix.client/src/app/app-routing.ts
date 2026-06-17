@@ -30,6 +30,11 @@ import { ManagerTransfersComponent } from './components/manager-components/manag
 import { ManagerOrdersComponent } from './components/manager-components/manager-orders/manager-orders';
 import { ManagerCouponsComponent } from './components/manager-components/manager-coupons/manager-coupons';
 import { PublicStoresComponent } from './pages/public-stores/public-stores';
+import { PaymentPageComponent } from './pages/payment-page/payment-page';
+import { managerGuard } from './guards/manager-guard';
+import { authGuard } from './guards/auth-guard';
+import { adminGuard } from './guards/admin-guard';
+import { ManagerUsersComponent } from './components/manager-components/manager-users/manager-users';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -39,9 +44,15 @@ export const routes: Routes = [
   {
     path: 'manager',
     component: ManagerPage, // Выступает как Layout для админки (со своим сайдбаром)
-    // canActivate: [AdminGuard],
+    canActivate: [managerGuard],
     children: [
       { path: '', redirectTo: 'products', pathMatch: 'full' },
+      {
+        path: 'users',
+        component: ManagerUsersComponent,
+        canActivate: [adminGuard], // 🛡️ ПУСКАЕТ ТОЛЬКО АДМИНА
+        title: 'Управление пользователями'
+      },
       { path: 'products', component: ManagerProductsComponent },
       { path: 'categories', component: ManagerCategoriesComponent },
       { path: 'brands', component: ManagerBrandsComponent },
@@ -84,6 +95,7 @@ export const routes: Routes = [
         path: 'profile',
         component: ProfilePage,
         title: 'Мой аккаунт',
+        canActivate: [authGuard],
         children: [
           { path: '', redirectTo: 'details', pathMatch: 'full' },
           { path: 'details', component: ProfileDetailsComponent },
@@ -107,7 +119,8 @@ export const routes: Routes = [
         path: 'stores',
         component: PublicStoresComponent,
         title: 'Наши магазины | SigmaElectronix'
-      }
+      },
+      { path: 'payment/:id', component: PaymentPageComponent },
     ]
   },
 

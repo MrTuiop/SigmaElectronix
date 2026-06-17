@@ -1,0 +1,272 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+        <svg lucideShield size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Пользователи системы</h2>
+        <p class="subtitle">Управление доступом, ролями, блокировками и балансом</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucideUserPlus size="18" strokeWidth="1.5"></svg>
+      Новый пользователь
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      <svg lucideArrowLeft size="18" strokeWidth="1.5"></svg>
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по имени, email или телефону..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Найдено: <strong>{{ filteredUsers().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загрузка пользователей..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Пользователь</th>
+          <th>Роль</th>
+          <th>Телефон</th>
+          <th>Бонусы</th>
+          <th>Регистрация</th>
+          <th>Статус</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of filteredUsers(); track user.id) {
+        <tr [class.unpublished]="!user.isActive">
+          <td>
+            <div class="product-cell-content">
+              <div class="img-preview" style="border-radius: 50%;">
+                <svg lucideUser size="20" color="#9ca3af" strokeWidth="1.5"></svg>
+              </div>
+              <div class="product-meta">
+                <span class="p-name">{{ getUserDisplayName(user) }}</span>
+                <span class="p-slug">{{ user.email }}</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <div class="roles-container">
+              @if (user.roles?.includes('Admin')) {
+              <span class="badge badge-admin">Администратор</span>
+              } @else if (user.roles?.includes('Manager')) {
+              <span class="badge badge-manager">Менеджер</span>
+              } @else {
+              <span class="badge badge-gray">Покупатель</span>
+              }
+            </div>
+          </td>
+
+          <td>
+            <span class="cat-tag">{{ user.phoneNumber || '—' }}</span>
+          </td>
+
+          <td>
+            <span class="final-price">{{ user.bonusBalance | number }} ₽</span>
+          </td>
+
+          <td>
+            <span class="p-date">{{ user.createdAt | date:'dd.MM.yyyy' }}</span>
+          </td>
+
+          <td>
+            @if (user.isActive) {
+            <span class="badge badge-success">Активен</span>
+            } @else {
+            <span class="badge badge-danger">Заблокирован</span>
+            }
+          </td>
+
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn toggle" (click)="openPasswordModal(user)" title="Сменить пароль">
+                <svg lucideKey size="16" strokeWidth="1.5"></svg>
+              </button>
+
+              @if (!user.roles?.includes('Admin')) {
+              <button class="action-btn toggle" (click)="toggleStatus(user)" [title]="user.isActive ? 'Заблокировать' : 'Разблокировать'">
+                @if (user.isActive) {
+                <svg lucideCheckCircle size="16" strokeWidth="1.5"></svg>
+                } @else {
+                <svg lucideBan size="16" strokeWidth="1.5"></svg>
+                }
+              </button>
+              }
+
+              <button class="action-btn edit" (click)="editUser(user)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+
+              @if (!user.roles?.includes('Admin')) {
+              <button class="action-btn delete" (click)="deleteUser(user)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="7" class="empty-row">Пользователи не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="animate-fade">
+    <div class="form-step-card">
+      <h3>{{ isEditing() ? 'Редактирование пользователя' : 'Создание нового пользователя' }}</h3>
+
+      <div class="form-group full-width">
+        <label>Логин (UserName) *</label>
+        <input type="text" formControlName="userName" placeholder="Имя пользователя в системе"
+               [class.input-error]="userForm.get('userName')?.invalid && userForm.get('userName')?.touched">
+        @if (userForm.get('userName')?.invalid && userForm.get('userName')?.touched) {
+        <span class="error-msg">Логин обязателен (минимум 3 символа)</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Имя *</label>
+          <input type="text" formControlName="firstName" placeholder="Иван"
+                 [class.input-error]="userForm.get('firstName')?.invalid && userForm.get('firstName')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Фамилия *</label>
+          <input type="text" formControlName="lastName" placeholder="Иванов"
+                 [class.input-error]="userForm.get('lastName')?.invalid && userForm.get('lastName')?.touched">
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" formControlName="email" placeholder="email@example.com"
+                 [class.input-error]="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+          @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
+          <span class="error-msg">Введите корректный email</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Телефон *</label>
+          <input type="text" formControlName="phoneNumber" placeholder="+7 (999) 000-00-00"
+                 [class.input-error]="userForm.get('phoneNumber')?.invalid && userForm.get('phoneNumber')?.touched">
+        </div>
+
+        @if (!isEditing()) {
+        <div class="form-group">
+          <label>Пароль *</label>
+          <input type="password" formControlName="password" placeholder="Минимум 6 символов"
+                 [class.input-error]="userForm.get('password')?.invalid && userForm.get('password')?.touched">
+          @if (userForm.get('password')?.invalid && userForm.get('password')?.touched) {
+          <span class="error-msg">Пароль обязателен (мин. 6 символов)</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Роль в системе *</label>
+          <select formControlName="role">
+            <option value="Customer">Покупатель</option>
+            <option value="Manager">Менеджер контента</option>
+            <option value="Admin">Администратор</option>
+          </select>
+        </div>
+        }
+
+        @if (isEditing()) {
+        <div class="form-group">
+          <label>Бонусный баланс (₽)</label>
+          <input type="number" formControlName="bonusBalance">
+        </div>
+
+        <div class="form-group full-width" style="margin-top: 15px;">
+          <label class="toggle-switch">
+            <input type="checkbox" formControlName="isActive">
+            <span class="slider"></span>
+            <span class="toggle-label" [class.text-danger]="!userForm.get('isActive')?.value">
+              {{ userForm.get('isActive')?.value ? 'Аккаунт активен' : 'Аккаунт заблокирован' }}
+            </span>
+          </label>
+        </div>
+        }
+      </div>
+
+      <div class="wizard-footer" style="margin-top: 30px;">
+        <div></div> <button type="submit" class="btn btn-success" [disabled]="userForm.invalid || loading()">
+          <svg lucideCheck size="16" strokeWidth="1.5"></svg>
+          {{ isEditing() ? 'Сохранить изменения' : 'Создать пользователя' }}
+        </button>
+      </div>
+    </div>
+  </form>
+  }
+</div>
+
+@if (showPasswordModal()) {
+<div class="modal-overlay" (mousedown)="onOverlayClick($event)">
+  <div class="modal-content animate-fade">
+    <div class="modal-header">
+      <h3>Смена пароля</h3>
+      <button class="btn-icon-danger" (click)="closePasswordModal()" title="Закрыть">
+        <svg lucideX size="18" strokeWidth="1.5"></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="modal-description">
+        Введите новый пароль для пользователя <strong>{{ userForPasswordChange()?.userName }}</strong>.
+      </p>
+
+      <div class="form-group">
+        <label>Новый пароль *</label>
+        <input type="text"
+               [value]="passwordToChange()"
+               (input)="passwordToChange.set($any($event.target).value)"
+               placeholder="Минимум 6 символов"
+               class="mono-input">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closePasswordModal()">Отмена</button>
+      <button class="btn btn-success" (click)="submitPasswordChange()" [disabled]="passwordToChange().length < 6 || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg>
+        Сохранить пароль
+      </button>
+    </div>
+  </div>
+</div>
+}
+@if (showConfirmModal()) {
+  <app-confirm-modal title="Удаление пользователя"
+    [message]="'Вы уверены, что хотите безвозвратно удалить пользователя ' + (userToDelete()?.fullName || userToDelete()?.userName) + '? (Если у пользователя есть заказы, его данные будут очищены, но история заказов сохранится).'"
+    confirmText="Удалить"
+    cancelText="Отмена"
+    [isDestructive]="true"
+    (confirm)="confirmDelete()"
+    (cancel)="cancelDelete()">
+  </app-confirm-modal>
+}

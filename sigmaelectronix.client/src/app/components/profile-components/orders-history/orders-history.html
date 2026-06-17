@@ -2,27 +2,145 @@
   <div class="section-header-inner">
     <h2>История заказов</h2>
   </div>
-  @if (data.orders().length === 0) {
+
+  @if (isLoadingOrders()) {
   <div class="empty-state">
-    <svg lucidePackage size="48" strokeWidth="1.5"></svg>
-    <p>У вас пока нет заказов</p>
+    <svg lucideLoader2 class="spinner" size="48" strokeWidth="1.5"></svg>
+    <p>Загружаем ваши заказы...</p>
   </div>
-  } @else {
+  }
+  @else if (ordersList().length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon-wrapper">
+      <svg lucidePackage size="56" strokeWidth="1.5"></svg>
+    </div>
+    <h3>У вас пока нет заказов</h3>
+    <p>Здесь будет храниться история ваших покупок.</p>
+    <button class="btn-primary" routerLink="/catalog">Перейти к покупкам</button>
+  </div>
+  }
+  @else {
   <div class="orders-list">
-    @for (order of data.orders(); track order.id) {
-    <div class="order-card">
-      <div class="order-top">
-        <span class="order-id">№ {{ order.id }}</span>
-        <span class="order-status" [style.background]="order.statusColor">{{ order.status }}</span>
+    @for (order of ordersList(); track order.id) {
+    <div class="order-card" [class.expanded]="expandedOrderId() === order.id?.toString()">
+
+      <div class="order-summary" (click)="toggleOrder(order.id)">
+        <div class="summary-left">
+          <div class="order-id-group">
+            <span class="order-id">Заказ {{ order.orderNumber || '№' + order.id }}</span>
+            <span class="order-date">от {{ order.date }}</span>
+          </div>
+          <div class="order-status" [style.background]="order.statusColor">
+            {{ order.statusName }}
+          </div>
+        </div>
+
+        <div class="summary-right">
+          <div class="order-price-group">
+            <span class="order-total">{{ order.totalAmount | currency:'₽':'symbol':'1.0-0' }}</span>
+            <span class="order-items-count">{{ order.itemsCount }} товар(а)</span>
+          </div>
+          <button class="expand-btn">
+            @if (expandedOrderId() === order.id?.toString()) {
+            <svg lucideChevronUp></svg>
+            } @else {
+            <svg lucideChevronDown></svg>
+            }
+          </button>
+        </div>
       </div>
-      <div class="order-meta">
-        <span>от {{ order.date }}</span>
-        <span>{{ order.items }} товар(а)</span>
+
+      @if (expandedOrderId() === order.id?.toString()) {
+      <div class="order-details fade-in-down">
+
+        @if (isLoadingDetails() && !currentOrderDetails()) {
+        <div class="loading-state">
+          <svg lucideLoader2 class="spinner" size="28"></svg>
+          <span>Загружаем состав заказа...</span>
+        </div>
+        }
+
+        @if (currentOrderDetails(); as details) {
+        <div class="details-grid">
+
+          <div class="details-items-section">
+            <h4>Товары ({{ details.items.length }})</h4>
+            <div class="items-list">
+              @for (item of details.items; track item.id) {
+              <div class="product-item">
+                <div class="img-wrapper">
+                  <img [src]="item.productImageUrl || 'assets/placeholder.jpg'" [alt]="item.productName">
+                </div>
+                <div class="item-info">
+                  <span class="item-name" [routerLink]="['/product', item.productId]">{{ item.productName }}</span>
+                  <span class="item-qty">{{ item.quantity }} шт. × {{ item.unitPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+                </div>
+                <div class="item-total-price">
+                  {{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+
+          <div class="details-info-section">
+
+            <div class="info-card">
+              <div class="info-header">
+                <svg lucideMapPin size="18"></svg>
+                <h5>Доставка</h5>
+              </div>
+              <p class="main-text">{{ details.shippingAddress }}</p>
+              <p class="sub-text">{{ details.shippingFullName }} • {{ details.shippingPhone }}</p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-header">
+                <svg lucideCreditCard size="18"></svg>
+                <h5>Оплата</h5>
+              </div>
+              <p class="main-text">{{ getPaymentMethodName(details.paymentMethod) }}</p>
+
+              <p class="sub-text"
+                 [class.success]="details.paymentStatus === 'Paid'"
+                 [class.error]="details.paymentStatus === 'Failed' || details.paymentStatus === 'Expired'">
+                {{ getPaymentStatusName(details.paymentStatus) }}
+              </p>
+
+              @if (canPayOnline(details.paymentMethod, details.paymentStatus, details.status)) {
+              <button class="btn-pay-online" [routerLink]="['/payment', details.id]">
+                Оплатить сейчас
+              </button>
+              }
+            </div>
+
+            <div class="receipt-card">
+              <div class="receipt-row">
+                <span>Товары:</span>
+                <span>{{ (details.totalAmount - details.shippingCost + details.discountAmount) | currency:'₽':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="receipt-row">
+                <span>Доставка:</span>
+                <span>{{ details.shippingCost === 0 ? 'Бесплатно' : (details.shippingCost | currency:'₽':'symbol':'1.0-0') }}</span>
+              </div>
+              @if (details.discountAmount > 0) {
+              <div class="receipt-row text-green">
+                <span>Скидка:</span>
+                <span>-{{ details.discountAmount | currency:'₽':'symbol':'1.0-0' }}</span>
+              </div>
+              }
+              <div class="receipt-divider"></div>
+              <div class="receipt-row total">
+                <span>Итого:</span>
+                <span>{{ details.totalAmount | currency:'₽':'symbol':'1.0-0' }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        }
       </div>
-      <div class="order-bottom">
-        <span class="order-total">{{ order.total | currency:'₽':'symbol':'1.0-0' }}</span>
-        <button class="btn-outline-sm">Подробнее</button>
-      </div>
+      }
     </div>
     }
   </div>

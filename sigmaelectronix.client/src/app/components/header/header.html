@@ -95,6 +95,16 @@
           <span class="action-label">Войти</span>
         </button>
         }
+
+        @if (isManager()) {
+        <div class="header-divider"></div>
+        <a class="action-item workspace-item" routerLink="/manager">
+          <div class="icon-box">
+            <svg lucideLayoutDashboard size="24" strokeWidth="2"></svg>
+          </div>
+          <span class="action-label">Workspace</span>
+        </a>
+        }
       </div>
 
     </div>

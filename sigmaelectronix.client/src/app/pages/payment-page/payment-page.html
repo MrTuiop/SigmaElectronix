@@ -1,0 +1,41 @@
+<div class="payment-page">
+  <div class="container">
+    @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Загрузка данных для оплаты...</p>
+    </div>
+    } @else if (order()) {
+    <div class="payment-card">
+      <div class="payment-header">
+        <h2>К оплате: {{ order()?.totalAmount | currency:'₽':'symbol':'1.0-0' }}</h2>
+        <p>Заказ №{{ order()?.orderNumber }}</p>
+      </div>
+
+      <div class="qr-section">
+        <p>Отсканируйте QR-код для оплаты 🎵</p>
+        <div class="qr-wrapper">
+          <img [src]="qrCodeUrl" alt="QR Code для оплаты" />
+        </div>
+        <p class="hint">Наведите камеру смартфона</p>
+      </div>
+
+      <div class="payment-actions">
+        <button class="pay-btn" (click)="simulatePayment()" [disabled]="isPaying()">
+          @if (isPaying()) {
+          <span>Обработка транзакции...</span>
+          } @else {
+          <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
+          <span>Подтвердить оплату</span>
+          }
+        </button>
+
+        <p class="safe-payment-text">
+          <svg lucideCheckCircle size="14" strokeWidth="2.5"></svg>
+          Безопасный платеж
+        </p>
+      </div>
+    </div>
+    }
+  </div>
+</div>

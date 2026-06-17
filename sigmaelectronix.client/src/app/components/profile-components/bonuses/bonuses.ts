@@ -18,5 +18,6 @@ export class BonusesComponent implements OnInit {
 
   ngOnInit(): void {
     this.data.loadBonusHistory().subscribe();
+    this.data.loadProfile().subscribe();
   }
 }

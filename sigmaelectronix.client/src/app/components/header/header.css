@@ -456,3 +456,29 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+/* --- КНОПКА SIGMA WORKSPACE --- */
+.header-divider {
+  width: 1px;
+  height: 36px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+}
+
+.workspace-item {
+  color: var(--primary-color);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(118, 75, 162, 0.05));
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  padding: 6px 12px; /* Чуть шире обычной кнопки */
+}
+
+  .workspace-item .icon-box {
+    color: var(--primary-color);
+  }
+
+  .workspace-item:hover {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(118, 75, 162, 0.1));
+    border-color: rgba(124, 58, 237, 0.4);
+    transform: translate3d(0, -2px, 0);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  }

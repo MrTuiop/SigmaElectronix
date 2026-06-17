@@ -32,6 +32,8 @@ builder.Services.AddScoped<IRegionService, RegionService>();
 builder.Services.AddScoped<ICityService, CityService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IStoreInventoryService, StoreInventoryService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Настройка сервисов
 builder.Services.AddControllers()

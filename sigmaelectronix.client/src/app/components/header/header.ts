@@ -5,7 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import {
   LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
   LucideHeart, LucideShoppingCart, LucideUser,
-  LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2
+  LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
+  LucideLayoutDashboard
 } from '@lucide/angular';
 import { AuthModalComponent } from '../auth-components/auth-modal/auth-modal';
 import { AuthService } from '../../services/auth-service';
@@ -26,7 +27,7 @@ import { LocationSelectorComponent } from '../header-components/location-selecto
     LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
     LucideHeart, LucideShoppingCart, LucideUser,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
-    AuthModalComponent, SearchBarComponent, LocationSelectorComponent
+    AuthModalComponent, SearchBarComponent, LocationSelectorComponent, LucideLayoutDashboard
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',
@@ -38,6 +39,8 @@ export class HeaderComponent implements OnInit{
   private router = inject(Router);
   private wishlistService = inject(WishlistService);
   private cartService = inject(CartService);
+
+  readonly isManager = computed(() => this.auth.isManager());
 
   // Теперь счётчик берётся из сервиса
   readonly favoritesCount = computed(() => this.wishlistService.totalItems());

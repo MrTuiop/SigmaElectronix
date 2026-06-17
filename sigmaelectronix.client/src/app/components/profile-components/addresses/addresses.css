@@ -1,69 +1,333 @@
 /* ===== АДРЕСА ===== */
 .addresses-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
 }
 
 .address-card {
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
   padding: 20px;
-  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-in-out;
 }
 
   .address-card:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
+    border-color: #c4b5fd;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.08);
+    transform: translateY(-2px);
+  }
+
+  /* Выделение адреса по умолчанию */
+  .address-card.is-default {
+    border-color: var(--primary-color, #7c3aed);
+    background: rgba(124, 58, 237, 0.02);
   }
 
 .address-header {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.pin-icon {
-  color: var(--primary-color);
-  margin-top: 2px;
-}
-
-.address-title-group {
+.address-title-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.icon-box {
+  width: 36px;
+  height: 36px;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--primary-color, #7c3aed);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .address-title {
   font-weight: 700;
   font-size: 16px;
-  color: var(--text-main);
+  color: var(--text-main, #111827);
 }
 
 .default-badge {
-  background: var(--bg-color);
-  color: var(--primary-color);
+  background: var(--primary-color, #7c3aed);
+  color: #ffffff;
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
 }
 
-.address-text {
+.address-body {
+  margin-bottom: 20px;
+  flex: 1; /* Чтобы кнопки всегда были внизу, даже если текст разной длины */
+}
+
+.address-main-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-main, #111827);
+  margin: 0 0 6px 0;
+  line-height: 1.4;
+}
+
+.address-sub-text {
   font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
+  color: var(--text-muted, #6b7280);
+  margin: 0;
 }
 
+/* Кнопки действий */
 .address-actions {
   display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding-top: 16px;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.edit-btn {
+  color: var(--primary-color, #7c3aed);
+  background: rgba(124, 58, 237, 0.05);
+}
+
+  .edit-btn:hover {
+    background: rgba(124, 58, 237, 0.15);
+  }
+
+.delete-btn {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+  .delete-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+/* Состояние "Нет адресов" */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--bg-color, #f9fafb);
+  border: 1px dashed var(--border-color, #e5e7eb);
+  border-radius: 16px;
+  color: var(--text-muted, #6b7280);
+}
+
+  .empty-state svg {
+    color: #cbd5e1;
+    margin-bottom: 16px;
+  }
+
+  .empty-state p {
+    margin: 0 0 20px 0;
+    font-size: 15px;
+  }
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Сделал z-index больше, чтобы точно перекрыть всё */
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+  .icon-btn:hover {
+    background: #f3f4f6;
+    color: var(--text-main);
+  }
+
+/* ФОРМА В МОДАЛКЕ */
+.address-form {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  margin-top: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0; /* 🚀 ВАЖНО: Разрешаем колонке сжиматься */
+}
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap; /* Чтобы текст (например, "Квартира") не ломался */
+  }
+
+.form-input {
+  width: 100%; /* 🚀 Занимаем всю доступную ширину родителя */
+  min-width: 0; /* 🚀 Сбрасываем "вшитую" минимальную ширину инпута браузера */
+  box-sizing: border-box; /* Чтобы padding не увеличивал размер инпута */
+  /* Твои старые стили ниже: */
+  padding: 10px 14px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: #f9fafb;
+  transition: var(--transition);
+}
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #7c3aed);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  }
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+  .form-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color, #7c3aed);
+    cursor: pointer;
+  }
+
+  .form-checkbox label {
+    font-size: 14px;
+    color: var(--text-main);
+    cursor: pointer;
+  }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-secondary {
+  padding: 10px 18px;
+  background: white;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+  .btn-secondary:hover {
+    background: #f9fafb;
+  }
+
+.form-error-summary {
+  background: rgba(239, 68, 68, 0.05);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
   .addresses-grid {
     grid-template-columns: 1fr;
   }
+
+  /* 🚀 На телефонах разбиваем ряд на отдельные строки или делаем перенос */
+  .form-row {
+    flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку */
+  }
+
+    .form-row .form-group[style*="flex: 2"] {
+      flex: 1 1 100% !important; /* Улица занимает 100% ширины */
+    }
+
+    .form-row .form-group[style*="flex: 1"] {
+      flex: 1 1 calc(50% - 6px) !important; /* Дом и Квартира делят 50% / 50% */
+    }
 }

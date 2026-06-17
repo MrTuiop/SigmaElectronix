@@ -28,12 +28,11 @@ namespace SigmaElectronix.Server.Services
             await using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // === Определяем срок резерва ===
                 var reservationHours = dto.PaymentMethod switch
                 {
-                    PaymentMethod.InStore => 72,        // 3 дня
+                    PaymentMethod.InStore => 72,
                     PaymentMethod.CashOnDelivery => 72,
-                    PaymentMethod.Online => 0.25,       // 15 минут до оплаты
+                    PaymentMethod.Online => 0.25,
                     _ => 24
                 };
 
@@ -54,7 +53,6 @@ namespace SigmaElectronix.Server.Services
                     ReservationExpiresAt = DateTime.UtcNow.AddHours(reservationHours)
                 };
 
-                // Подгружаем товары и остатки
                 var productIds = dto.Items.Select(i => i.ProductId).ToList();
                 var products = await _db.Products
                     .Include(p => p.Images)
@@ -82,7 +80,6 @@ namespace SigmaElectronix.Server.Services
                     if (!stockByProduct.TryGetValue(product.Id, out var productInventories))
                         throw new InvalidOperationException($"Товар {product.Name} отсутствует на складах");
 
-                    // === ГЛАВНАЯ ЛОГИКА: приоритет магазина получения ===
                     var inventory = await FindAndReserveStockAsync(
                         productInventories, dto.StoreId, item.Quantity);
 
@@ -97,7 +94,7 @@ namespace SigmaElectronix.Server.Services
                     {
                         Order = order,
                         ProductId = item.ProductId,
-                        StoreId = inventory.StoreId, // Реальный источник товара
+                        StoreId = inventory.StoreId,
                         ProductName = product.Name,
                         ProductImageUrl = primaryImage?.Url,
                         UnitPrice = product.DiscountPrice ?? product.Price,
@@ -108,15 +105,50 @@ namespace SigmaElectronix.Server.Services
                     subtotal += orderItem.TotalPrice;
                 }
 
-                decimal discount = 0;
+                decimal promoDiscount = 0;
                 if (!string.IsNullOrWhiteSpace(dto.PromoCode))
-                    discount = await ApplyPromoCodeAsync(dto.PromoCode, subtotal);
+                    promoDiscount = await ApplyPromoCodeAsync(dto.PromoCode, subtotal);
 
-                order.DiscountAmount = discount;
-                order.TotalAmount = subtotal + dto.ShippingCost - discount;
+                // ===============================================
+                // РАСЧЕТ И ПРИМЕНЕНИЕ БОНУСОВ (Только списание)
+                // ===============================================
+                decimal bonusesSpent = 0;
+
+                if (userId != null && dto.BonusesToSpend > 0)
+                {
+                    var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                    if (user != null)
+                    {
+                        var maxBonuses = (subtotal - promoDiscount) * 0.3m;
+                        if (dto.BonusesToSpend > user.BonusBalance || dto.BonusesToSpend > maxBonuses)
+                            throw new InvalidOperationException("Некорректная сумма списания бонусов");
+
+                        bonusesSpent = dto.BonusesToSpend;
+                        user.BonusBalance -= bonusesSpent; // Списываем сразу (резервируем)
+                    }
+                }
+
+                order.DiscountAmount = promoDiscount + bonusesSpent;
+                order.TotalAmount = subtotal + dto.ShippingCost - promoDiscount - bonusesSpent;
 
                 _db.Orders.Add(order);
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(); // Сохраняем заказ, чтобы получить order.Id
+
+                // ЗАПИСЬ ТРАНЗАКЦИИ О СПИСАНИИ В ИСТОРИЮ
+                if (userId != null && bonusesSpent > 0)
+                {
+                    _db.Set<BonusTransaction>().Add(new BonusTransaction
+                    {
+                        UserId = userId,
+                        OrderId = order.Id,
+                        Amount = -bonusesSpent, // Отрицательное = списание
+                        Reason = "Списание для оплаты заказа",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    await _db.SaveChangesAsync();
+                }
+
+                // Завершаем транзакцию
                 await transaction.CommitAsync();
 
                 _logger.LogInformation("Создан заказ {OrderNumber} (метод: {Method}, резерв до: {Expiry})",
@@ -128,6 +160,52 @@ namespace SigmaElectronix.Server.Services
             {
                 await transaction.RollbackAsync();
                 throw;
+            }
+        }
+
+        public async Task AwardCashbackAsync(int orderId)
+        {
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+            if (order == null || string.IsNullOrEmpty(order.UserId)) return;
+
+            // Начисляем только если заказ реально оплачен
+            if (order.PaymentStatus != PaymentStatus.Paid) return;
+
+            // 1. Проверяем, не начисляли ли мы уже кэшбек (защита от двойного начисления)
+            bool alreadyAwarded = await _db.Set<BonusTransaction>()
+                .AnyAsync(bt => bt.OrderId == orderId && bt.Amount > 0 && bt.Reason == "Кэшбек за покупку");
+
+            if (alreadyAwarded) return;
+
+            // 2. Проверяем, не списывал ли юзер баллы в этом заказе (если списал - кэшбек не даем)
+            bool wasBonusesSpent = await _db.Set<BonusTransaction>()
+                .AnyAsync(bt => bt.OrderId == orderId && bt.Amount < 0);
+
+            if (wasBonusesSpent) return;
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == order.UserId);
+            if (user != null)
+            {
+                // Рассчитываем кэшбек: 5% от стоимости товаров (без учета стоимости доставки)
+                decimal baseAmount = order.TotalAmount - order.ShippingCost;
+                if (baseAmount > 0)
+                {
+                    decimal cashback = Math.Floor(baseAmount * 0.05m);
+
+                    user.BonusBalance += cashback;
+
+                    _db.Set<BonusTransaction>().Add(new BonusTransaction
+                    {
+                        UserId = user.Id,
+                        OrderId = order.Id,
+                        Amount = cashback, // Плюсовое = начисление
+                        Reason = "Кэшбек за покупку",
+                        CreatedAt = DateTime.UtcNow
+                    });
+
+                    await _db.SaveChangesAsync();
+                    _logger.LogInformation("Пользователю {UserId} начислен кэшбек {Amount} за заказ {OrderId}", user.Id, cashback, order.Id);
+                }
             }
         }
 
@@ -189,7 +267,7 @@ namespace SigmaElectronix.Server.Services
             await using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // Возвращаем товары в те же магазины
+                // 1. Возвращаем товары в те же магазины
                 foreach (var item in order.Items)
                 {
                     var inventory = await _db.Set<StoreInventory>()
@@ -201,6 +279,28 @@ namespace SigmaElectronix.Server.Services
                     {
                         inventory.Quantity += item.Quantity;
                         inventory.LastUpdated = DateTime.UtcNow;
+                    }
+                }
+
+                // 2. ОТМЕНА БОНУСОВ (возврат баланса)
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                var bonusTxs = await _db.Set<BonusTransaction>().Where(bt => bt.OrderId == order.Id).ToListAsync();
+
+                if (user != null && bonusTxs.Any())
+                {
+                    foreach (var tx in bonusTxs)
+                    {
+                        // Если списали -> возвращаем (+), если начислили -> забираем (-)
+                        user.BonusBalance -= tx.Amount;
+
+                        _db.Set<BonusTransaction>().Add(new BonusTransaction
+                        {
+                            UserId = userId,
+                            OrderId = order.Id,
+                            Amount = -tx.Amount, // Инвертируем значение транзакции
+                            Reason = "Отмена заказа",
+                            CreatedAt = DateTime.UtcNow
+                        });
                     }
                 }
 
@@ -241,10 +341,15 @@ namespace SigmaElectronix.Server.Services
             Id = o.Id,
             OrderNumber = o.OrderNumber,
             UserId = o.UserId,
+            StoreId = o.StoreId, // <-- Не забываем передать ID магазина (для самовывоза)
             TotalAmount = o.TotalAmount,
             ShippingCost = o.ShippingCost,
             DiscountAmount = o.DiscountAmount,
             Status = o.Status.ToString(),
+            PaymentStatus = o.PaymentStatus.ToString(), // <-- Добавили статус оплаты
+            PaymentMethod = o.PaymentMethod.ToString(), // <-- Добавили метод оплаты
+            PaidAt = o.PaidAt,                          // <-- Добавили дату оплаты
+            ReservationExpiresAt = o.ReservationExpiresAt,
             ShippingFullName = o.ShippingFullName,
             ShippingPhone = o.ShippingPhone,
             ShippingEmail = o.ShippingEmail,
@@ -255,6 +360,7 @@ namespace SigmaElectronix.Server.Services
             {
                 Id = i.Id,
                 ProductId = i.ProductId,
+                StoreId = i.StoreId,
                 ProductName = i.ProductName,
                 ProductImageUrl = i.ProductImageUrl,
                 Quantity = i.Quantity,
@@ -262,6 +368,7 @@ namespace SigmaElectronix.Server.Services
                 TotalPrice = i.TotalPrice
             }).ToList()
         };
+
         private async Task<StoreInventory?> FindAndReserveStockAsync(
     List<StoreInventory> inventories,
     int? preferredStoreId,
@@ -298,5 +405,6 @@ namespace SigmaElectronix.Server.Services
 
             return anyAvailable;
         }
+
     }
 }

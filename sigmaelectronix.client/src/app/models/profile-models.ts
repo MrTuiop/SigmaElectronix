@@ -28,13 +28,32 @@ export interface Order {
 }
 
 // ========== Адрес ==========
+// DTO для отправки на сервер
+export interface CreateUpdateAddressDto {
+  title: string;
+  cityId: number; // 👈 Меняем cityName: string на cityId: number
+  street: string;
+  building: string;
+  apartment?: string;
+  postalCode: string;
+  isDefault: boolean;
+  recipientName?: string;
+  recipientPhone?: string;
+}
+
+// Убедись, что твой интерфейс Address выглядит так:
 export interface Address {
   id: number;
   title: string;
-  city: string;
   street: string;
+  city: string;
   zip: string;
   isDefault: boolean;
+  // Поля для формы редактирования:
+  cityId: number;
+  originalStreet: string;
+  originalBuilding: string;
+  originalApartment?: string;
 }
 
 // ========== Бонусная транзакция (DTO с сервера) ==========

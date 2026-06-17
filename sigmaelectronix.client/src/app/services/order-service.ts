@@ -35,6 +35,12 @@ export class OrderService {
     );
   }
 
+  markAsPaidInStore(id: number): Observable<OrderDto> {
+    return this.http.post<OrderDto>(`${this.baseUrl}/${id}/pay-in-store`, {}, { withCredentials: true }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   // --- МЕТОДЫ ДЛЯ МЕНЕДЖЕРА ---
 
   // Получить все заказы магазина

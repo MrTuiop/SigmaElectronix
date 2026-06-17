@@ -25,15 +25,6 @@
       <svg lucideSearch size="18" class="search-icon"></svg>
       <input type="text" placeholder="Поиск по номеру или клиенту..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
     </div>
-
-    <div class="filter-box">
-      <select class="custom-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-        <option value="All">Все статусы</option>
-        @for (status of availableStatuses; track status) {
-        <option [value]="status">{{ translateStatus(status) }}</option>
-        }
-      </select>
-    </div>
   </div>
 
   <div class="table-container">
@@ -48,8 +39,8 @@
           <th>Клиент</th>
           <th>Дата</th>
           <th>Сумма</th>
-          <th>Статус оплаты</th>
-          <th>Статус заказа</th>
+          <th>Оплата</th>
+          <th>Статус</th>
           <th class="text-right">Действия</th>
         </tr>
       </thead>
@@ -72,7 +63,7 @@
             <span class="final-price">{{ order.totalAmount | number }} ₽</span>
           </td>
           <td>
-            <span class="badge" [class.badge-success]="order.paymentStatus === 'Paid'" [class.badge-warning]="order.paymentStatus === 'Pending'">
+            <span class="badge" [class.badge-success]="order.paymentStatus === 'Paid'" [class.badge-warning]="order.paymentStatus === 'Pending'" [class.badge-danger]="order.paymentStatus === 'Failed'">
               {{ translatePaymentStatus(order.paymentStatus) }}
             </span>
           </td>
@@ -150,7 +141,7 @@
           </div>
           @if (selectedOrder()!.discountAmount > 0) {
           <div class="total-row discount">
-            <span>Скидка:</span>
+            <span>Скидка (баллы/промо):</span>
             <span>- {{ selectedOrder()!.discountAmount | number }} ₽</span>
           </div>
           }
@@ -181,7 +172,15 @@
             <svg lucideTruck size="18"></svg> Доставка
           </div>
           <div class="info-card-body">
-            <p>Адрес:</p>
+            @if (selectedOrder()!.paymentMethod === 'InStore') {
+            <p>Тип доставки: <strong style="color: #7c3aed;">Самовывоз</strong></p>
+            @if (selectedOrder()!.storeId) {
+            <p>Магазин ID: <strong>{{ selectedOrder()!.storeId }}</strong></p>
+            }
+            } @else {
+            <p>Тип доставки: <strong>Курьером до двери</strong></p>
+            }
+            <p class="mt-2 text-muted">Адрес доставки:</p>
             <p><strong>{{ selectedOrder()!.shippingAddress }}</strong></p>
           </div>
         </div>
@@ -193,16 +192,25 @@
           <div class="info-card-body">
             <div class="payment-flex">
               <span>Метод:</span>
-              <strong>{{ selectedOrder()!.paymentMethod }}</strong>
+              <strong>{{ translatePaymentMethod(selectedOrder()!.paymentMethod) }}</strong>
             </div>
             <div class="payment-flex mt-2">
               <span>Статус:</span>
-              <span class="badge" [class.badge-success]="selectedOrder()!.paymentStatus === 'Paid'" [class.badge-warning]="selectedOrder()!.paymentStatus === 'Pending'">
+              <span class="badge" [class.badge-success]="selectedOrder()!.paymentStatus === 'Paid'" [class.badge-warning]="selectedOrder()!.paymentStatus === 'Pending'" [class.badge-danger]="selectedOrder()!.paymentStatus === 'Failed'">
                 {{ translatePaymentStatus(selectedOrder()!.paymentStatus) }}
               </span>
             </div>
             @if (selectedOrder()!.paidAt) {
             <p class="mt-2 text-muted">Оплачено: {{ selectedOrder()!.paidAt | date:'dd.MM.yyyy HH:mm' }}</p>
+            }
+
+            @if (selectedOrder()!.paymentStatus === 'Pending' && (selectedOrder()!.paymentMethod === 'InStore' || selectedOrder()!.paymentMethod === 'CashOnDelivery')) {
+            <div class="payment-action-wrapper">
+              <button class="btn-confirm-payment" (click)="confirmInStorePayment()">
+                <svg lucideBanknote size="18" strokeWidth="1.5"></svg>
+                Подтвердить оплату
+              </button>
+            </div>
             }
           </div>
         </div>
@@ -212,3 +220,24 @@
   </div>
   }
 </div>
+
+@if (showPaymentModal()) {
+<app-confirm-modal title="Подтверждение оплаты"
+                   [message]="'Вы подтверждаете получение оплаты (наличными или картой на кассе) за заказ ' + selectedOrder()?.orderNumber + '?'"
+                   confirmText="Оплачено"
+                   cancelText="Отмена"
+                   [isDestructive]="false"
+                   (confirm)="processPayment()"
+                   (cancel)="cancelPayment()">
+</app-confirm-modal>
+}
+
+@if (showStatusModal() && pendingStatusChange()) {
+<app-confirm-modal title="Изменение статуса заказа"
+                   [message]="'Изменить статус заказа ' + selectedOrder()?.orderNumber + ' на «' + translateStatus(pendingStatusChange()!) + '»?'"
+                   confirmText="Применить статус"
+                   cancelText="Отмена"
+                   [isDestructive]="false"
+                   (confirm)="confirmStatusChange()"
+                   (cancel)="cancelStatusChange()"></app-confirm-modal>
+}

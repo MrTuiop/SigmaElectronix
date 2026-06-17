@@ -18,7 +18,8 @@ import {
   LucideGlobe,
   LucideTruck,
   LucideTicket,
-  LucideBoxes
+  LucideBoxes,
+  LucideShield
 } from '@lucide/angular';
 
 @Component({
@@ -41,7 +42,8 @@ import {
     LucideGlobe,
     LucideTicket, // <-- Купоны
     LucideTruck,  // <-- Поступления/перемещения
-    LucideBoxes
+    LucideBoxes,
+    LucideShield
   ],
   templateUrl: './manager.html',
   styleUrl: './manager.css'
@@ -49,6 +51,10 @@ import {
 export class ManagerPage {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
+
+  isAdmin = computed(() => {
+    return this.authService.isAdmin();
+  });
 
   isSidebarCollapsed = signal(false);
 

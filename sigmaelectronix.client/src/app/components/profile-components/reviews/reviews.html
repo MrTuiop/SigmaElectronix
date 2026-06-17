@@ -1,11 +1,28 @@
 <div class="content-card fade-in">
   <h2>Мои отзывы</h2>
-  @for (review of data.reviews(); track review.product) {
+
+  @if (isLoading()) {
+  <p class="loading-text">Загрузка отзывов...</p>
+  } @else if (reviews().length === 0) {
+  <div class="no-reviews">
+    <p>У вас пока нет отзывов.</p>
+  </div>
+  } @else {
+  @for (review of reviews(); track review.id) {
   <div class="review-item">
     <div class="review-header">
-      <span class="review-product">{{ review.product }}</span>
-      <span class="review-date">{{ review.date }}</span>
+
+      @if (review.productSlug) {
+      <a [routerLink]="['/products', review.productSlug]" class="review-product-link">
+        {{ review.productName }}
+      </a>
+      } @else {
+      <span class="review-product">{{ review.productName }}</span>
+      }
+
+      <span class="review-date">{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
     </div>
+
     <div class="rating-row">
       @for (star of [1,2,3,4,5]; track star) {
       <svg lucideStar
@@ -15,7 +32,27 @@
            [class.empty-star]="star > review.rating"></svg>
       }
     </div>
-    <p class="review-text">{{ review.text }}</p>
+
+    <p class="review-text">{{ review.comment }}</p>
+
+    <div class="review-reactions">
+      <div class="reaction" title="Пользователи считают отзыв полезным">
+        <svg lucideThumbsUp [size]="16"></svg>
+        <span>{{ review.likesCount || 0 }}</span>
+      </div>
+      <div class="reaction" title="Пользователи не согласны с отзывом">
+        <svg lucideThumbsDown [size]="16"></svg>
+        <span>{{ review.dislikesCount || 0 }}</span>
+      </div>
+    </div>
+
+    @if (review.adminResponse) {
+    <div class="admin-response">
+      <strong>Ответ магазина:</strong>
+      <p>{{ review.adminResponse }}</p>
+    </div>
+    }
   </div>
+  }
   }
 </div>

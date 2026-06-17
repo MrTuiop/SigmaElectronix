@@ -470,3 +470,47 @@
   color: #9ca3af;
   font-size: 12px;
 }
+
+/* === КНОПКА ПОДТВЕРЖДЕНИЯ ОПЛАТЫ === */
+.payment-action-wrapper {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.btn-confirm-payment {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+  .btn-confirm-payment:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .btn-confirm-payment:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  }
+
+  .btn-confirm-payment svg {
+    transition: transform 0.3s ease;
+  }
+
+  .btn-confirm-payment:hover svg {
+    transform: scale(1.1) rotate(-5deg);
+  }

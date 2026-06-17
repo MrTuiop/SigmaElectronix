@@ -20,6 +20,7 @@ export interface CreateOrderDto {
   storeId?: number | null;
   paymentMethod: PaymentMethod;
   items: CreateOrderItemDto[];
+  bonusesToSpend?: number;
 }
 
 export interface OrderItemDto {

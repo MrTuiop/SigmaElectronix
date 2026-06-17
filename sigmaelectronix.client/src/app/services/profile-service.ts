@@ -17,7 +17,8 @@ import {
   UpdateAvatarRequest,
   UpdatePreferredCityRequest,
   UpdatePreferredStoreRequest,
-  UpdateUsernameRequest
+  UpdateUsernameRequest,
+  CreateUpdateAddressDto
 } from '../models/profile-models';
 
 @Injectable({ providedIn: 'root' })
@@ -71,13 +72,52 @@ export class ProfileService {
     );
   }
 
-  // ===== Загрузка адресов =====
+  /// ===== Загрузка адресов =====
   loadAddresses(): Observable<Address[]> {
-    return this.http.get<Address[]>(`${this.baseUrl}/addresses`).pipe(
+    return this.http.get<Address[]>('/api/addresses').pipe( // <-- Изменили URL
       tap(addresses => this.addresses.set(addresses)),
       catchError(error => {
         console.error('Ошибка загрузки адресов', error);
         return throwError(() => error);
+      })
+    );
+  }
+
+  // ===== Создание адреса =====
+  createAddress(dto: CreateUpdateAddressDto): Observable<Address> {
+    return this.http.post<Address>('/api/addresses', dto).pipe( // <-- Изменили URL
+      tap(newAddress => {
+        this.addresses.update(addrs => {
+          let current = [...addrs];
+          if (newAddress.isDefault) {
+            current = current.map(a => ({ ...a, isDefault: false }));
+          }
+          return [newAddress, ...current];
+        });
+      })
+    );
+  }
+
+  // ===== Обновление адреса =====
+  updateAddress(id: number, dto: CreateUpdateAddressDto): Observable<Address> {
+    return this.http.put<Address>(`/api/addresses/${id}`, dto).pipe( // <-- Изменили URL
+      tap(updatedAddress => {
+        this.addresses.update(addrs => {
+          let current = [...addrs];
+          if (updatedAddress.isDefault) {
+            current = current.map(a => ({ ...a, isDefault: false }));
+          }
+          return current.map(a => a.id === id ? updatedAddress : a);
+        });
+      })
+    );
+  }
+
+  // ===== Удаление адреса =====
+  deleteAddress(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/addresses/${id}`).pipe( // <-- Изменили URL
+      tap(() => {
+        this.addresses.update(addrs => addrs.filter(a => a.id !== id));
       })
     );
   }

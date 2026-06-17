@@ -9,23 +9,107 @@
 
   <div class="addresses-grid">
     @for (addr of data.addresses(); track addr.id) {
-    <div class="address-card">
+    <div class="address-card" [class.is-default]="addr.isDefault">
       <div class="address-header">
-        <svg lucideMapPin size="20" strokeWidth="2" class="pin-icon"></svg>
-        <div class="address-title-group">
+        <div class="address-title-wrapper">
+          <div class="icon-box">
+            <svg lucideMapPin size="18" strokeWidth="2.5"></svg>
+          </div>
           <span class="address-title">{{ addr.title }}</span>
-          @if (addr.isDefault) {
-          <span class="default-badge">По умолчанию</span>
-          }
         </div>
+
+        @if (addr.isDefault) {
+        <span class="default-badge">По умолчанию</span>
+        }
       </div>
-      <p class="address-text">{{ addr.street }}</p>
-      <p class="address-text">{{ addr.city }}, {{ addr.zip }}</p>
+
+      <div class="address-body">
+        <p class="address-main-text">{{ addr.street }}</p>
+        <p class="address-sub-text">{{ addr.city }}, {{ addr.zip }}</p>
+      </div>
+
       <div class="address-actions">
-        <button class="text-btn" (click)="editAddress(addr.id)">Изменить</button>
-        <button class="text-btn text-btn-danger" (click)="deleteAddress(addr.id)">Удалить</button>
+        <button class="action-btn edit-btn" (click)="editAddress(addr.id)">Изменить</button>
+        <button class="action-btn delete-btn" (click)="deleteAddress(addr.id)">Удалить</button>
       </div>
+    </div>
+    }
+
+    @if (data.addresses().length === 0) {
+    <div class="empty-state">
+      <svg lucideMapPin size="48" strokeWidth="1.5"></svg>
+      <p>У вас пока нет сохраненных адресов.</p>
+      <button class="btn-primary btn-sm" (click)="addAddress()">Добавить первый адрес</button>
     </div>
     }
   </div>
 </div>
+
+@if (showModal()) {
+<div class="modal-overlay fade-in" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ isEditing() ? 'Редактировать адрес' : 'Добавить адрес' }}</h3>
+      <button class="icon-btn" (click)="closeModal()">
+        <svg lucideX size="20"></svg>
+      </button>
+    </div>
+
+    <form [formGroup]="addressForm" (ngSubmit)="saveAddress()" class="address-form">
+      <div class="form-group">
+        <label>Название (например, "Дом" или "Работа")</label>
+        <input type="text" formControlName="title" class="form-input" placeholder="Дом">
+      </div>
+
+      <div class="form-group">
+        <label>Город</label>
+        <select formControlName="cityId" class="form-input">
+          <option [ngValue]="null" disabled selected>Выберите город</option>
+
+          @for (city of cities(); track city.id) {
+          <option [value]="city.id">{{ city.name }}</option>
+          }
+        </select>
+      </div>
+
+      @if (errorMessage()) {
+      <div class="form-error-summary">
+        {{ errorMessage() }}
+      </div>
+      }
+
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label>Улица</label>
+          <input type="text" formControlName="street" class="form-input" placeholder="ул. Ленина">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Дом</label>
+          <input type="text" formControlName="building" class="form-input" placeholder="10А">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Квартира</label>
+          <input type="text" formControlName="apartment" class="form-input" placeholder="42">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Почтовый индекс</label>
+        <input type="text" formControlName="postalCode" class="form-input" placeholder="123456">
+      </div>
+
+      <div class="form-checkbox">
+        <input type="checkbox" id="isDefault" formControlName="isDefault">
+        <label for="isDefault">Сделать адресом по умолчанию</label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Отмена</button>
+        <button type="submit" class="btn-primary" [disabled]="addressForm.invalid">
+          Сохранить
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

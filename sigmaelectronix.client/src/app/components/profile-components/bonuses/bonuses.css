@@ -60,5 +60,15 @@
 
 .entry-amount {
   font-weight: 700;
-  color: #10b981;
+  /* Убрали жесткий зеленый цвет отсюда */
 }
+
+  /* Зеленый для начисления (+) */
+  .entry-amount.positive {
+    color: #10b981;
+  }
+
+  /* Красный для списания (-) */
+  .entry-amount.negative {
+    color: #ef4444;
+  }

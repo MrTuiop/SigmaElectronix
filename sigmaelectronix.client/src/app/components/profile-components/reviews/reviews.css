@@ -1,33 +1,160 @@
-/* ===== ОТЗЫВЫ ===== */
-.review-item {
-  border-bottom: 1px solid var(--border-color);
-  padding: 16px 0;
+/* ===== КОНТЕЙНЕР ===== */
+.content-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-sm, 0 4px 6px -1px rgba(0, 0, 0, 0.05));
 }
 
+  .content-card h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+
+/* ===== СПИСОК ОТЗЫВОВ ===== */
+.review-item {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Автоматически делает красивые отступы между всеми строками */
+}
+
+  /* Убираем отступ сверху у первого и полоску снизу у последнего */
+  .review-item:first-of-type {
+    padding-top: 0;
+  }
+
   .review-item:last-child {
+    padding-bottom: 0;
     border-bottom: none;
   }
 
+/* ===== ШАПКА ОТЗЫВА (Название товара и Дата) ===== */
 .review-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .review-product {
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-main);
+  line-height: 1.4;
 }
 
 .review-date {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
+  white-space: nowrap; /* Чтобы дата не переносилась по словам */
 }
 
-.review-text {
-  font-size: 14px;
-  color: var(--text-main);
-  margin-top: 8px;
-  line-height: 1.5;
+/* ===== РЕЙТИНГ (Звезды) ===== */
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+
+/* Красивый золотой цвет для заполненных звезд */
+.filled-star {
+  color: #f59e0b;
+  fill: #f59e0b;
+}
+
+/* Светло-серый цвет для пустых звезд */
+.empty-star {
+  color: #e5e7eb;
+  fill: transparent;
+}
+
+/* ===== ТЕКСТ ОТЗЫВА ===== */
+.review-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* ===== ОТВЕТ МАГАЗИНА ===== */
+.admin-response {
+  margin-top: 8px;
+  padding: 16px;
+  background-color: var(--bg-color, #f8fafc);
+  border-radius: 12px;
+  border-left: 4px solid var(--primary-color);
+}
+
+  .admin-response strong {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    color: var(--primary-color);
+    font-weight: 800;
+  }
+
+  .admin-response p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-main);
+  }
+
+/* ===== СОСТОЯНИЯ ЗАГРУЗКИ / ПУСТО ===== */
+.loading-text, .no-reviews {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 15px;
+  background: var(--bg-color, #f8fafc);
+  border-radius: 12px;
+  border: 1px dashed var(--border-color, #e5e7eb);
+}
+
+/* ===== РЕАКЦИИ НА ОТЗЫВ (Лайки / Дизлайки) ===== */
+.review-reactions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px; /* Легкий отступ от текста отзыва */
+}
+
+.reaction {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted, #6b7280); /* Серый, нейтральный цвет */
+  font-size: 13px;
+  font-weight: 500;
+  user-select: none; /* Чтобы текст случайно не выделялся */
+}
+
+  .reaction svg {
+    color: var(--text-muted, #6b7280);
+    stroke-width: 2px;
+  }
+
+/* ===== ССЫЛКА НА ТОВАР ===== */
+.review-product-link {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-decoration: none; /* Убираем стандартное подчеркивание синей ссылки */
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.2s ease; /* Плавный переход цвета */
+}
+
+  /* Эффект при наведении мыши */
+  .review-product-link:hover {
+    color: var(--primary-color, #7c3aed); /* Меняем цвет на акцентный из твоих переменных */
+    text-decoration: underline; /* Красивое подчеркивание при наведении */
+  }

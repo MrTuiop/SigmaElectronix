@@ -13,6 +13,7 @@ namespace SigmaElectronix.Server.DTOs.OrderDTOs
         public string? PromoCode { get; set; }
         public int? StoreId { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
+        public decimal BonusesToSpend { get; set; }
         public List<CreateOrderItemDto> Items { get; set; } = new();
     }
 }

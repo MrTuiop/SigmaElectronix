@@ -8,6 +8,8 @@ namespace SigmaElectronix.Server.Entities.UserModels
         public string UserId { get; set; } = string.Empty;
         public ApplicationUser User { get; set; } = null!;
 
+        public string Title { get; set; } = string.Empty;
+
         // Ссылка на справочник городов
         public int CityId { get; set; }
         public City City { get; set; } = null!;
@@ -17,7 +19,7 @@ namespace SigmaElectronix.Server.Entities.UserModels
         public string? Apartment { get; set; }
         public string PostalCode { get; set; } = string.Empty;
 
-        // Для карты
+        // Для картыф
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
 

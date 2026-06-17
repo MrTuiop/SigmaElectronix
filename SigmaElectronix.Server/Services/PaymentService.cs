@@ -83,36 +83,42 @@ namespace SigmaElectronix.Server.Services
         /// <summary>
         /// Пометка, что заказ оплачен в магазине (кассир нажимает кнопку)
         /// </summary>
-        public async Task<OrderDto> MarkAsPaidInStoreAsync(int orderId, string userId)
+        public async Task<OrderDto> MarkAsPaidInStoreAsync(int orderId, string managerId)
         {
+            // УБРАЛИ жесткую привязку && o.UserId == userId, так как оплату подтверждает менеджер
             var order = await _db.Orders
                 .Include(o => o.Items)
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+                .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
                 throw new InvalidOperationException("Заказ не найден");
 
-            // ✅ Идемпотентность и тут — кассир мог случайно нажать дважды
             if (order.PaymentStatus == PaymentStatus.Paid)
             {
-                _logger.LogWarning(
-                    "Повторная пометка оплаты в магазине для уже оплаченного заказа {OrderNumber}",
-                    order.OrderNumber);
+                _logger.LogWarning("Повторная пометка оплаты в магазине для уже оплаченного заказа {OrderNumber}", order.OrderNumber);
                 return MapToDto(order);
             }
 
-            if (order.PaymentMethod != PaymentMethod.InStore &&
-                order.PaymentMethod != PaymentMethod.CashOnDelivery)
-                throw new InvalidOperationException("Этот заказ нельзя оплатить в магазине");
+            if (order.PaymentMethod != PaymentMethod.InStore && order.PaymentMethod != PaymentMethod.CashOnDelivery)
+                throw new InvalidOperationException("Этот заказ нельзя оплатить при получении");
 
+            // Генерируем чек (Reference)
             order.PaymentReference = $"STORE-{DateTime.UtcNow:yyyyMMddHHmmss}";
             order.PaymentStatus = PaymentStatus.Paid;
             order.PaidAt = DateTime.UtcNow;
-            order.Status = OrderStatus.Confirmed;
+
+            // Если заказ был в сборке/ожидании, подтверждаем его
+            if (order.Status == OrderStatus.Pending)
+            {
+                order.Status = OrderStatus.Confirmed;
+            }
+
             order.UpdatedAt = DateTime.UtcNow;
             order.ReservationExpiresAt = null;
 
             await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Менеджер {ManagerId} подтвердил оплату заказа {OrderNumber}", managerId, order.OrderNumber);
 
             return MapToDto(order);
         }

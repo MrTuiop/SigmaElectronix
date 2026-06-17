@@ -153,7 +153,12 @@ namespace SigmaElectronix.Server.Controllers
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized();
 
+                // 1. Оплачиваем заказ (PaymentService переведет статус в Paid)
                 var order = await _paymentService.ProcessPaymentAsync(id, userId);
+
+                // 2. 🚀 ТРИГГЕРИМ НАЧИСЛЕНИЕ БОНУСОВ!
+                await _orderService.AwardCashbackAsync(id);
+
                 return Ok(order);
             }
             catch (InvalidOperationException ex)
@@ -167,19 +172,20 @@ namespace SigmaElectronix.Server.Controllers
         // ============================================
         [HttpPost("{id:int}/pay-in-store")]
         [Authorize(Roles = "Admin")]
-        [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PayInStore(int id)
         {
             try
             {
-                // Даже у админа должен быть userId (для аудита)
                 var userId = GetCurrentUserId();
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized();
 
+                // 1. Менеджер подтверждает оплату в магазине
                 var order = await _paymentService.MarkAsPaidInStoreAsync(id, userId);
+
+                // 2. 🚀 ТРИГГЕРИМ НАЧИСЛЕНИЕ БОНУСОВ!
+                await _orderService.AwardCashbackAsync(id);
+
                 return Ok(order);
             }
             catch (InvalidOperationException ex)

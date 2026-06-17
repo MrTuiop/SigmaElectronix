@@ -16,7 +16,9 @@
         {{ entry.reason }}
         @if (entry.orderNumber) { (заказ №{{ entry.orderNumber }}) }
       </span>
-      <span class="entry-amount" [class.positive]="entry.amount > 0">
+      <span class="entry-amount"
+            [class.positive]="entry.amount > 0"
+            [class.negative]="entry.amount < 0">
         {{ entry.amount > 0 ? '+' : '' }}{{ entry.amount }}
       </span>
     </div>
