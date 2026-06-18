@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CityDto, CreateUpdateCityDto, RegionDto } from '../../../models/location-models';
 import {
   LucideMap, LucidePlus, LucideEdit2, LucideTrash2,
-  LucideCheck, LucideSearch, LucideGlobe
+  LucideCheck, LucideSearch, LucideGlobe, LucideChevronDown // <-- Добавили иконку стрелочки
 } from '@lucide/angular';
-import { SpinnerComponent } from '../../ui-components/spinner/spinner'; // Проверь путь
+import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 import { RegionService } from '../../../services/region-service';
 import { CityService } from '../../../services/city-service';
+import { ToastService } from '../../../services/toast'; // <-- Подключили сервис уведомлений
 
 @Component({
   selector: 'app-manager-cities',
@@ -17,7 +18,7 @@ import { CityService } from '../../../services/city-service';
     CommonModule,
     ReactiveFormsModule,
     LucideMap, LucidePlus, LucideEdit2, LucideTrash2,
-    LucideCheck, LucideSearch, LucideGlobe,
+    LucideCheck, LucideSearch, LucideGlobe, LucideChevronDown, // <-- Не забываем провайдить
     SpinnerComponent
   ],
   templateUrl: './manager-cities.html',
@@ -25,8 +26,9 @@ import { CityService } from '../../../services/city-service';
 })
 export class ManagerCitiesComponent implements OnInit {
   private cityService = inject(CityService);
-  private regionService = inject(RegionService); // Нужен для выпадающего списка регионов
+  private regionService = inject(RegionService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService); // <-- Инжектим сервис
 
   // Состояния
   cities = signal<CityDto[]>([]);
@@ -40,7 +42,12 @@ export class ManagerCitiesComponent implements OnInit {
 
   cityForm!: FormGroup;
 
-  // Умный локальный поиск
+  // --- Состояния для Умного поиска регионов ---
+  regionSearch = signal('');
+  isRegionDropdownOpen = signal(false);
+  selectedRegionDisplay = signal('');
+
+  // Умный локальный поиск городов в таблице
   filteredCities = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const all = this.cities();
@@ -50,6 +57,13 @@ export class ManagerCitiesComponent implements OnInit {
       c.name.toLowerCase().includes(query) ||
       c.regionName.toLowerCase().includes(query)
     );
+  });
+
+  // Умная фильтрация регионов в выпадающем списке
+  filteredRegions = computed(() => {
+    const search = this.regionSearch().toLowerCase().trim();
+    if (!search) return this.regions();
+    return this.regions().filter(r => r.name.toLowerCase().includes(search));
   });
 
   ngOnInit(): void {
@@ -70,7 +84,7 @@ export class ManagerCitiesComponent implements OnInit {
   loadData(): void {
     this.loading.set(true);
 
-    // Загружаем и города, и регионы одновременно
+    // Загружаем регионы для селекта
     this.regionService.getAll().subscribe(res => this.regions.set(res));
 
     this.cityService.getAll().subscribe({
@@ -78,7 +92,10 @@ export class ManagerCitiesComponent implements OnInit {
         this.cities.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.toastService.error('Не удалось загрузить города');
+        this.loading.set(false);
+      }
     });
   }
 
@@ -86,11 +103,34 @@ export class ManagerCitiesComponent implements OnInit {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
+  // --- Управление умным селектом Регионов ---
+  openRegionSearch(): void {
+    this.isRegionDropdownOpen.set(true);
+    this.regionSearch.set('');
+  }
+
+  closeRegionSearch(): void {
+    setTimeout(() => this.isRegionDropdownOpen.set(false), 200);
+  }
+
+  onRegionSearch(event: Event): void {
+    this.regionSearch.set((event.target as HTMLInputElement).value);
+    this.isRegionDropdownOpen.set(true);
+  }
+
+  selectRegion(id: number, name: string): void {
+    this.cityForm.patchValue({ regionId: id });
+    this.selectedRegionDisplay.set(name);
+    this.isRegionDropdownOpen.set(false);
+    this.cityForm.get('regionId')?.updateValueAndValidity();
+  }
+
   // --- Навигация ---
   openCreateMode(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
     this.cityForm.reset({ latitude: 0, longitude: 0, timeZone: 'Europe/Moscow' });
+    this.selectedRegionDisplay.set(''); // Очищаем название региона
     this.viewMode.set('form');
   }
 
@@ -111,6 +151,8 @@ export class ManagerCitiesComponent implements OnInit {
       timeZone: city.timeZone
     });
 
+    this.selectedRegionDisplay.set(city.regionName || ''); // Восстанавливаем показ региона
+
     this.viewMode.set('form');
   }
 
@@ -118,28 +160,35 @@ export class ManagerCitiesComponent implements OnInit {
   saveCity(): void {
     if (this.cityForm.invalid) {
       this.cityForm.markAllAsTouched();
+      this.toastService.error('Пожалуйста, заполните все обязательные поля корректно.');
       return;
     }
 
     this.loading.set(true);
     const payload: CreateUpdateCityDto = {
       ...this.cityForm.value,
-      regionId: Number(this.cityForm.value.regionId) // Убеждаемся, что это число
+      regionId: Number(this.cityForm.value.regionId)
     };
 
     if (this.isEditing() && this.editingId()) {
       this.cityService.update(this.editingId()!, payload).subscribe({
-        next: () => this.onSaveSuccess(),
+        next: () => {
+          this.toastService.success('Город успешно обновлен');
+          this.onSaveSuccess();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Ошибка при обновлении города');
+          this.toastService.error(err.error?.message || 'Ошибка при обновлении города');
           this.loading.set(false);
         }
       });
     } else {
       this.cityService.create(payload).subscribe({
-        next: () => this.onSaveSuccess(),
+        next: () => {
+          this.toastService.success('Город успешно добавлен');
+          this.onSaveSuccess();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Ошибка при создании города');
+          this.toastService.error(err.error?.message || 'Ошибка при создании города');
           this.loading.set(false);
         }
       });
@@ -156,9 +205,12 @@ export class ManagerCitiesComponent implements OnInit {
     if (confirm(`Удалить город "${name}"?\nЭто действие нельзя отменить.`)) {
       this.loading.set(true);
       this.cityService.delete(id).subscribe({
-        next: () => this.loadData(),
+        next: () => {
+          this.toastService.success(`Город "${name}" успешно удален`);
+          this.loadData();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Невозможно удалить город. Возможно, к нему привязаны магазины или пользователи.');
+          this.toastService.error(err.error?.message || 'Невозможно удалить город. Возможно, к нему привязаны магазины или адреса.');
           this.loading.set(false);
         }
       });

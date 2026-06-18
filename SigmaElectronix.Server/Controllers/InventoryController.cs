@@ -23,7 +23,7 @@ namespace SigmaElectronix.Server.Controllers
             try
             {
                 await _inventoryService.ReceiveStockAsync(dto);
-                return Ok(new { message = "Товар успешно оприходован на склад." });
+                return Ok(new { message = "Товар успешно принят на склад." });
             }
             catch (Exception ex)
             {
@@ -41,6 +41,21 @@ namespace SigmaElectronix.Server.Controllers
             }
             catch (Exception ex)
             {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("write-off")]
+        public async Task<IActionResult> WriteOffStock([FromBody] WriteOffStockDto dto)
+        {
+            try
+            {
+                await _inventoryService.WriteOffStockAsync(dto);
+                return Ok(new { message = "Товар успешно списан со склада." });
+            }
+            catch (Exception ex)
+            {
+                // Вернет 400 Bad Request с текстом твоей ошибки из сервиса (например, "Недостаточно товара...")
                 return BadRequest(new { message = ex.Message });
             }
         }

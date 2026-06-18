@@ -28,15 +28,32 @@
     @if (viewMode() === 'store') {
     <div class="filter-group">
       <label>Выберите точку продаж:</label>
-      <div class="select-wrapper">
-        <select [(ngModel)]="selectedStoreId" (change)="loadData()">
-          <option [ngValue]="null" disabled>-- Выберите склад --</option>
-          @for (store of availableStores(); track store.id) {
-          <option [ngValue]="store.id">
-            {{ store.name }} ({{ store.cityName }})
-          </option>
+      <div class="custom-search-select" (click)="openStoreSearch()">
+        <input type="text"
+               [value]="isStoreDropdownOpen() ? storeSearch() : selectedStoreDisplay()"
+               (input)="storeSearch.set($any($event.target).value)"
+               (blur)="closeStoreSearch()"
+               placeholder="Поиск магазина или города..."
+               class="search-input" autocomplete="off">
+        <svg lucideChevronDown size="16" class="select-icon"></svg>
+
+        @if (isStoreDropdownOpen()) {
+        <div class="dropdown-options animate-fade">
+          @for (region of filteredGroupedStores(); track region.regionName) {
+          <div class="region-label">{{ region.regionName }}</div>
+          @for (city of region.cities; track city.cityName) {
+          <div class="city-label">{{ city.cityName }}</div>
+          @for (store of city.stores; track store.id) {
+          <div class="option-item store-item" (mousedown)="selectStore(store)">
+            <svg lucideStore size="14" class="mr-2 text-gray"></svg> {{ store.name }}
+          </div>
           }
-        </select>
+          }
+          } @empty {
+          <div class="empty-option">Магазины не найдены</div>
+          }
+        </div>
+        }
       </div>
     </div>
     }
@@ -44,13 +61,29 @@
     @if (viewMode() === 'product') {
     <div class="filter-group">
       <label>Выберите товар:</label>
-      <div class="select-wrapper">
-        <select [(ngModel)]="selectedProductId" (change)="loadData()">
-          <option [ngValue]="null" disabled>-- Выберите товар --</option>
-          @for (product of availableProducts(); track product.id) {
-          <option [ngValue]="product.id">[{{ product.id }}] {{ product.name }}</option>
+      <div class="custom-search-select" (click)="openProductSearch()">
+        <input type="text"
+               [value]="isProductDropdownOpen() ? productSearch() : selectedProductDisplay()"
+               (input)="productSearch.set($any($event.target).value)"
+               (blur)="closeProductSearch()"
+               placeholder="Поиск товара или категории..."
+               class="search-input" autocomplete="off">
+        <svg lucideChevronDown size="16" class="select-icon"></svg>
+
+        @if (isProductDropdownOpen()) {
+        <div class="dropdown-options animate-fade">
+          @for (group of filteredGroupedProducts(); track group.categoryName) {
+          <div class="optgroup-label">{{ group.categoryName }}</div>
+          @for (product of group.products; track product.id) {
+          <div class="option-item" (mousedown)="selectProduct(product)">
+            <svg lucidePackage size="14" class="mr-2 text-gray"></svg> {{ product.name }}
+          </div>
           }
-        </select>
+          } @empty {
+          <div class="empty-option">Товары не найдены</div>
+          }
+        </div>
+        }
       </div>
     </div>
     }
@@ -160,8 +193,12 @@
           </div>
 
           <div class="tx-icon" [style.color]="formatTransactionType(tx.transactionType).color">
-            @if (tx.quantityChange > 0) {
-            <svg lucideCheckCircle2 size="20"></svg>
+            @if (tx.transactionType === 'Sale') {
+            <svg lucideShoppingBag size="20"></svg>
+            } @else if (tx.transactionType === 'TransferOut' || tx.transactionType === 'TransferIn') {
+            <svg lucideTruck size="20"></svg>
+            } @else if (tx.quantityChange > 0) {
+            <svg lucideArrowDownToLine size="20"></svg>
             } @else {
             <svg lucideAlertCircle size="20"></svg>
             }
@@ -172,7 +209,15 @@
               {{ formatTransactionType(tx.transactionType).label }}
             </span>
             @if (tx.referenceId) {
-            <span class="tx-ref">Док: {{ tx.referenceId }}</span>
+            <span class="tx-ref">
+              @if (tx.transactionType === 'Sale') {
+              Заказ №{{ tx.referenceId }}
+              } @else if (tx.transactionType === 'TransferOut' || tx.transactionType === 'TransferIn') {
+              Накладная: {{ tx.referenceId }}
+              } @else {
+              Док: {{ tx.referenceId }}
+              }
+            </span>
             }
           </div>
 

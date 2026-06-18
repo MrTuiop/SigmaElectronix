@@ -123,5 +123,30 @@ namespace SigmaElectronix.Server.Services
                 throw new InvalidOperationException("Состояние склада изменилось. Пожалуйста, обновите страницу и попробуйте снова.");
             }
         }
+
+        public async Task<bool> WriteOffStockAsync(WriteOffStockDto dto)
+        {
+            var inventory = await _context.StoreInventories
+                .FirstOrDefaultAsync(i => i.StoreId == dto.StoreId && i.ProductId == dto.ProductId);
+
+            if (inventory == null || inventory.Quantity < dto.Quantity)
+                throw new InvalidOperationException("Недостаточно товара на складе для списания.");
+
+            inventory.Quantity -= dto.Quantity;
+            inventory.LastUpdated = DateTime.UtcNow;
+
+            _context.InventoryTransactions.Add(new InventoryTransaction
+            {
+                StoreId = dto.StoreId,
+                ProductId = dto.ProductId,
+                QuantityChange = -dto.Quantity,
+                TransactionType = InventoryTransactionType.WriteOff,
+                ReferenceId = dto.ReferenceId,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

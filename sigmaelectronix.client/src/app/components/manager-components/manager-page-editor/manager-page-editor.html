@@ -1,0 +1,49 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideFileEdit size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Визуальный редактор</h2>
+        <p class="subtitle">Тестовый полигон для управления контентом (Без сохранения в БД)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-workspace">
+    <div class="form-group mb-4">
+      <label>Редактируемая страница</label>
+      <div class="page-selector-input">
+        <svg lucideLayoutTemplate size="18" class="input-icon"></svg>
+        <input type="text" [(ngModel)]="pageTitle" placeholder="Название страницы (например: О компании)">
+      </div>
+    </div>
+
+    <div class="editor-container">
+      <editor apiKey="8ald5l6bnj3cdxbf9remt0w102ms73rdslqvlfjnvp20m7wt"
+              [init]="editorConfig"
+              [(ngModel)]="pageContent">
+      </editor>
+    </div>
+
+    <div class="editor-footer">
+      <div class="status-area">
+        @if (showSuccess()) {
+        <span class="success-text animate-fade-in">
+          <svg lucideCheckCircle size="18" strokeWidth="2"></svg>
+          Изменения успешно "сохранены"!
+        </span>
+        }
+      </div>
+
+      <button class="btn btn-primary" (click)="savePage()" [disabled]="isSaving()">
+        @if (isSaving()) {
+        <span class="spinner-small"></span> Сохранение...
+        } @else {
+        <svg lucideSave size="18" strokeWidth="1.5"></svg> Сохранить контент
+        }
+      </button>
+    </div>
+  </div>
+</div>

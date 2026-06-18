@@ -1,13 +1,15 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { StoreService } from '../../../services/store-service'; // Проверь путь!
-import { StoreDto, CreateStoreDto, StoreType } from '../../../models/store-models'; // Проверь путь!
+import { StoreService } from '../../../services/store-service';
+import { StoreDto, CreateStoreDto, StoreType } from '../../../models/store-models';
+import { CityService } from '../../../services/city-service';
+import { CityDto } from '../../../models/location-models';
 import {
   LucideMapPin, LucidePlus, LucideEdit2, LucideEye, LucideEyeOff,
-  LucideCheck, LucideSearch, LucidePhone, LucideMail
+  LucideCheck, LucideSearch, LucidePhone, LucideMail, LucideChevronDown
 } from '@lucide/angular';
-import { SpinnerComponent } from '../../ui-components/spinner/spinner'; // Проверь путь!
+import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 
 @Component({
   selector: 'app-manager-stores',
@@ -16,7 +18,7 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner'; // Пр�
     CommonModule,
     ReactiveFormsModule,
     LucideMapPin, LucidePlus, LucideEdit2, LucideEye, LucideEyeOff,
-    LucideCheck, LucideSearch, LucidePhone, LucideMail,
+    LucideCheck, LucideSearch, LucidePhone, LucideMail, LucideChevronDown,
     SpinnerComponent
   ],
   templateUrl: './manager-stores.html',
@@ -24,6 +26,7 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner'; // Пр�
 })
 export class ManagerStoresComponent implements OnInit {
   private storeService = inject(StoreService);
+  private cityService = inject(CityService);
   private fb = inject(FormBuilder);
 
   // Состояния
@@ -57,16 +60,53 @@ export class ManagerStoresComponent implements OnInit {
     );
   });
 
+  // --- Состояния для Умного выбора города ---
+  allCities = signal<CityDto[]>([]);
+  citySearch = signal('');
+  isCityDropdownOpen = signal(false);
+  selectedCityDisplay = signal('');
+
+  // Группировка и фильтрация городов
+  groupedCities = computed(() => {
+    const query = this.citySearch().toLowerCase().trim();
+    const cities = this.allCities();
+
+    const filtered = query
+      ? cities.filter(c =>
+        c.name.toLowerCase().includes(query) ||
+        (c.regionName || 'Другие регионы').toLowerCase().includes(query)
+      )
+      : cities;
+
+    const groups = new Map<string, CityDto[]>();
+
+    filtered.forEach(city => {
+      const region = city.regionName || 'Другие регионы';
+      if (!groups.has(region)) {
+        groups.set(region, []);
+      }
+      groups.get(region)!.push(city);
+    });
+
+    return Array.from(groups.entries())
+      .map(([groupName, citiesList]) => ({
+        groupName,
+        cities: citiesList.sort((a, b) => a.name.localeCompare(b.name))
+      }))
+      .sort((a, b) => a.groupName.localeCompare(b.groupName));
+  });
+
   ngOnInit(): void {
     this.initForm();
     this.loadStores();
+    this.loadCities();
   }
 
   initForm(): void {
     this.storeForm = this.fb.group({
       name: ['', Validators.required],
-      code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9\-_]+$/)]], // Только буквы, цифры и дефис
-      cityId: [null, Validators.required], // Пока обычный инпут, позже можно привязать к CityService
+      // code удален из формы, генерируется автоматически
+      cityId: [null, Validators.required],
       fullAddress: ['', Validators.required],
       latitude: [0, Validators.required],
       longitude: [0, Validators.required],
@@ -90,8 +130,38 @@ export class ManagerStoresComponent implements OnInit {
     });
   }
 
+  loadCities(): void {
+    this.cityService.getAll().subscribe({
+      next: (cities) => this.allCities.set(cities),
+      error: (err) => console.error('Ошибка загрузки городов', err)
+    });
+  }
+
   onSearchChange(event: Event): void {
     this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  // --- Методы для поиска городов ---
+  openCitySearch(): void {
+    this.isCityDropdownOpen.set(true);
+    this.citySearch.set('');
+  }
+
+  closeCitySearch(): void {
+    setTimeout(() => this.isCityDropdownOpen.set(false), 200);
+  }
+
+  onCitySearch(event: Event): void {
+    this.citySearch.set((event.target as HTMLInputElement).value);
+    this.isCityDropdownOpen.set(true);
+  }
+
+  selectCity(id: number, name: string, regionName: string): void {
+    this.storeForm.patchValue({ cityId: id });
+    this.selectedCityDisplay.set(`${name} (${regionName})`);
+    this.isCityDropdownOpen.set(false);
+    this.storeForm.get('cityId')?.markAsTouched();
+    this.storeForm.get('cityId')?.updateValueAndValidity();
   }
 
   // --- Навигация ---
@@ -99,6 +169,7 @@ export class ManagerStoresComponent implements OnInit {
     this.isEditing.set(false);
     this.editingId.set(null);
     this.storeForm.reset({ isActive: true, type: StoreType.Retail, latitude: 0, longitude: 0 });
+    this.selectedCityDisplay.set('');
     this.viewMode.set('form');
   }
 
@@ -119,7 +190,6 @@ export class ManagerStoresComponent implements OnInit {
 
     this.storeForm.patchValue({
       name: store.name,
-      code: store.code,
       cityId: store.cityId,
       fullAddress: store.fullAddress,
       latitude: store.latitude,
@@ -130,6 +200,14 @@ export class ManagerStoresComponent implements OnInit {
       isActive: store.isActive,
       type: typeEnum
     });
+
+    // Находим город для отображения
+    const city = this.allCities().find(c => c.id === store.cityId);
+    if (city) {
+      this.selectedCityDisplay.set(`${city.name} (${city.regionName || 'Другие регионы'})`);
+    } else {
+      this.selectedCityDisplay.set(store.cityName || 'Выбрать...');
+    }
 
     this.viewMode.set('form');
   }
@@ -142,8 +220,19 @@ export class ManagerStoresComponent implements OnInit {
     }
 
     this.loading.set(true);
+
+    // Подтягиваем старый код (если редактируем) или генерируем новый (если создаем)
+    let storeCode = `STORE-${Date.now()}`;
+    if (this.isEditing() && this.editingId()) {
+      const existingStore = this.stores().find(s => s.id === this.editingId());
+      if (existingStore && existingStore.code) {
+        storeCode = existingStore.code;
+      }
+    }
+
     const payload: CreateStoreDto = {
       ...this.storeForm.value,
+      code: storeCode, // Скрытно передаем код на бэкенд
       type: Number(this.storeForm.value.type) // Убеждаемся, что отправляем число (Enum)
     };
 

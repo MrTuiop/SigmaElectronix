@@ -1,6 +1,10 @@
 <div class="content-card fade-in">
   <div class="section-header-inner">
     <h2>История заказов</h2>
+    <button class="btn-outline" (click)="openLinkModal()">
+      <svg lucideSearch size="16"></svg>
+      Найти по номеру
+    </button>
   </div>
 
   @if (isLoadingOrders()) {
@@ -146,3 +150,64 @@
   </div>
   }
 </div>
+@if (showLinkModal()) {
+<div class="modal-overlay fade-in" (mousedown)="onOverlayClick($event)">
+  <div class="modal-content fade-in-up">
+    <button class="modal-close" (click)="closeLinkModal()">
+      <svg lucideX size="20"></svg>
+    </button>
+
+    <div class="modal-header">
+      <div class="icon-wrap">
+        <svg lucidePackage size="24"></svg>
+      </div>
+      <h3>Найти заказ</h3>
+      <p>Оформляли заказ без регистрации? Найдите его, чтобы добавить в историю покупок.</p>
+    </div>
+
+    <div class="modal-body">
+      <div class="link-tabs">
+        <button [class.active]="linkMode() === 'number'" (click)="linkMode.set('number')">
+          По номеру заказа
+        </button>
+        <button [class.active]="linkMode() === 'phone'" (click)="linkMode.set('phone')">
+          По телефону
+        </button>
+      </div>
+
+      @if (linkMode() === 'number') {
+      <div class="form-group fade-in">
+        <label>Номер заказа</label>
+        <input type="text"
+               [(ngModel)]="linkOrderNumber"
+               placeholder="Например: ORD-20260618-12345"
+               (keyup.enter)="submitLink()">
+      </div>
+      } @else {
+      <div class="form-group fade-in">
+        <label>Номер телефона</label>
+        <input type="text"
+               [(ngModel)]="linkPhone"
+               placeholder="Например: +7 (999) 123-45-67"
+               (keyup.enter)="submitLink()">
+        <span class="field-hint">Будут привязаны все ваши гостевые заказы.</span>
+      </div>
+      }
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeLinkModal()">Отмена</button>
+
+      <button class="btn-primary"
+              (click)="submitLink()"
+              [disabled]="(linkMode() === 'number' ? !linkOrderNumber().trim() : !linkPhone().trim()) || isLinking()">
+        @if (isLinking()) {
+        <svg lucideLoader2 class="spinner" size="18"></svg> Поиск...
+        } @else {
+        Привязать
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}

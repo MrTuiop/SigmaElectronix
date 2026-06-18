@@ -24,6 +24,8 @@ import { StoreInventoryService } from '../../services/store-inventory-service';
 import { CreateOrderDto, PaymentMethod } from '../../models/order-model';
 import { StoreDto } from '../../models/store-models';
 import { StoreInventoryDto } from '../../models/store-inventory-models';
+import { AuthModalComponent } from '../../components/auth-components/auth-modal/auth-modal';
+import { ToastService } from '../../services/toast';
 
 @Component({
   selector: 'app-checkout',
@@ -36,7 +38,7 @@ import { StoreInventoryDto } from '../../models/store-inventory-models';
     LucideTruck, LucideStore, LucidePackage,
     LucideCreditCard, LucideBanknote, LucideWallet,
     LucideTag, LucidePercent, LucideGift,
-    LucideShieldCheck, LucideChevronDown, LucideCalendar, LucideMapPin
+    LucideShieldCheck, LucideChevronDown, LucideCalendar, LucideMapPin, AuthModalComponent
   ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
@@ -52,6 +54,9 @@ export class CheckoutPage implements OnInit {
   storeService = inject(StoreService);
   storeInventoryService = inject(StoreInventoryService);
   private router = inject(Router);
+  toastService = inject(ToastService);
+
+  showAuthModal = signal(false);
 
   // ======= ШАГ 1: КОНТАКТНЫЕ ДАННЫЕ =======
   contact = signal({ name: '', email: '', phone: '' });
@@ -161,6 +166,40 @@ export class CheckoutPage implements OnInit {
   bonusesDiscount = computed(() => this.useBonuses() ? this.bonusesToSpend() : 0);
   totalDiscount = computed(() => this.promoDiscountAmount() + this.bonusesDiscount());
   total = computed(() => this.subtotal() - this.totalDiscount() + this.deliveryCost());
+
+  // ======= ВАЛИДАЦИЯ ФОРМЫ =======
+  // ======= ВАЛИДАЦИЯ ФОРМЫ =======
+  isFormValid = computed(() => {
+    const phone = this.contact().phone;
+
+    // 1. Проверяем телефон (он обязателен)
+    if (!phone || phone.trim() === '') {
+      return false;
+    }
+
+    const method = this.deliveryMethod();
+
+    // 2. Проверяем курьерскую доставку
+    if (method === 'courier') {
+      if (this.isCustomAddress()) {
+        const addr = this.deliveryAddress();
+        if (!addr || addr.trim() === '') return false;
+      } else {
+        if (!this.selectedSavedAddressId()) return false;
+      }
+    }
+    // 3. Проверяем службы доставки (СДЭК и т.д.)
+    else if (method === 'delivery_service') {
+      const addr = this.deliveryAddress();
+      if (!addr || addr.trim() === '') return false;
+    }
+    // 4. Проверяем самовывоз
+    else if (method === 'pickup') {
+      if (!this.selectedStoreId()) return false;
+    }
+
+    return true; // Форма валидна!
+  });
 
   // ======= ИНИЦИАЛИЗАЦИЯ =======
   constructor() {
@@ -323,7 +362,13 @@ export class CheckoutPage implements OnInit {
   placeOrder(): void {
     const currentCart = this.cartService.cart();
     if (!currentCart || currentCart.items.length === 0) {
-      alert('Корзина пуста!');
+      this.toastService.error('Корзина пуста!'); // 👈 ИСПОЛЬЗУЕМ TOAST
+      return;
+    }
+
+    // 👈 ПРОВЕРЯЕМ ФОРМУ И ВЫВОДИМ ОШИБКУ ПРИ КЛИКЕ
+    if (!this.isFormValid()) {
+      this.toastService.error('Пожалуйста, заполните обязательные поля (Телефон и Адрес/Магазин)');
       return;
     }
 
@@ -335,7 +380,6 @@ export class CheckoutPage implements OnInit {
     } else if (this.deliveryMethod() === 'delivery_service') {
       finalAddress = `Доставка ${this.deliveryCompany().toUpperCase()}: ${this.deliveryAddress()}`;
     } else if (this.deliveryMethod() === 'courier') {
-      // 👈 ДОБАВЛЯЕМ: Если выбран сохраненный адрес
       if (!this.isCustomAddress() && this.selectedSavedAddressId()) {
         const savedAddr = this.profileService.addresses().find(a => a.id === this.selectedSavedAddressId());
         if (savedAddr) {
@@ -345,7 +389,7 @@ export class CheckoutPage implements OnInit {
     }
 
     const dto: CreateOrderDto = {
-      shippingFullName: this.contact().name,
+      shippingFullName: this.contact().name, // Имя уйдет пустым, если не введено - это нормально
       shippingPhone: this.contact().phone,
       shippingEmail: this.contact().email,
       shippingAddress: finalAddress,
@@ -353,7 +397,7 @@ export class CheckoutPage implements OnInit {
       promoCode: this.appliedPromo()?.code,
       storeId: this.deliveryMethod() === 'pickup' ? this.selectedStoreId() : null,
       paymentMethod: this.mapPaymentMethod(this.paymentMethod()),
-      bonusesToSpend: this.useBonuses() ? this.bonusesToSpend() : 0, // <--- ПЕРЕДАЕМ БАЛЛЫ НА СЕРВЕР
+      bonusesToSpend: this.useBonuses() ? this.bonusesToSpend() : 0,
       items: currentCart.items.map(item => ({
         productId: item.productId,
         quantity: item.quantity
@@ -362,19 +406,16 @@ export class CheckoutPage implements OnInit {
 
     this.orderService.createOrder(dto).subscribe({
       next: (order) => {
-        // Очищаем корзину в любом случае
         this.cartService.clearCart().subscribe();
 
         if (this.paymentMethod() === 'cash') {
-          // Если наличные — просто завершаем заказ
-          alert(`Заказ №${order.orderNumber} успешно оформлен!`);
+          this.toastService.success(`Заказ №${order.orderNumber} успешно оформлен!`); // 👈 ИСПОЛЬЗУЕМ TOAST
           this.router.navigate(['/profile']);
         } else {
-          // Если карта или кошелек — перекидываем на страницу оплаты
           this.router.navigate(['/payment', order.id]);
         }
       },
-      error: (err) => alert('Не удалось оформить заказ: ' + err.message)
+      error: (err) => this.toastService.error('Не удалось оформить заказ: ' + err.message) // 👈 ИСПОЛЬЗУЕМ TOAST
     });
   }
 

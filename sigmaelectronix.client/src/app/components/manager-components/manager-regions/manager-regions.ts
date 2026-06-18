@@ -8,6 +8,7 @@ import {
 } from '@lucide/angular';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 import { RegionService } from '../../../services/region-service';
+import { ToastService } from '../../../services/toast'; // <-- Подключаем твой сервис уведомлений
 
 @Component({
   selector: 'app-manager-regions',
@@ -25,6 +26,7 @@ import { RegionService } from '../../../services/region-service';
 export class ManagerRegionsComponent implements OnInit {
   private regionService = inject(RegionService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService); // <-- Инжектим ToastService
 
   // Состояния
   regions = signal<RegionDto[]>([]);
@@ -67,7 +69,10 @@ export class ManagerRegionsComponent implements OnInit {
         this.regions.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.toastService.error('Ошибка при загрузке списка регионов'); // <-- Используем сервис
+        this.loading.set(false);
+      }
     });
   }
 
@@ -112,17 +117,23 @@ export class ManagerRegionsComponent implements OnInit {
 
     if (this.isEditing() && this.editingId()) {
       this.regionService.update(this.editingId()!, payload).subscribe({
-        next: () => this.onSaveSuccess(),
+        next: () => {
+          this.toastService.success('Регион успешно обновлен!'); // <-- Toast
+          this.onSaveSuccess();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Ошибка при обновлении региона');
+          this.toastService.error(err.error?.message || 'Ошибка при обновлении региона'); // <-- Toast
           this.loading.set(false);
         }
       });
     } else {
       this.regionService.create(payload).subscribe({
-        next: () => this.onSaveSuccess(),
+        next: () => {
+          this.toastService.success('Регион успешно добавлен!'); // <-- Toast
+          this.onSaveSuccess();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Ошибка при создании региона');
+          this.toastService.error(err.error?.message || 'Ошибка при создании региона'); // <-- Toast
           this.loading.set(false);
         }
       });
@@ -139,12 +150,23 @@ export class ManagerRegionsComponent implements OnInit {
     if (confirm(`Вы уверены, что хотите удалить регион "${name}"?`)) {
       this.loading.set(true);
       this.regionService.delete(id).subscribe({
-        next: () => this.loadRegions(),
+        next: () => {
+          this.toastService.success('Регион удален'); // <-- Toast
+          this.loadRegions();
+        },
         error: (err) => {
-          alert(err.error?.message || 'Невозможно удалить регион. Убедитесь, что в нем нет городов.');
+          this.toastService.error(err.error?.message || 'Невозможно удалить регион. Убедитесь, что в нем нет городов.'); // <-- Toast
           this.loading.set(false);
         }
       });
     }
+  }
+
+  // 🚀 Функция для красивого склонения слова "город"
+  getCitiesWord(count: number): string {
+    const words = ['город', 'города', 'городов'];
+    const cases = [2, 0, 1, 1, 1, 2];
+    const index = (count % 100 > 4 && count % 100 < 20) ? 2 : cases[(count % 10 < 5) ? count % 10 : 5];
+    return `${count} ${words[index]}`;
   }
 }

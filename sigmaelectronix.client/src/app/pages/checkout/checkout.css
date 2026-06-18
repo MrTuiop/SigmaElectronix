@@ -1072,3 +1072,10 @@ input:checked + .slider {
     opacity: 0.8;
   }
 }
+
+.link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer; /* <--- Убедитесь, что это есть */
+}

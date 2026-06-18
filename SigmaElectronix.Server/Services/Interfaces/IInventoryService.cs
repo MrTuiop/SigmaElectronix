@@ -7,5 +7,6 @@ namespace SigmaElectronix.Server.Services.Interfaces
         // Поступление товара на конкретный склад
         Task<bool> ReceiveStockAsync(ReceiveStockDto dto);
         Task<bool> TransferStockAsync(TransferStockDto dto);
+        Task<bool> WriteOffStockAsync(WriteOffStockDto dto);
     }
 }

@@ -83,6 +83,19 @@ namespace SigmaElectronix.Server.Services
                     var inventory = await FindAndReserveStockAsync(
                         productInventories, dto.StoreId, item.Quantity);
 
+                    if (inventory != null)
+                    {
+                        _db.Set<InventoryTransaction>().Add(new InventoryTransaction
+                        {
+                            StoreId = inventory.StoreId,
+                            ProductId = item.ProductId,
+                            QuantityChange = -item.Quantity, // Минус, так как товар уходит клиенту
+                            TransactionType = InventoryTransactionType.Sale,
+                            ReferenceId = order.OrderNumber, // Записываем номер заказа
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
                     if (inventory == null)
                     {
                         var totalStock = productInventories.Sum(i => i.Quantity);
@@ -279,6 +292,16 @@ namespace SigmaElectronix.Server.Services
                     {
                         inventory.Quantity += item.Quantity;
                         inventory.LastUpdated = DateTime.UtcNow;
+
+                        _db.Set<InventoryTransaction>().Add(new InventoryTransaction
+                        {
+                            StoreId = inventory.StoreId,
+                            ProductId = item.ProductId,
+                            QuantityChange = item.Quantity, // Плюс, так как товар вернулся
+                            TransactionType = InventoryTransactionType.Return,
+                            ReferenceId = order.OrderNumber,
+                            CreatedAt = DateTime.UtcNow
+                        });
                     }
                 }
 
@@ -330,10 +353,44 @@ namespace SigmaElectronix.Server.Services
 
         private async Task<decimal> ApplyPromoCodeAsync(string code, decimal subtotal)
         {
-            // Заглушка — позже можно сделать через таблицу PromoCodes
-            if (code == "SALE10")
-                return subtotal * 0.10m;
-            return 0;
+            var normalizedCode = code.Trim().ToUpperInvariant();
+
+            // ВАЖНО: Достаем без AsNoTracking, чтобы Entity Framework отслеживал изменения!
+            var coupon = await _db.Coupons.FirstOrDefaultAsync(c => c.Code == normalizedCode);
+
+            if (coupon == null)
+                throw new InvalidOperationException("Промокод не найден.");
+
+            if (!coupon.IsActive)
+                throw new InvalidOperationException("Данный промокод отключен.");
+
+            var now = DateTime.UtcNow;
+            if (now < coupon.StartDate || now > coupon.EndDate)
+                throw new InvalidOperationException("Срок действия промокода истек или еще не наступил.");
+
+            if (coupon.MaxUsageCount > 0 && coupon.CurrentUsageCount >= coupon.MaxUsageCount)
+                throw new InvalidOperationException("Лимит использования данного промокода исчерпан.");
+
+            if (subtotal < coupon.MinOrderAmount)
+                throw new InvalidOperationException($"Минимальная сумма заказа для применения: {coupon.MinOrderAmount} ₽");
+
+            // 1. Вычисляем скидку
+            decimal discountAmount = 0;
+            if (coupon.IsPercentage)
+            {
+                // Процентная скидка
+                discountAmount = Math.Round(subtotal * (coupon.DiscountValue / 100m), 2);
+            }
+            else
+            {
+                // Фиксированная скидка (скидка не может превышать стоимость самих товаров)
+                discountAmount = Math.Min(subtotal, coupon.DiscountValue);
+            }
+
+            // 🚀 2. ГЛАВНОЕ: Увеличиваем счетчик использований!
+            coupon.CurrentUsageCount++;
+
+            return discountAmount;
         }
 
         private static OrderDto MapToDto(Order o) => new OrderDto
@@ -406,5 +463,48 @@ namespace SigmaElectronix.Server.Services
             return anyAvailable;
         }
 
+        public async Task<bool> LinkGuestOrderAsync(string orderNumber, string userId)
+        {
+            // Ищем заказ по номеру (игнорируя регистр на всякий случай)
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderNumber.ToLower() == orderNumber.ToLower());
+
+            if (order == null) return false; // Заказ не найден
+
+            // Защита: если у заказа уже есть владелец
+            if (!string.IsNullOrEmpty(order.UserId))
+            {
+                if (order.UserId == userId) return true; // Уже привязан к этому юзеру
+                throw new InvalidOperationException("Этот заказ уже привязан к другому аккаунту.");
+            }
+
+            // Привязываем заказ к пользователю
+            order.UserId = userId;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<int> LinkGuestOrdersByPhoneAsync(string phone, string userId)
+        {
+            // Ищем все заказы, у которых нет владельца и совпадает номер телефона
+            var orders = await _db.Orders
+                .Where(o => o.UserId == null && o.ShippingPhone == phone)
+                .ToListAsync();
+
+            if (!orders.Any()) return 0; // Ничего не нашли
+
+            foreach (var order in orders)
+            {
+                order.UserId = userId;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
+
+            return orders.Count; // Возвращаем количество привязанных заказов
+        }
+
     }
+
 }

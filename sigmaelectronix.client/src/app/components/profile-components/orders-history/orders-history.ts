@@ -1,6 +1,8 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // <-- ДОБАВЛЕНО
+import { ToastService } from '../../../services/toast'; // <-- ДОБАВЛЕНО
 import {
   LucidePackage,
   LucideChevronDown,
@@ -8,10 +10,13 @@ import {
   LucideMapPin,
   LucideCreditCard,
   LucideReceipt,
-  LucideLoader2
+  LucideLoader2,
+  LucideSearch, // <-- ДОБАВЛЕНО
+  LucideX       // <-- ДОБАВЛЕНО
 } from '@lucide/angular';
 import { OrderService } from '../../../services/order-service';
 import { OrderDto } from '../../../models/order-model';
+import { ProfileService } from '../../../services/profile-service';
 
 @Component({
   selector: 'app-orders-history',
@@ -19,32 +24,38 @@ import { OrderDto } from '../../../models/order-model';
   imports: [
     CommonModule,
     RouterLink,
+    FormsModule, // <-- ДОБАВЛЕНО
     LucidePackage,
     LucideChevronDown,
     LucideChevronUp,
     LucideMapPin,
     LucideCreditCard,
     LucideReceipt,
-    LucideLoader2
+    LucideLoader2,
+    LucideSearch, // <-- ДОБАВЛЕНО
+    LucideX       // <-- ДОБАВЛЕНО
   ],
   templateUrl: './orders-history.html',
   styleUrl: './orders-history.css',
 })
 export class OrdersHistoryComponent implements OnInit {
   private orderService = inject(OrderService);
+  private toastService = inject(ToastService); // <-- ДОБАВЛЕНО
+  private profileService = inject(ProfileService);
 
-  // 🔹 Сигналы для списка заказов
   ordersList = signal<any[]>([]);
   isLoadingOrders = signal(true);
-
-  // ID открытого заказа (аккордеон)
   expandedOrderId = signal<string | null>(null);
-
-  // Кэш для деталей заказов
   orderDetails = signal<Map<string, OrderDto>>(new Map());
   isLoadingDetails = signal(false);
 
-  // Вычисляем детали текущего открытого заказа
+  // 🔹 Сигналы для модального окна поиска заказа
+  showLinkModal = signal(false);
+  linkMode = signal<'number' | 'phone'>('number'); // Переключатель
+  linkOrderNumber = signal('');
+  linkPhone = signal(''); // Для поля телефона
+  isLinking = signal(false);
+
   currentOrderDetails = computed(() => {
     const id = this.expandedOrderId();
     return id ? this.orderDetails().get(id) : null;
@@ -54,18 +65,15 @@ export class OrdersHistoryComponent implements OnInit {
     this.loadMyOrders();
   }
 
-  // 🔹 Загружаем список заказов пользователя
   loadMyOrders() {
     this.isLoadingOrders.set(true);
     this.orderService.getMyOrders().subscribe({
       next: (orders) => {
-        // Преобразуем данные с бэкенда для красивого отображения в списке
         const mappedOrders = orders.map(o => ({
           ...o,
           date: new Date(o.createdAt).toLocaleDateString('ru-RU'),
           statusColor: this.getStatusColor(o.status),
           statusName: this.getStatusName(o.status),
-          // Считаем общее количество товаров в заказе
           itemsCount: o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0
         }));
 
@@ -81,17 +89,14 @@ export class OrdersHistoryComponent implements OnInit {
 
   toggleOrder(id: string | number) {
     const orderIdStr = String(id);
-
     if (this.expandedOrderId() === orderIdStr) {
       this.expandedOrderId.set(null);
       return;
     }
-
     this.expandedOrderId.set(orderIdStr);
 
     if (!this.orderDetails().has(orderIdStr)) {
       this.isLoadingDetails.set(true);
-
       this.orderService.getOrderById(Number(id)).subscribe({
         next: (detail) => {
           this.orderDetails.update(map => {
@@ -109,7 +114,93 @@ export class OrdersHistoryComponent implements OnInit {
     }
   }
 
-  // 🔹 Перевод способа оплаты
+  // === ЛОГИКА ПРИВЯЗКИ ЗАКАЗА ===
+  openLinkModal() {
+    this.showLinkModal.set(true);
+    this.linkOrderNumber.set('');
+
+    // 🔹 УМНАЯ ПОДСТАНОВКА: Берём телефон из профиля (если он есть)
+    const currentUser = this.profileService.user();
+    this.linkPhone.set(currentUser?.phoneNumber || '');
+
+    this.linkMode.set('number'); // По умолчанию открываем вкладку поиска по номеру
+  }
+
+  closeLinkModal() {
+    this.showLinkModal.set(false);
+  }
+
+  onOverlayClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.closeLinkModal();
+    }
+  }
+
+  linkOrder() {
+    const orderNum = this.linkOrderNumber().trim();
+    if (!orderNum) return;
+
+    this.isLinking.set(true);
+    this.orderService.linkGuestOrder(orderNum).subscribe({
+      next: () => {
+        this.toastService.success('Заказ успешно добавлен в ваш профиль!');
+        this.closeLinkModal();
+        this.loadMyOrders(); // Обновляем список, чтобы заказ сразу появился
+        this.isLinking.set(false);
+      },
+      error: (err) => {
+        this.toastService.error(err.message || 'Ошибка. Проверьте номер заказа.');
+        this.isLinking.set(false);
+      }
+    });
+  }
+
+  submitLink() {
+    // В зависимости от режима, вызываем нужный метод
+    if (this.linkMode() === 'number') {
+      const orderNum = this.linkOrderNumber().trim();
+      if (!orderNum) return;
+
+      this.isLinking.set(true);
+      this.orderService.linkGuestOrder(orderNum).subscribe({
+        next: () => {
+          this.toastService.success('Заказ успешно добавлен в ваш профиль!');
+          this.finalizeLinking();
+        },
+        error: (err) => {
+          this.toastService.error(err.message || 'Ошибка. Проверьте номер заказа.');
+          this.isLinking.set(false);
+        }
+      });
+    } else {
+      const phone = this.linkPhone().trim();
+      if (!phone) return;
+
+      this.isLinking.set(true);
+      this.orderService.linkGuestOrdersByPhone(phone).subscribe({
+        next: (res) => {
+          if (res.count > 0) {
+            this.toastService.success(`Успешно привязано заказов: ${res.count}`);
+            this.finalizeLinking();
+          } else {
+            this.toastService.info('Не найдено непривязанных заказов с таким номером.');
+            this.isLinking.set(false);
+          }
+        },
+        error: (err) => {
+          this.toastService.error(err.message || 'Ошибка при поиске заказов.');
+          this.isLinking.set(false);
+        }
+      });
+    }
+  }
+
+  private finalizeLinking() {
+    this.closeLinkModal();
+    this.loadMyOrders(); // Обновляем список заказов
+    this.isLinking.set(false);
+  }
+
   getPaymentMethodName(method: string): string {
     const methods: Record<string, string> = {
       'Online': 'Картой онлайн',
@@ -122,7 +213,6 @@ export class OrdersHistoryComponent implements OnInit {
     return methods[method] || method;
   }
 
-  // 🔹 НОВОЕ: Перевод статуса оплаты
   getPaymentStatusName(status: string): string {
     const map: Record<string, string> = {
       'Pending': 'Ожидает оплаты',
@@ -134,22 +224,20 @@ export class OrdersHistoryComponent implements OnInit {
     return map[status] || status;
   }
 
-  // 🔹 Красивые цвета для статусов с C# Enum
   getStatusColor(status: string): string {
     const colors: Record<string, string> = {
-      'Pending': '#f59e0b',    // Желтый (Ожидает)
-      'Paid': '#10b981',       // Зеленый (Оплачен)
-      'Confirmed': '#0ea5e9',  // Голубой (Подтвержден)
-      'Processing': '#8b5cf6', // Фиолетовый (В сборке)
-      'Shipped': '#6366f1',    // Индиго (Отправлен)
-      'Delivered': '#10b981',  // Зеленый (Доставлен)
-      'Cancelled': '#ef4444',  // Красный (Отменен)
-      'Refunded': '#6b7280'    // Серый (Возврат)
+      'Pending': '#f59e0b',
+      'Paid': '#10b981',
+      'Confirmed': '#0ea5e9',
+      'Processing': '#8b5cf6',
+      'Shipped': '#6366f1',
+      'Delivered': '#10b981',
+      'Cancelled': '#ef4444',
+      'Refunded': '#6b7280'
     };
     return colors[status] ?? '#6b7280';
   }
 
-  // 🔹 Перевод статусов на русский (полный список)
   getStatusName(status: string): string {
     const names: Record<string, string> = {
       'Pending': 'Ожидает',

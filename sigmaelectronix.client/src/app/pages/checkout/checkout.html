@@ -17,22 +17,21 @@
           </div>
           } @else {
           <div class="not-logged-in">
-            <p>У вас уже есть аккаунт? <a routerLink="/login" class="link">Войти</a></p>
+            <p>У вас уже есть аккаунт? <span class="link" (click)="showAuthModal.set(true)" style="cursor: pointer;">Войти</span></p>
           </div>
           }
 
           <div class="form-grid">
             <div class="form-group">
-              <label><svg lucideUser size="16" strokeWidth="2"></svg> Имя</label>
-              <input type="text" [(ngModel)]="contact().name" />
+              <label><svg lucideUser size="16" strokeWidth="2"></svg> Имя</label> <input type="text" [(ngModel)]="contact().name" placeholder="Иван Иванов" />
             </div>
             <div class="form-group">
               <label><svg lucideMail size="16" strokeWidth="2"></svg> Email</label>
-              <input type="email" [(ngModel)]="contact().email" />
+              <input type="email" [(ngModel)]="contact().email" placeholder="example@mail.ru" />
             </div>
             <div class="form-group">
-              <label><svg lucidePhone size="16" strokeWidth="2"></svg> Телефон</label>
-              <input type="tel" [(ngModel)]="contact().phone" />
+              <label><svg lucidePhone size="16" strokeWidth="2"></svg> Телефон <span style="color: #ef4444;">*</span></label>
+              <input type="tel" [(ngModel)]="contact().phone" placeholder="+7 (___) ___-__-__" />
             </div>
           </div>
         </div>
@@ -295,7 +294,8 @@
         </div>
 
         <div class="checkout-submit">
-          <button class="place-order-btn" (click)="placeOrder()" [disabled]="cartService.cart()?.items?.length === 0">
+          <button class="place-order-btn" (click)="placeOrder()"
+                  [disabled]="cartService.cart()?.items?.length === 0 || !cartService.cart()">
             <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
             Оформить заказ
           </button>
@@ -378,3 +378,8 @@
     </div>
   </div>
 </div>
+@if (showAuthModal()) {
+<app-auth-modal (close)="showAuthModal.set(false)"
+                (authenticated)="showAuthModal.set(false)">
+</app-auth-modal>
+}

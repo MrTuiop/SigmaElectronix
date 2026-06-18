@@ -6,7 +6,7 @@
       </div>
       <div>
         <h2>Движение товаров</h2>
-        <p class="subtitle">Оформление поступлений и перемещений между складами</p>
+        <p class="subtitle">Оформление поступлений, перемещений и списаний со складов</p>
       </div>
     </div>
   </div>
@@ -14,11 +14,15 @@
   <div class="tabs-container">
     <button class="tab-btn" [class.active]="activeTab() === 'receive'" (click)="setTab('receive')">
       <svg lucideArrowDownToLine size="18"></svg>
-      Поступление от поставщика
+      Поступление
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'transfer'" (click)="setTab('transfer')">
       <svg lucideArrowRightLeft size="18"></svg>
-      Внутреннее перемещение
+      Перемещение
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'writeoff'" (click)="setTab('writeoff')">
+      <svg lucideTrash2 size="18"></svg>
+      Списание
     </button>
   </div>
 
@@ -37,14 +41,8 @@
                    (blur)="closeProductSearch(); receiveForm.get('productId')?.markAsTouched()"
                    placeholder="Поиск по названию..."
                    class="search-input" autocomplete="off">
-            <svg lucideSearch size="16" class="select-icon" *if="!selectedProductDisplay()"></svg>
-            <svg lucideChevronDown size="16" class="select-icon" *if="selectedProductDisplay()"></svg>
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
           </div>
-
-          @if (receiveForm.get('productId')?.invalid && receiveForm.get('productId')?.touched) {
-          <span class="error-msg">Товар обязателен для выбора</span>
-          }
-
           @if (isProductDropdownOpen()) {
           <div class="dropdown-options animate-fade">
             @for (product of filteredProducts(); track product.id) {
@@ -58,27 +56,44 @@
           }
         </div>
 
-        <div class="form-group">
+        <div class="form-group relative">
           <label>Склад получения (Магазин) *</label>
-          <select formControlName="storeId" [class.input-error]="receiveForm.get('storeId')?.invalid && receiveForm.get('storeId')?.touched">
-            <option [ngValue]="null" disabled>-- Выберите точку --</option>
-            @for (store of stores(); track store.id) {
-            <option [value]="store.id">{{ store.name }}</option>
+          <div class="custom-search-select" (click)="openStoreSearch('receiveStore')">
+            <input type="text"
+                   [class.input-error]="receiveForm.get('storeId')?.invalid && receiveForm.get('storeId')?.touched"
+                   [value]="activeStoreField() === 'receiveStore' ? storeSearch() : getStoreName(receiveForm.get('storeId')?.value)"
+                   (input)="onStoreSearch($event)"
+                   (blur)="closeStoreSearch(); receiveForm.get('storeId')?.markAsTouched()"
+                   placeholder="Поиск магазина или города..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (activeStoreField() === 'receiveStore') {
+          <div class="dropdown-options animate-fade">
+            @for (region of filteredGroupedStores(); track region.regionName) {
+            <div class="region-label">{{ region.regionName }}</div>
+            @for (city of region.cities; track city.cityName) {
+            <div class="city-label">{{ city.cityName }}</div>
+            @for (store of city.stores; track store.id) {
+            <div class="option-item store-item" (mousedown)="selectStore(store.id)">
+              <svg lucideStore size="14" class="mr-2 text-gray"></svg> {{ store.name }}
+            </div>
             }
-          </select>
-          @if (receiveForm.get('storeId')?.invalid && receiveForm.get('storeId')?.touched) {
-          <span class="error-msg">Укажите склад</span>
+            }
+            } @empty {
+            <div class="empty-option">Магазины не найдены</div>
+            }
+          </div>
           }
         </div>
 
         <div class="form-group">
           <label>Количество (шт) *</label>
-          <input type="number" formControlName="quantity" min="1" placeholder="100"
-                 [class.input-error]="receiveForm.get('quantity')?.invalid && receiveForm.get('quantity')?.touched">
+          <input type="number" formControlName="quantity" min="1" placeholder="100">
         </div>
 
         <div class="form-group full-width">
-          <label>Номер накладной / Документа (Необязательно)</label>
+          <label>Номер накладной / Документа</label>
           <input type="text" formControlName="referenceId" placeholder="Напр: ТТН-12345678">
         </div>
       </div>
@@ -110,10 +125,6 @@
                    class="search-input" autocomplete="off">
             <svg lucideChevronDown size="16" class="select-icon"></svg>
           </div>
-          @if (transferForm.get('productId')?.invalid && transferForm.get('productId')?.touched) {
-          <span class="error-msg">Товар обязателен для выбора</span>
-          }
-
           @if (isProductDropdownOpen()) {
           <div class="dropdown-options animate-fade">
             @for (product of filteredProducts(); track product.id) {
@@ -127,30 +138,81 @@
           }
         </div>
 
-        <div class="form-group">
+        <div class="form-group relative">
           <label>Откуда забираем (Отправитель) *</label>
-          <select formControlName="fromStoreId" [class.input-error]="transferForm.get('fromStoreId')?.invalid && transferForm.get('fromStoreId')?.touched">
-            <option [ngValue]="null" disabled>-- Выберите точку --</option>
-            @for (store of stores(); track store.id) {
-            <option [value]="store.id">{{ store.name }}</option>
+          <div class="custom-search-select" (click)="openStoreSearch('fromStore')">
+            <input type="text"
+                   [class.input-error]="transferForm.get('fromStoreId')?.invalid && transferForm.get('fromStoreId')?.touched"
+                   [value]="activeStoreField() === 'fromStore' ? storeSearch() : getStoreName(transferForm.get('fromStoreId')?.value)"
+                   (input)="onStoreSearch($event)"
+                   (blur)="closeStoreSearch(); transferForm.get('fromStoreId')?.markAsTouched()"
+                   placeholder="Поиск магазина или города..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (activeStoreField() === 'fromStore') {
+          <div class="dropdown-options animate-fade">
+            @for (region of filteredGroupedStores(); track region.regionName) {
+            <div class="region-label">{{ region.regionName }}</div>
+            @for (city of region.cities; track city.cityName) {
+            <div class="city-label">{{ city.cityName }}</div>
+            @for (store of city.stores; track store.id) {
+            <div class="option-item store-item" (mousedown)="selectStore(store.id)">
+              <svg lucideStore size="14" class="mr-2 text-gray"></svg> {{ store.name }}
+            </div>
             }
-          </select>
+            }
+            } @empty {
+            <div class="empty-option">Магазины не найдены</div>
+            }
+          </div>
+          }
+          @if (transferForm.get('fromStoreId')?.value) {
+          <span class="stock-info">
+            Остаток на складе: <strong>{{ getStoreStock(transferForm.get('fromStoreId')?.value) }} шт.</strong>
+          </span>
+          }
         </div>
 
-        <div class="form-group">
+        <div class="form-group relative">
           <label>Куда везем (Получатель) *</label>
-          <select formControlName="toStoreId" [class.input-error]="transferForm.get('toStoreId')?.invalid && transferForm.get('toStoreId')?.touched">
-            <option [ngValue]="null" disabled>-- Выберите точку --</option>
-            @for (store of stores(); track store.id) {
-            <option [value]="store.id">{{ store.name }}</option>
+          <div class="custom-search-select" (click)="openStoreSearch('toStore')">
+            <input type="text"
+                   [class.input-error]="transferForm.get('toStoreId')?.invalid && transferForm.get('toStoreId')?.touched"
+                   [value]="activeStoreField() === 'toStore' ? storeSearch() : getStoreName(transferForm.get('toStoreId')?.value)"
+                   (input)="onStoreSearch($event)"
+                   (blur)="closeStoreSearch(); transferForm.get('toStoreId')?.markAsTouched()"
+                   placeholder="Поиск магазина или города..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (activeStoreField() === 'toStore') {
+          <div class="dropdown-options animate-fade">
+            @for (region of filteredGroupedStores(); track region.regionName) {
+            <div class="region-label">{{ region.regionName }}</div>
+            @for (city of region.cities; track city.cityName) {
+            <div class="city-label">{{ city.cityName }}</div>
+            @for (store of city.stores; track store.id) {
+            <div class="option-item store-item" (mousedown)="selectStore(store.id)">
+              <svg lucideStore size="14" class="mr-2 text-gray"></svg> {{ store.name }}
+            </div>
             }
-          </select>
+            }
+            } @empty {
+            <div class="empty-option">Магазины не найдены</div>
+            }
+          </div>
+          }
+          @if (transferForm.get('toStoreId')?.value) {
+          <span class="stock-info">
+            В наличии: <strong>{{ getStoreStock(transferForm.get('toStoreId')?.value) }} шт.</strong>
+          </span>
+          }
         </div>
 
         <div class="form-group">
           <label>Количество (шт) *</label>
-          <input type="number" formControlName="quantity" min="1" placeholder="5"
-                 [class.input-error]="transferForm.get('quantity')?.invalid && transferForm.get('quantity')?.touched">
+          <input type="number" formControlName="quantity" min="1" placeholder="5">
         </div>
 
         <div class="form-group">
@@ -162,6 +224,93 @@
       <div class="wizard-footer justify-end mt-4">
         <button type="submit" class="btn btn-primary" [disabled]="loading()">
           <svg lucideArrowRightLeft size="16"></svg> Оформить перемещение
+        </button>
+      </div>
+
+    </form>
+  </div>
+  }
+
+  @if (activeTab() === 'writeoff') {
+  <div class="form-step-card animate-fade">
+    <form [formGroup]="writeoffForm" (ngSubmit)="submitWriteoff()">
+
+      <div class="form-grid">
+        <div class="form-group full-width relative">
+          <label>Выберите товар *</label>
+          <div class="custom-search-select" (click)="openProductSearch()">
+            <input type="text"
+                   [class.input-error]="writeoffForm.get('productId')?.invalid && writeoffForm.get('productId')?.touched"
+                   [value]="isProductDropdownOpen() ? productSearch() : selectedProductDisplay()"
+                   (input)="onProductSearch($event)"
+                   (blur)="closeProductSearch(); writeoffForm.get('productId')?.markAsTouched()"
+                   placeholder="Поиск по названию..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (isProductDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (product of filteredProducts(); track product.id) {
+            <div class="option-item" (mousedown)="selectProduct(product.id, product.name)">
+              <svg lucidePackage size="14" class="mr-2 text-gray"></svg> {{ product.name }}
+            </div>
+            } @empty {
+            <div class="empty-option">Товары не найдены</div>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="form-group relative">
+          <label>Склад списания *</label>
+          <div class="custom-search-select" (click)="openStoreSearch('writeoffStore')">
+            <input type="text"
+                   [class.input-error]="writeoffForm.get('storeId')?.invalid && writeoffForm.get('storeId')?.touched"
+                   [value]="activeStoreField() === 'writeoffStore' ? storeSearch() : getStoreName(writeoffForm.get('storeId')?.value)"
+                   (input)="onStoreSearch($event)"
+                   (blur)="closeStoreSearch(); writeoffForm.get('storeId')?.markAsTouched()"
+                   placeholder="Поиск магазина или города..."
+                   class="search-input" autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (activeStoreField() === 'writeoffStore') {
+          <div class="dropdown-options animate-fade">
+            @for (region of filteredGroupedStores(); track region.regionName) {
+            <div class="region-label">{{ region.regionName }}</div>
+            @for (city of region.cities; track city.cityName) {
+            <div class="city-label">{{ city.cityName }}</div>
+            @for (store of city.stores; track store.id) {
+            <div class="option-item store-item" (mousedown)="selectStore(store.id)">
+              <svg lucideStore size="14" class="mr-2 text-gray"></svg> {{ store.name }}
+            </div>
+            }
+            }
+            } @empty {
+            <div class="empty-option">Магазины не найдены</div>
+            }
+          </div>
+          }
+          @if (writeoffForm.get('storeId')?.value) {
+          <span class="stock-info">
+            Доступно для списания: <strong>{{ getStoreStock(writeoffForm.get('storeId')?.value) }} шт.</strong>
+          </span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Количество (шт) *</label>
+          <input type="number" formControlName="quantity" min="1" placeholder="1">
+        </div>
+
+        <div class="form-group full-width">
+          <label>Причина списания (Обязательно укажите)</label>
+          <input type="text" formControlName="referenceId" placeholder="Напр: Брак при распаковке">
+        </div>
+      </div>
+
+      <div class="wizard-footer justify-end mt-4">
+        <button type="submit" class="btn btn-danger" [disabled]="loading()">
+          <svg lucideTrash2 size="16"></svg> Оформить списание
         </button>
       </div>
 

@@ -35,6 +35,7 @@ import { managerGuard } from './guards/manager-guard';
 import { authGuard } from './guards/auth-guard';
 import { adminGuard } from './guards/admin-guard';
 import { ManagerUsersComponent } from './components/manager-components/manager-users/manager-users';
+import { ManagerPageEditorComponent } from './components/manager-components/manager-page-editor/manager-page-editor';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -75,6 +76,10 @@ export const routes: Routes = [
         path: 'coupons',
         component: ManagerCouponsComponent,
         title: 'Управление купонами'
+      },
+      {
+        path: 'page-editor',
+        component: ManagerPageEditorComponent
       }
     ]
   },

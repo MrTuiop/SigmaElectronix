@@ -124,15 +124,47 @@
       <h3>{{ isEditing() ? 'Редактирование точки' : 'Новая точка продаж' }}</h3>
 
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group full-width">
           <label>Название магазина *</label>
           <input type="text" formControlName="name" placeholder="Например: Sigma ТЦ Галерея"
                  [class.input-error]="storeForm.get('name')?.invalid && storeForm.get('name')?.touched">
+          @if (storeForm.get('name')?.invalid && storeForm.get('name')?.touched) {
+          <span class="error-msg">Название обязательно</span>
+          }
         </div>
-        <div class="form-group">
-          <label>Код (ID для системы) *</label>
-          <input type="text" formControlName="code" class="mono-input" placeholder="Например: MOW-GAL-1"
-                 [class.input-error]="storeForm.get('code')?.invalid && storeForm.get('code')?.touched">
+
+        <div class="form-group relative">
+          <label>Город *</label>
+
+          <div class="custom-search-select" (click)="openCitySearch()">
+            <input type="text"
+                   [class.input-error]="storeForm.get('cityId')?.invalid && storeForm.get('cityId')?.touched"
+                   [value]="isCityDropdownOpen() ? citySearch() : selectedCityDisplay()"
+                   (input)="onCitySearch($event)"
+                   (blur)="closeCitySearch(); storeForm.get('cityId')?.markAsTouched()"
+                   placeholder="Поиск или выбор города..."
+                   class="search-input"
+                   autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+          @if (storeForm.get('cityId')?.invalid && storeForm.get('cityId')?.touched) {
+          <span class="error-msg">Пожалуйста, выберите город из списка</span>
+          }
+
+          @if (isCityDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (group of groupedCities(); track group.groupName) {
+            <div class="optgroup-label">{{ group.groupName }}</div>
+            @for (city of group.cities; track city.id) {
+            <div class="option-item" (mousedown)="selectCity(city.id, city.name, group.groupName)">
+              {{ city.name }}
+            </div>
+            }
+            } @empty {
+            <div class="empty-option">Города не найдены</div>
+            }
+          </div>
+          }
         </div>
 
         <div class="form-group">
@@ -143,16 +175,14 @@
             }
           </select>
         </div>
-        <div class="form-group">
-          <label>ID Города *</label>
-          <input type="number" formControlName="cityId" placeholder="ID города в БД"
-                 [class.input-error]="storeForm.get('cityId')?.invalid && storeForm.get('cityId')?.touched">
-        </div>
 
         <div class="form-group full-width">
           <label>Полный адрес *</label>
           <input type="text" formControlName="fullAddress" placeholder="г. Москва, Лиговский пр., 30а"
                  [class.input-error]="storeForm.get('fullAddress')?.invalid && storeForm.get('fullAddress')?.touched">
+          @if (storeForm.get('fullAddress')?.invalid && storeForm.get('fullAddress')?.touched) {
+          <span class="error-msg">Адрес обязателен</span>
+          }
         </div>
 
         <div class="form-group">
@@ -193,8 +223,7 @@
     </div>
 
     <div class="wizard-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
-      <button type="submit" class="btn btn-success" [disabled]="storeForm.invalid || loading()">
+      <div></div> <button type="submit" class="btn btn-success" [disabled]="storeForm.invalid || loading()">
         <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить
       </button>
     </div>

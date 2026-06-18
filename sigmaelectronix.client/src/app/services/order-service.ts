@@ -63,4 +63,16 @@ export class OrderService {
     console.error('Ошибка в OrderService:', error);
     return throwError(() => new Error(error.error?.message || 'Произошла ошибка при работе с заказами'));
   }
+
+  linkGuestOrder(orderNumber: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/link/${orderNumber}`, {}, { withCredentials: true }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  linkGuestOrdersByPhone(phone: string): Observable<{ count: number }> {
+    return this.http.post<{ count: number }>(`${this.baseUrl}/link-by-phone`, { phone }, { withCredentials: true }).pipe(
+      catchError(this.handleError)
+    );
+  }
 }

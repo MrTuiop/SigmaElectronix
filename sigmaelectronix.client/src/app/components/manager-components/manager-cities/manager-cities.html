@@ -98,16 +98,40 @@
           <label>Название города *</label>
           <input type="text" formControlName="name" placeholder="Например: Екатеринбург"
                  [class.input-error]="cityForm.get('name')?.invalid && cityForm.get('name')?.touched">
+          @if (cityForm.get('name')?.invalid && cityForm.get('name')?.touched) {
+          <span class="error-msg">Название города обязательно</span>
+          }
         </div>
 
-        <div class="form-group">
+        <div class="form-group relative">
           <label>Регион *</label>
-          <select formControlName="regionId" [class.input-error]="cityForm.get('regionId')?.invalid && cityForm.get('regionId')?.touched">
-            <option [ngValue]="null" disabled selected>-- Выберите регион --</option>
-            @for (region of regions(); track region.id) {
-            <option [value]="region.id">{{ region.name }}</option>
+          <div class="custom-search-select" (click)="openRegionSearch()">
+            <input type="text"
+                   [class.input-error]="cityForm.get('regionId')?.invalid && cityForm.get('regionId')?.touched"
+                   [value]="isRegionDropdownOpen() ? regionSearch() : selectedRegionDisplay()"
+                   (input)="onRegionSearch($event)"
+                   (blur)="closeRegionSearch(); cityForm.get('regionId')?.markAsTouched()"
+                   placeholder="Поиск или выбор региона..."
+                   class="search-input"
+                   autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
+          </div>
+
+          @if (cityForm.get('regionId')?.invalid && cityForm.get('regionId')?.touched) {
+          <span class="error-msg">Пожалуйста, выберите регион</span>
+          }
+
+          @if (isRegionDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (region of filteredRegions(); track region.id) {
+            <div class="option-item" (mousedown)="selectRegion(region.id, region.name)">
+              {{ region.name }}
+            </div>
+            } @empty {
+            <div class="empty-option">Регионы не найдены</div>
             }
-          </select>
+          </div>
+          }
         </div>
 
         <div class="form-group">

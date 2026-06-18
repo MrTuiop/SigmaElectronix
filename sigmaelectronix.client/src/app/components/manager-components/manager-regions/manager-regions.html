@@ -64,7 +64,7 @@
           </td>
           <td>
             <span class="badge" [ngClass]="region.citiesCount > 0 ? 'badge-active' : 'badge-gray'">
-              {{ region.citiesCount }} городов
+              {{ getCitiesWord(region.citiesCount) }}
             </span>
           </td>
           <td class="text-right">

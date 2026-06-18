@@ -19,7 +19,8 @@ import {
   LucideTruck,
   LucideTicket,
   LucideBoxes,
-  LucideShield
+  LucideShield,
+  LucideFileEdit // <-- ДОБАВИЛИ НОВУЮ ИКОНКУ
 } from '@lucide/angular';
 
 @Component({
@@ -40,10 +41,11 @@ import {
     LucideMapPin,
     LucideMap,
     LucideGlobe,
-    LucideTicket, // <-- Купоны
-    LucideTruck,  // <-- Поступления/перемещения
+    LucideTicket,
+    LucideTruck,
     LucideBoxes,
-    LucideShield
+    LucideShield,
+    LucideFileEdit // <-- НЕ ЗАБЫВАЕМ ДОБАВИТЬ В IMPORTS
   ],
   templateUrl: './manager.html',
   styleUrl: './manager.css'
@@ -58,7 +60,7 @@ export class ManagerPage {
 
   isSidebarCollapsed = signal(false);
 
-  // Умное вычисление имени (как мы сделали ранее)
+  // Умное вычисление имени
   managerName = computed(() => {
     const u = this.profileService.user();
     if (!u) return 'Загрузка...';
@@ -74,19 +76,14 @@ export class ManagerPage {
     return this.profileService.user()?.avatarUrl || '/assets/avatar-placeholder.png';
   });
 
-  // НОВОЕ: Умное вычисление роли
+  // Умное вычисление роли
   managerRoleDisplay = computed(() => {
     const token = this.authService.token();
-    if (!token) return 'Контент-отдел'; // Значение по умолчанию
+    if (!token) return 'Контент-отдел';
 
     try {
-      // Расшифровываем среднюю часть JWT-токена (payload)
       const payload = JSON.parse(atob(token.split('.')[1]));
-
-      // В ASP.NET Identity роли лежат в этом длинном ключе (или просто в 'role')
       const roles = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload['role'];
-
-      // Проверяем, есть ли 'Admin' (roles может быть массивом или строкой)
       const isAdmin = Array.isArray(roles) ? roles.includes('Admin') : roles === 'Admin';
 
       if (isAdmin) {
@@ -96,7 +93,6 @@ export class ManagerPage {
       console.error('Ошибка чтения токена', e);
     }
 
-    // Если код дошел сюда, значит роли Admin нет, выводим для менеджера:
     return 'Контент-отдел';
   });
 

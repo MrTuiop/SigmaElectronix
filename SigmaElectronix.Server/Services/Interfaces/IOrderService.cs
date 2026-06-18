@@ -12,5 +12,7 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<OrderDto?> UpdateStatusAsync(int id, OrderStatus newStatus);
         Task<bool> CancelOrderAsync(int id, string userId);
         Task AwardCashbackAsync(int orderId);
+        Task<bool> LinkGuestOrderAsync(string orderNumber, string userId);
+        Task<int> LinkGuestOrdersByPhoneAsync(string phone, string userId);
     }
 }

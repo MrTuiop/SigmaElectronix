@@ -31,4 +31,10 @@ export class InventoryService {
     console.error('InventoryService Error:', error);
     return throwError(() => new Error(errorMessage));
   }
+
+  writeOffStock(dto: any): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/write-off`, dto).pipe(
+      catchError(this.handleError)
+    );
+  }
 }

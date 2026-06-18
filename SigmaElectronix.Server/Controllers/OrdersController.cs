@@ -56,17 +56,23 @@ namespace SigmaElectronix.Server.Controllers
         // GET /api/orders/{id}
         // ============================================
         [HttpGet("{id:int}")]
+        [AllowAnonymous] // 🚀 РАЗРЕШАЕМ ГОСТЯМ ВИДЕТЬ СОЗДАННЫЙ ЗАКАЗ НА СТРАНИЦЕ ОПЛАТЫ
         [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetById(int id)
         {
             var order = await _orderService.GetByIdAsync(id);
-            if (order == null) return NotFound();
+            if (order == null) return NotFound(new { message = "Заказ не найден" });
 
             var userId = GetCurrentUserId();
-            if (order.UserId != userId && !IsAdmin())
-                return Forbid();
+
+            // Если заказ оформлен авторизованным юзером, защищаем его от чужих глаз
+            if (!string.IsNullOrEmpty(order.UserId))
+            {
+                if (order.UserId != userId && !IsAdmin())
+                    return Forbid();
+            }
 
             return Ok(order);
         }
@@ -142,6 +148,7 @@ namespace SigmaElectronix.Server.Controllers
         // POST /api/orders/{id}/pay
         // ============================================
         [HttpPost("{id:int}/pay")]
+        [AllowAnonymous] // 🚀 РАЗРЕШАЕМ ГОСТЯМ ОПЛАЧИВАТЬ
         [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -149,14 +156,12 @@ namespace SigmaElectronix.Server.Controllers
         {
             try
             {
-                var userId = GetCurrentUserId();
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized();
+                var userId = GetCurrentUserId(); // Для гостя будет null
 
-                // 1. Оплачиваем заказ (PaymentService переведет статус в Paid)
-                var order = await _paymentService.ProcessPaymentAsync(id, userId);
+                // Передаем userId (даже если он null) в сервис оплаты
+                var order = await _paymentService.ProcessPaymentAsync(id, userId!);
 
-                // 2. 🚀 ТРИГГЕРИМ НАЧИСЛЕНИЕ БОНУСОВ!
+                // ТРИГГЕРИМ НАЧИСЛЕНИЕ БОНУСОВ! (внутри сервиса есть защита, гостям просто не начислит)
                 await _orderService.AwardCashbackAsync(id);
 
                 return Ok(order);
@@ -192,6 +197,47 @@ namespace SigmaElectronix.Server.Controllers
             {
                 return BadRequest(new { error = "payment_failed", message = ex.Message });
             }
+        }
+
+        // ============================================
+        // POST /api/orders/link/{orderNumber}
+        // ============================================
+        [HttpPost("link/{orderNumber}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> LinkOrder(string orderNumber)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            try
+            {
+                var success = await _orderService.LinkGuestOrderAsync(orderNumber, userId);
+                return success
+                    ? Ok(new { message = "Заказ успешно привязан" })
+                    : NotFound(new { message = "Заказ с таким номером не найден" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ============================================
+        // POST /api/orders/link-by-phone
+        // ============================================
+        [HttpPost("link-by-phone")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> LinkOrdersByPhone([FromBody] LinkByPhoneDto dto)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var count = await _orderService.LinkGuestOrdersByPhoneAsync(dto.Phone, userId);
+
+            return Ok(new { count });
         }
     }
 }
