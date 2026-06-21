@@ -151,3 +151,87 @@
 .detail-item:hover .icon-btn.edit {
   opacity: 1;
 }
+
+/* ===== ЗАГРУЗКА АВАТАРА ===== */
+.avatar-upload-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden; /* Обрезает оверлей по форме круга */
+  border: 2px solid var(--border-color);
+  background: var(--bg-color);
+  flex-shrink: 0;
+  transition: border-color var(--transition);
+}
+
+  .avatar-upload-wrapper:hover {
+    border-color: var(--primary-color);
+  }
+
+.avatar-circle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Оверлей с фотоаппаратом (скрыт по умолчанию) */
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Полупрозрачный черный */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Показываем фотоаппарат при наведении */
+.avatar-upload-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+/* Оверлей прогресса загрузки */
+.avatar-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85); /* Светлый фон для текста */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* Для темной темы (если она у тебя есть) */
+:host-context(.dark-theme) .avatar-loading-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-color, #7c3aed);
+}
+
+.hidden-input {
+  display: none !important;
+}

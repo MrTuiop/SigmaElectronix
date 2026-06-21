@@ -1,0 +1,39 @@
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 40px; /* Отступ снизу (учти высоту футера, чтобы не перекрывался) */
+  right: 30px;
+  z-index: 9999; /* Гарантирует, что кнопка будет поверх всего */
+
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%; /* Круглая форма */
+  /* Подстрой под дизайн своего магазина */
+  background-color: #333;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Начальное состояние (скрыто) */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  /* Плавные переходы */
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+}
+
+  /* Состояние, когда кнопка видима */
+  .scroll-to-top-btn.visible {
+    opacity: 0.9;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Эффект при наведении */
+  .scroll-to-top-btn:hover {
+    background-color: #007bff; /* Твой основной цвет магазина */
+    transform: translateY(-5px); /* Легка приподнимается */
+    opacity: 1;
+  }

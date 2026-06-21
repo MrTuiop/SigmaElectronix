@@ -11,6 +11,7 @@ export interface UserDto {
   isActive: boolean;
   createdAt: string;
   roles: string[];
+  avatarUrl?: string;
 }
 
 export interface CreateUserDto {

@@ -2,6 +2,8 @@
 export interface BrandSummaryDto {
   id: number;
   name: string;
+  slug?: string;
+  logoUrl?: string;
 }
 
 // Фильтр списка товаров
@@ -79,6 +81,7 @@ export interface CreateProductDto {
   specifications: Record<string, string>;
   tags: string[];
   isPublished: boolean;
+  images: ProductImageDto[];
 }
 
 export interface UpdateProductDto {
@@ -92,6 +95,7 @@ export interface UpdateProductDto {
   categoryId: number;
   specifications: Record<string, string>;
   isPublished: boolean;
+  images: ProductImageDto[];
 }
 
 // Обёртка пагинированного ответа (предполагаемая структура с бэка)

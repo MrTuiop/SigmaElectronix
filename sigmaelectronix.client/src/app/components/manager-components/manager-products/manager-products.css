@@ -703,3 +703,189 @@ tr.unpublished {
     transform: translateY(0);
   }
 }
+
+/* =============================================
+   СТИЛИ ДЛЯ ГАЛЕРЕИ ТОВАРОВ (Шаг 4)
+   ============================================= */
+
+.image-upload-wrapper.multiple {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+  .image-upload-wrapper.multiple:hover,
+  .image-upload-wrapper.multiple.dragover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+  }
+
+  .image-upload-wrapper.multiple.dragover {
+    border-width: 3px;
+    transform: scale(1.02);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.15);
+  }
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+}
+
+  .upload-placeholder svg {
+    color: #9ca3af;
+    transition: color 0.2s ease;
+  }
+
+.image-upload-wrapper:hover .upload-placeholder svg {
+  color: #3b82f6;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+  .upload-text strong {
+    color: #3b82f6;
+    font-size: 15px;
+  }
+
+.hidden-input {
+  display: none;
+}
+
+/* СЕТКА ЗАГРУЖЕННЫХ КАРТИНОК */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.gallery-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+  .gallery-item.is-main {
+    border-color: #f59e0b; /* Золотая рамка для главной */
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+  }
+
+/* Наложение при наведении */
+.item-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(2px);
+}
+
+.gallery-item:hover .item-overlay {
+  opacity: 1;
+}
+
+/* Кнопки действий на картинке */
+.action-btn-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+  .action-btn-img:hover {
+    transform: scale(1.1);
+  }
+
+  .action-btn-img.make-main {
+    background-color: #f59e0b;
+  }
+
+    .action-btn-img.make-main:hover {
+      background-color: #d97706;
+    }
+
+  .action-btn-img.delete-img {
+    background-color: #ef4444;
+  }
+
+    .action-btn-img.delete-img:hover {
+      background-color: #dc2626;
+    }
+
+/* Бейджик "Главная" */
+.main-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #f59e0b;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-transform: uppercase;
+}
+
+/* === Кликабельные шаги мастера === */
+.step.clickable {
+  cursor: pointer;
+}
+
+  .step.clickable:hover .step-text {
+    color: #3b82f6; /* Подсвечиваем текст синим */
+  }
+
+  .step.clickable:hover .step-num {
+    transform: scale(1.1); /* Слегка увеличиваем кружочек */
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); /* Добавляем свечение */
+  }
+
+  /* Если шаг кликабельный, но еще не активный, при наведении делаем рамку синей */
+  .step.clickable:not(.active):not(.completed):hover .step-num {
+    border-color: #3b82f6;
+    color: #3b82f6;
+  }

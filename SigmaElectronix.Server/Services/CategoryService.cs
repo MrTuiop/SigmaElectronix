@@ -28,6 +28,7 @@ namespace SigmaElectronix.Server.Services
                     c.Name,
                     c.Slug,
                     c.ImageUrl,
+                    Icon = c.Icon,
                     c.ParentCategoryId,
                     ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
                     SubCategoriesCount = c.SubCategories.Count,
@@ -61,6 +62,7 @@ namespace SigmaElectronix.Server.Services
                     Name = c.Name,
                     Slug = c.Slug,
                     ImageUrl = c.ImageUrl,
+                    Icon = c.Icon,
                     ParentCategoryId = c.ParentCategoryId,
                     ParentCategoryName = c.ParentCategoryName,
                     SubCategoriesCount = c.SubCategoriesCount,
@@ -80,6 +82,7 @@ namespace SigmaElectronix.Server.Services
                     c.Name,
                     c.Slug,
                     c.ImageUrl,
+                    Icon = c.Icon,
                     c.ParentCategoryId,
                     ProductsCount = c.Products.Count
                 })
@@ -98,6 +101,7 @@ namespace SigmaElectronix.Server.Services
                         Name = c.Name,
                         Slug = c.Slug,
                         ImageUrl = c.ImageUrl,
+                        Icon = c.Icon,
                         ProductsCount = c.ProductsCount, // Базовое количество
                         SubCategories = BuildTree(c.Id)
                     })
@@ -130,6 +134,7 @@ namespace SigmaElectronix.Server.Services
                     Name = c.Name,
                     Slug = c.Slug,
                     ImageUrl = c.ImageUrl,
+                    Icon = c.Icon,
                     ParentCategoryId = c.ParentCategoryId,
                     ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
                     ProductsCount = c.Products.Count,
@@ -149,6 +154,7 @@ namespace SigmaElectronix.Server.Services
                     Name = c.Name,
                     Slug = c.Slug,
                     ImageUrl = c.ImageUrl,
+                    Icon = c.Icon,
                     ParentCategoryId = c.ParentCategoryId,
                     ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
                     ProductsCount = c.Products.Count,
@@ -174,6 +180,7 @@ namespace SigmaElectronix.Server.Services
                 Name = dto.Name,
                 Slug = dto.Slug.ToLowerInvariant(),
                 ImageUrl = dto.ImageUrl ?? string.Empty,
+                Icon = dto.Icon ?? "folder",
                 ParentCategoryId = dto.ParentCategoryId
             };
 
@@ -204,6 +211,7 @@ namespace SigmaElectronix.Server.Services
             category.Name = dto.Name;
             category.Slug = dto.Slug.ToLowerInvariant();
             category.ImageUrl = dto.ImageUrl ?? category.ImageUrl;
+            category.Icon = dto.Icon ?? category.Icon;
             category.ParentCategoryId = dto.ParentCategoryId;
 
             await _context.SaveChangesAsync();
@@ -257,6 +265,7 @@ namespace SigmaElectronix.Server.Services
                 Name = c.Name,
                 Slug = c.Slug,
                 ImageUrl = c.ImageUrl,
+                Icon = c.Icon,
                 ParentCategoryId = c.ParentCategoryId,
                 ParentCategoryName = c.ParentCategory?.Name,
                 ProductsCount = c.Products?.Count ?? 0,

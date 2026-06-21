@@ -172,16 +172,41 @@
   <div class="wizard-container">
 
     <div class="wizard-stepper">
-      <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+      <div class="step"
+           [class.active]="currentStep() >= 1"
+           [class.completed]="currentStep() > 1"
+           [class.clickable]="isEditing() || currentStep() > 1"
+           (click)="goToStep(1)">
         <span class="step-num">1</span><span class="step-text">База</span>
       </div>
+
       <div class="step-line" [class.filled]="currentStep() > 1"></div>
-      <div class="step" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
-        <span class="step-num">2</span><span class="step-text">Цены и Статус</span>
+
+      <div class="step"
+           [class.active]="currentStep() >= 2"
+           [class.completed]="currentStep() > 2"
+           [class.clickable]="isEditing() || currentStep() > 2"
+           (click)="goToStep(2)">
+        <span class="step-num">2</span><span class="step-text">Цены</span>
       </div>
+
       <div class="step-line" [class.filled]="currentStep() > 2"></div>
-      <div class="step" [class.active]="currentStep() === 3">
-        <span class="step-num">3</span><span class="step-text">Характеристики</span>
+
+      <div class="step"
+           [class.active]="currentStep() >= 3"
+           [class.completed]="currentStep() > 3"
+           [class.clickable]="isEditing() || currentStep() > 3"
+           (click)="goToStep(3)">
+        <span class="step-num">3</span><span class="step-text">Инфо</span>
+      </div>
+
+      <div class="step-line" [class.filled]="currentStep() > 3"></div>
+
+      <div class="step"
+           [class.active]="currentStep() === 4"
+           [class.clickable]="isEditing()"
+           (click)="goToStep(4)">
+        <span class="step-num">4</span><span class="step-text">Медиа</span>
       </div>
     </div>
 
@@ -204,9 +229,6 @@
             <label>Системный путь (Slug) *</label>
             <input type="text" formControlName="slug" class="mono-input"
                    [class.input-error]="productForm.get('slug')?.invalid && productForm.get('slug')?.touched">
-            @if (productForm.get('slug')?.invalid && productForm.get('slug')?.touched) {
-            <span class="error-msg">Обязательное поле для формирования URL</span>
-            }
           </div>
 
           <div class="form-group full-width">
@@ -216,7 +238,6 @@
 
           <div class="form-group relative">
             <label>Категория товара *</label>
-
             <div class="custom-search-select" (click)="openCategorySearch()">
               <input type="text"
                      [class.input-error]="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched"
@@ -250,7 +271,6 @@
 
           <div class="form-group relative">
             <label>Бренд *</label>
-
             <div class="custom-search-select" (click)="openBrandSearch()">
               <input type="text"
                      [class.input-error]="productForm.get('brandId')?.invalid && productForm.get('brandId')?.touched"
@@ -348,19 +368,13 @@
           <div formArrayName="specifications" class="specs-list">
             @for (spec of specsArray.controls; track spec; let i = $index) {
             <div [formGroupName]="i" class="spec-row">
-
-              <input type="text" formControlName="key" list="spec-keys-list" placeholder="Свойство (напр: Цвет)" autocomplete="off"
-                     [class.input-error]="spec.get('key')?.invalid && spec.get('key')?.touched">
-
+              <input type="text" formControlName="key" list="spec-keys-list" placeholder="Свойство (напр: Цвет)" autocomplete="off">
               <datalist [id]="'spec-vals-list-' + i">
                 @for (val of getValuesForSpecKey(spec.get('key')?.value); track val) {
                 <option [value]="val"></option>
                 }
               </datalist>
-
-              <input type="text" formControlName="value" [attr.list]="'spec-vals-list-' + i" placeholder="Значение (напр: Черный)" autocomplete="off"
-                     [class.input-error]="spec.get('value')?.invalid && spec.get('value')?.touched">
-
+              <input type="text" formControlName="value" [attr.list]="'spec-vals-list-' + i" placeholder="Значение (напр: Черный)" autocomplete="off">
               <button type="button" class="btn-icon-danger" (click)="removeSpecification(i)">
                 <svg lucideX size="16" strokeWidth="1.5"></svg>
               </button>
@@ -371,15 +385,69 @@
       </div>
       }
 
+      @if (currentStep() === 4) {
+      <div class="form-step-card animate-fade">
+        <h3>Шаг 4: Галерея изображений</h3>
+        <p class="step-desc">Вы можете загрузить сразу несколько фото. Перетащите их в зону ниже или нажмите для выбора.</p>
+
+        <div class="image-upload-wrapper multiple"
+             [class.dragover]="isDragoverImages()"
+             (dragover)="onDragOverImages($event)"
+             (dragleave)="onDragLeaveImages($event)"
+             (drop)="onDropImages($event)">
+
+          @if (isUploadingImages()) {
+          <div class="upload-placeholder">
+            <app-spinner message="Загружаем файлы..."></app-spinner>
+          </div>
+          } @else {
+          <label class="upload-placeholder cursor-pointer">
+            <input type="file" accept="image/*" multiple class="hidden-input" (change)="onImagesSelected($event)">
+            <svg lucideImagePlus size="40" strokeWidth="1.5"></svg>
+            <span class="upload-text">
+              <strong>Нажмите для выбора фото</strong><br>
+              или перетащите файлы сюда
+            </span>
+          </label>
+          }
+        </div>
+
+        @if (productImages().length > 0) {
+        <div class="gallery-grid">
+          @for (img of productImages(); track img.url) {
+          <div class="gallery-item" [class.is-main]="img.isMain">
+            <img [src]="img.url" alt="Product Image">
+
+            <div class="item-overlay">
+              @if (!img.isMain) {
+              <button type="button" class="action-btn-img make-main" (click)="setMainImage(img.url)" title="Сделать главной">
+                <svg lucideStar size="16" strokeWidth="2"></svg>
+              </button>
+              }
+              <button type="button" class="action-btn-img delete-img" (click)="removeProductImage(img.url)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="2"></svg>
+              </button>
+            </div>
+
+            @if (img.isMain) {
+            <div class="main-badge"><svg lucideStar size="12" strokeWidth="2"></svg> Главная</div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+
       <div class="wizard-footer">
         @if (currentStep() > 1) {
         <button type="button" class="btn btn-secondary" (click)="prevStep()">Назад</button>
         } @else { <div></div> }
 
-        @if (currentStep() < 3) {
+        @if (currentStep() < 4) {
         <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="!isStepValid(currentStep())">Далее</button>
         } @else {
-        <button type="submit" class="btn btn-success" [disabled]="productForm.invalid || loading()">
+        <button type="submit" class="btn btn-success" [disabled]="productForm.invalid || isUploadingImages() || loading()">
           <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить товар
         </button>
         }
@@ -388,4 +456,3 @@
     </form>
   </div>
   }
-</div>

@@ -13,5 +13,6 @@
         public Dictionary<string, string> Specifications { get; set; } = new();
         public List<string> Tags { get; set; } = new();
         public bool IsPublished { get; set; } = true;
+        public List<ProductImageDto> Images { get; set; } = new();
     }
 }

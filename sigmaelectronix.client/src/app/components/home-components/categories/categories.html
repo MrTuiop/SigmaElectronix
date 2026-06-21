@@ -24,17 +24,11 @@
       @else {
       @for (cat of categories(); track cat.id) {
       <a [routerLink]="['/catalog', cat.slug]" class="category-card">
+
         <div class="cat-icon-wrapper">
-          @switch (cat.iconType) {
-          @case ('smartphone') { <svg lucideSmartphone size="28" strokeWidth="1.8"></svg> }
-          @case ('laptop') { <svg lucideLaptop size="28" strokeWidth="1.8"></svg> }
-          @case ('headphones') { <svg lucideHeadphones size="28" strokeWidth="1.8"></svg> }
-          @case ('watch') { <svg lucideWatch size="28" strokeWidth="1.8"></svg> }
-          @case ('tv') { <svg lucideTv size="28" strokeWidth="1.8"></svg> }
-          @case ('gamepad-2') { <svg lucideGamepad2 size="28" strokeWidth="1.8"></svg> }
-          @default { <svg lucideTag size="28" strokeWidth="1.8"></svg> }
-          }
+          <ng-container *ngComponentOutlet="getIconComponent(cat); inputs: { size: 28, strokeWidth: 1.8 }"></ng-container>
         </div>
+
         <span class="cat-label">{{ cat.name }}</span>
         <span class="cat-count">{{ cat.productsCount }} товаров</span>
       </a>

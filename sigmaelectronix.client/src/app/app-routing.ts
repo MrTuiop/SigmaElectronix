@@ -36,6 +36,7 @@ import { authGuard } from './guards/auth-guard';
 import { adminGuard } from './guards/admin-guard';
 import { ManagerUsersComponent } from './components/manager-components/manager-users/manager-users';
 import { ManagerPageEditorComponent } from './components/manager-components/manager-page-editor/manager-page-editor';
+import { ManagerFilesComponent } from './components/manager-components/manager-files/manager-files';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -80,7 +81,8 @@ export const routes: Routes = [
       {
         path: 'page-editor',
         component: ManagerPageEditorComponent
-      }
+      },
+      { path: 'files', component: ManagerFilesComponent }
     ]
   },
 

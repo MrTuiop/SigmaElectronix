@@ -32,7 +32,7 @@
   font-weight: 600;
   color: var(--primary-color);
   transition: var(--transition);
-  text-decoration: none; /* Защита от дефолтного подчеркивания */
+  text-decoration: none;
 }
 
   .section-link:hover {
@@ -44,33 +44,32 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 20px;
-  min-height: 156px; /* Защита от схлопывания высоты сетки */
+  min-height: 156px;
 }
 
 .brand-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 28px 16px;
+  gap: 16px; /* 👈 Увеличили отступ между картинкой и текстом */
+  padding: 32px 16px; /* 👈 Сделали карточку просторнее */
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px; /* 👈 Усилили скругление углов */
   transition: var(--transition);
   text-decoration: none;
   color: inherit;
 }
 
-  /* Применяем hover-эффекты только к реальным карточкам, не к скелетонам */
   .brand-card:not(.skeleton-card):hover {
     border-color: var(--primary-color);
-    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.1);
-    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(124, 58, 237, 0.12); /* 👈 Более красивая тень */
+    transform: translateY(-6px); /* 👈 Карточка сильнее "взлетает" */
   }
 
 .brand-icon-wrapper {
-  width: 64px;
-  height: 64px;
+  width: 100px; /* 👈 БЫЛО 64px, СТАЛО 100px */
+  height: 100px; /* 👈 БЫЛО 64px, СТАЛО 100px */
   border-radius: 50%;
   background: var(--card-bg);
   display: flex;
@@ -88,15 +87,13 @@
   border-color: transparent;
 }
 
-/* Строгие ширина и высота (не max-), чтобы Flexbox не сжимал картинки в Safari/Chrome */
 .brand-logo-img {
-  width: 70%;
-  height: 70%;
+  width: 75%; /* 👈 Увеличили саму картинку внутри круга (было 70%) */
+  height: 75%;
   object-fit: contain;
   transition: var(--transition);
 }
 
-/* 🔥 КРУТОЙ ТРЮК: Если логотипы черные/цветные, при наведении на карточку мы делаем их чисто белыми, чтобы они шикарно смотрелись на фиолетовом фоне */
 .brand-card:not(.skeleton-card):hover .brand-logo-img {
   filter: brightness(0) invert(1);
 }
@@ -111,8 +108,8 @@
 }
 
 .brand-name {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700; /* 👈 Сделали пожирнее */
+  font-size: 16px; /* 👈 Увеличили текст (было 14px) */
   color: var(--text-main);
   text-align: center;
 }
@@ -130,7 +127,7 @@
 
 .skeleton-text {
   width: 60%;
-  height: 14px;
+  height: 16px; /* 👈 Увеличили скелетон текста под размер нового шрифта */
   background: var(--border-color);
   border-radius: 4px;
   animation: pulse 1.5s infinite ease-in-out;
@@ -159,14 +156,45 @@
 }
 
 /* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 1200px) {
+  .brands-grid {
+    grid-template-columns: repeat(4, 1fr); /* 👈 На небольших ПК 4 в ряд */
+  }
+}
+
 @media (max-width: 768px) {
   .brands-grid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .brand-card {
+    padding: 24px 12px;
+  }
+
+  .brand-icon-wrapper {
+    width: 80px; /* 👈 Уменьшаем круги на планшетах */
+    height: 80px;
+  }
+
+  .brand-name {
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
   .brands-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .brand-card {
+    padding: 20px 10px;
+    gap: 12px;
+  }
+
+  .brand-icon-wrapper {
+    width: 64px; /* 👈 На мобилках возвращаем компактный размер */
+    height: 64px;
   }
 }

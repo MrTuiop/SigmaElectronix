@@ -234,14 +234,77 @@
         <p class="step-desc">Здесь настраиваются медиа-ресурсы для индивидуальной страницы бренда.</p>
 
         <div class="form-grid">
+
           <div class="form-group-field">
-            <label>Ссылка на логотип (Logo URL)</label>
-            <input type="text" formControlName="logoUrl" placeholder="/images/brands/apple-logo.png">
+            <label>Логотип бренда (Logo)</label>
+            <div class="image-upload-wrapper"
+                 [class.dragover]="isDragoverLogo()"
+                 (dragover)="onDragOver($event, 'logoUrl')"
+                 (dragleave)="onDragLeave($event, 'logoUrl')"
+                 (drop)="onDrop($event, 'logoUrl')">
+
+              @if (isUploadingLogo()) {
+              <div class="upload-placeholder">
+                <app-spinner message=""></app-spinner>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="logoUploadProgress()"></div>
+                </div>
+                <span class="progress-text">Загрузка: {{ logoUploadProgress() }}%</span>
+              </div>
+              } @else if (brandForm.get('logoUrl')?.value) {
+              <div class="image-preview-box">
+                <img [src]="brandForm.get('logoUrl')?.value" alt="Logo">
+                <button type="button" class="btn-remove-img" (click)="removeImage('logoUrl')" title="Удалить логотип">
+                  <svg lucideX size="16" strokeWidth="2"></svg>
+                </button>
+              </div>
+              } @else {
+              <label class="upload-placeholder cursor-pointer">
+                <input type="file" accept="image/*" class="hidden-input" (change)="onImageSelected($event, 'logoUrl')">
+                <svg lucideUploadCloud size="32" strokeWidth="1.5"></svg>
+                <span class="upload-text">
+                  <strong>Нажмите для загрузки</strong><br>
+                  или перетащите логотип
+                </span>
+              </label>
+              }
+            </div>
           </div>
 
           <div class="form-group-field">
-            <label>Большое изображение обложки (Hero Image URL)</label>
-            <input type="text" formControlName="heroImageUrl" placeholder="/images/brands/apple-banner.jpg">
+            <label>Изображение обложки (Hero Image)</label>
+            <div class="image-upload-wrapper"
+                 [class.dragover]="isDragoverHero()"
+                 (dragover)="onDragOver($event, 'heroImageUrl')"
+                 (dragleave)="onDragLeave($event, 'heroImageUrl')"
+                 (drop)="onDrop($event, 'heroImageUrl')">
+
+              @if (isUploadingHero()) {
+              <div class="upload-placeholder">
+                <app-spinner message=""></app-spinner>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="heroUploadProgress()"></div>
+                </div>
+                <span class="progress-text">Загрузка: {{ heroUploadProgress() }}%</span>
+              </div>
+              } @else if (brandForm.get('heroImageUrl')?.value) {
+              <div class="image-preview-box hero-preview">
+                <img [src]="brandForm.get('heroImageUrl')?.value" alt="Hero">
+                <button type="button" class="btn-remove-img" (click)="removeImage('heroImageUrl')" title="Удалить обложку">
+                  <svg lucideX size="16" strokeWidth="2"></svg>
+                </button>
+              </div>
+              } @else {
+              <label class="upload-placeholder cursor-pointer">
+                <input type="file" accept="image/*" class="hidden-input" (change)="onImageSelected($event, 'heroImageUrl')">
+                <svg lucideImage size="32" strokeWidth="1.5"></svg>
+                <span class="upload-text">
+                  <strong>Нажмите для загрузки</strong><br>
+                  или перетащите обложку
+                </span>
+              </label>
+              }
+            </div>
           </div>
 
           <div class="form-group-field">

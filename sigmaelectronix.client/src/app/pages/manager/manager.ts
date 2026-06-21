@@ -20,7 +20,8 @@ import {
   LucideTicket,
   LucideBoxes,
   LucideShield,
-  LucideFileEdit // <-- ДОБАВИЛИ НОВУЮ ИКОНКУ
+  LucideFileEdit, // <-- ДОБАВИЛИ НОВУЮ ИКОНКУ
+  LucideHardDrive
 } from '@lucide/angular';
 
 @Component({
@@ -45,7 +46,8 @@ import {
     LucideTruck,
     LucideBoxes,
     LucideShield,
-    LucideFileEdit // <-- НЕ ЗАБЫВАЕМ ДОБАВИТЬ В IMPORTS
+    LucideFileEdit,
+    LucideHardDrive
   ],
   templateUrl: './manager.html',
   styleUrl: './manager.css'

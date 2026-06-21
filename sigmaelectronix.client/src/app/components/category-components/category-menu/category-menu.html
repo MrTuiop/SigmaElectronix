@@ -8,7 +8,7 @@
 
         <a [routerLink]="['/catalog', cat.slug]" (click)="onLinkClick()" class="root-link">
 
-          <ng-container *ngComponentOutlet="getIcon(cat.slug); inputs: { size: 18, class: 'cat-icon' }"></ng-container>
+          <ng-container *ngComponentOutlet="getIcon(cat.icon); inputs: { size: 18, class: 'cat-icon' }"></ng-container>
 
           <span class="root-name">{{ cat.name }}</span>
 

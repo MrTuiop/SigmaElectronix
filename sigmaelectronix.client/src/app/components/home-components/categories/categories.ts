@@ -1,18 +1,13 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-
 import {
   LucideArrowRight, LucideSmartphone, LucideLaptop, LucideHeadphones,
-  LucideWatch, LucideTv, LucideGamepad2, LucideTag
+  LucideWatch, LucideTv, LucideGamepad2, LucideTag, LucideFolder,
+  LucideMonitor, LucideCamera
 } from '@lucide/angular';
-
 import { CategoryDto } from '../../../models/category-models';
 import { CategoryService } from '../../../services/category-service';
-
-interface UiCategory extends CategoryDto {
-  iconType: string;
-}
 
 @Component({
   selector: 'app-categories',
@@ -20,8 +15,8 @@ interface UiCategory extends CategoryDto {
   imports: [
     CommonModule,
     RouterModule,
-    LucideArrowRight, LucideSmartphone, LucideLaptop, LucideHeadphones,
-    LucideWatch, LucideTv, LucideGamepad2, LucideTag
+    LucideArrowRight,
+    // Можем убрать иконки из imports, так как мы рендерим их динамически через ngComponentOutlet
   ],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
@@ -34,14 +29,24 @@ export class CategoriesComponent implements OnInit {
   error = signal<string | null>(null);
   skeletonArray = Array(6).fill(0);
 
-  categories = computed<UiCategory[]>(() => {
+  // Массив доступных иконок
+  availableIcons: Array<{ id: string, component: any }> = [
+    { id: 'smartphone', component: LucideSmartphone },
+    { id: 'laptop', component: LucideLaptop },
+    { id: 'headphones', component: LucideHeadphones },
+    { id: 'watch', component: LucideWatch },
+    { id: 'tv', component: LucideTv },
+    { id: 'gamepad-2', component: LucideGamepad2 },
+    { id: 'monitor', component: LucideMonitor },
+    { id: 'camera', component: LucideCamera },
+    { id: 'folder', component: LucideFolder },
+    { id: 'tag', component: LucideTag }
+  ];
+
+  // Берем просто чистые данные из сервиса
+  categories = computed<CategoryDto[]>(() => {
     const all = this.categoryService.allCategories();
-    // только корневые (без родителя)
-    const roots = all.filter(c => c.parentCategoryId == null);
-    return roots.map(c => ({
-      ...c,
-      iconType: this.mapIconType(c)
-    }));
+    return all.filter(c => c.parentCategoryId == null);
   });
 
   ngOnInit(): void {
@@ -61,6 +66,19 @@ export class CategoriesComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // Умное получение иконки
+  getIconComponent(cat: CategoryDto): any {
+    let iconId = cat.icon;
+
+    // Фолбэк: если иконки в базе еще нет, подбираем по названию
+    if (!iconId) {
+      iconId = this.mapIconType(cat);
+    }
+
+    const icon = this.availableIcons.find(i => i.id === iconId);
+    return icon ? icon.component : LucideTag;
   }
 
   private mapIconType(cat: CategoryDto): string {

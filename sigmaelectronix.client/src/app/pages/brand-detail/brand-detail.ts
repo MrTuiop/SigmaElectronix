@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 // Удалили кучу иконок корзины и звездочек, оставили только нужные странице бренда
-import { LucideArrowLeft, LucidePackage, LucideFolder, LucideChevronRight } from '@lucide/angular';
+import { LucideArrowLeft, LucidePackage, LucideFolder, LucideChevronRight, LucideLaptop, LucideSmartphone, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2, LucideMonitor, LucideCamera } from '@lucide/angular';
 import { BrandService } from '../../services/brand-service';
 import { BrandShowcaseDto } from '../../models/brand-models';
 import { WishlistService } from '../../services/wishlist-service';
@@ -95,5 +95,22 @@ export class BrandDetailComponent implements OnInit {
       this.gradientCache.set(productId, gradients[Math.floor(Math.random() * gradients.length)]);
     }
     return this.gradientCache.get(productId)!;
+  }
+
+  private iconMap: Record<string, any> = {
+    'smartphone': LucideSmartphone,
+    'laptop': LucideLaptop,
+    'headphones': LucideHeadphones,
+    'watch': LucideWatch,
+    'tv': LucideTv,
+    'gamepad-2': LucideGamepad2,
+    'monitor': LucideMonitor,
+    'camera': LucideCamera,
+    'folder': LucideFolder
+  };
+
+  getIconComponent(iconId: string | undefined): any {
+    if (!iconId) return LucideFolder; // По умолчанию папка
+    return this.iconMap[iconId] || LucideFolder;
   }
 }

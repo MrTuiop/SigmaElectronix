@@ -121,7 +121,8 @@ namespace SigmaElectronix.Server.Services
                     CategoryId = g.Key.Id,
                     CategoryName = g.Key.Name,
                     CategorySlug = g.Key.Slug,
-                    IconUrl = g.Key.ImageUrl, // Используем ImageUrl категории как иконку
+                    IconUrl = g.Key.ImageUrl,
+                    Icon = g.Key.Icon, // 👈 Передаем системную иконку из сущности Category
                     ProductsCount = g.Count()
                 })
                 .OrderByDescending(c => c.ProductsCount)

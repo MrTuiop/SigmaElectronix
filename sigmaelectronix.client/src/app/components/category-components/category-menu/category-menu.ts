@@ -19,16 +19,27 @@ import {
   LucideGamepad2,
   LucideFolder,
   LucideChevronRight,
+  LucideMonitor, // <-- ДОБАВИЛИ
+  LucideCamera   // <-- ДОБАВИЛИ
 } from '@lucide/angular';
 import { CategoryService } from '../../../services/category-service';
 
 @Component({
   selector: 'app-category-menu',
   standalone: true,
-  imports: [CommonModule, RouterLink,
-    LucideSmartphone, LucideLaptop, LucideHeadphones,
-    LucideWatch, LucideTv, LucideGamepad2, LucideFolder,
-    LucideChevronRight
+  imports: [
+    CommonModule,
+    RouterLink,
+    LucideSmartphone,
+    LucideLaptop,
+    LucideHeadphones,
+    LucideWatch,
+    LucideTv,
+    LucideGamepad2,
+    LucideFolder,
+    LucideChevronRight,
+    LucideMonitor, // <-- ДОБАВИЛИ СЮДА
+    LucideCamera   // <-- ДОБАВИЛИ СЮДА
   ],
   templateUrl: './category-menu.html',
   styleUrls: ['./category-menu.css'],
@@ -67,23 +78,26 @@ export class CategoryMenuComponent {
     return this.selectedRoot()?.subCategories || [];
   });
 
+  // 🎯 ТЕПЕРЬ СЛОВАРЬ РАБОТАЕТ ПО ТОЧНЫМ ID ИЗ БАЗЫ ДАННЫХ
   private iconMap: Record<string, any> = {
-    'smartphones': LucideSmartphone,
-    'phones': LucideSmartphone,
-    'laptops': LucideLaptop,
-    'computers': LucideLaptop,
+    'smartphone': LucideSmartphone,
+    'laptop': LucideLaptop,
     'headphones': LucideHeadphones,
-    'audio': LucideHeadphones,
-    'watches': LucideWatch,
-    'smartwatches': LucideWatch,
+    'watch': LucideWatch,
     'tv': LucideTv,
-    'televisions': LucideTv,
-    'gaming': LucideGamepad2,
-    'consoles': LucideGamepad2,
+    'gamepad-2': LucideGamepad2,
+    'monitor': LucideMonitor,
+    'camera': LucideCamera,
+    'folder': LucideFolder
   };
 
-  getIcon(slug: string) {
-    return this.iconMap[slug] || LucideFolder;
+  getIcon(iconKey?: string | null) {
+    if (!iconKey) {
+      return LucideFolder;
+    }
+
+    // Ищем компонент в словаре. Если ключа нет - отдаем папку по умолчанию
+    return this.iconMap[iconKey] || LucideFolder;
   }
 
   ngOnChanges() {

@@ -1,0 +1,66 @@
+<section class="hero-section" [style.background]="slides()[currentSlide()].bgGradient" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseLeave()">
+
+  <button class="nav-btn prev-btn" (click)="prevSlide()">
+    <svg lucideChevronLeft size="24" strokeWidth="2"></svg>
+  </button>
+
+  <button class="nav-btn next-btn" (click)="nextSlide()">
+    <svg lucideChevronRight size="24" strokeWidth="2"></svg>
+  </button>
+
+  <div class="slider-wrapper" [style.transform]="'translateX(-' + currentSlide() * 100 + '%)'">
+
+    @for (slide of slides(); track $index) {
+    <div class="slide">
+      <div class="container hero-inner">
+        <div class="hero-content">
+          <span class="hero-badge"><svg lucideZap size="16" strokeWidth="2.5"></svg> {{ slide.badgeText }}</span>
+          <h1 class="hero-title">
+            {{ slide.titlePart1 }}<span class="highlight">{{ slide.titleHighlight }}</span>
+          </h1>
+          <p class="hero-subtitle">
+            {{ slide.subtitle }}
+          </p>
+          <div class="hero-actions">
+            <a [routerLink]="slide.btnPrimaryLink" class="btn-primary btn-lg">{{ slide.btnPrimaryText }}</a>
+            <a [routerLink]="slide.btnSecondaryLink" class="btn-outline">{{ slide.btnSecondaryText }}</a>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          @if (slide.product) {
+          <a [routerLink]="['/products', slide.product.slug]" class="hero-image-placeholder has-product">
+            <div class="product-name-badge">{{ slide.product.name }}</div>
+
+            <img [src]="slide.product.mainImageUrl || '/assets/placeholder.png'" [alt]="slide.product.name" class="hero-product-img">
+
+            <div class="floating-badge price-badge">
+              @if (slide.product.discountPrice) {
+              <span class="old-price">{{ slide.product.price | number }} ₽</span>
+              <span class="new-price">{{ slide.product.finalPrice | number }} ₽</span>
+              } @else {
+              <span class="new-price">{{ slide.product.price | number }} ₽</span>
+              }
+            </div>
+          </a>
+          } @else {
+          <div class="hero-image-placeholder">
+            @switch (slide.iconName) {
+            @case ('smartphone') { <svg lucideSmartphone size="64" strokeWidth="1.5" class="hero-icon-main"></svg> }
+            @case ('laptop') { <svg lucideLaptop size="64" strokeWidth="1.5" class="hero-icon-main"></svg> }
+            @case ('headphones') { <svg lucideHeadphones size="64" strokeWidth="1.5" class="hero-icon-main"></svg> }
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+  <div class="hero-dots">
+    @for (slide of slides(); track $index) {
+    <button class="dot" [class.active]="currentSlide() === $index" (click)="goToSlide($index)"></button>
+    }
+  </div>
+</section>

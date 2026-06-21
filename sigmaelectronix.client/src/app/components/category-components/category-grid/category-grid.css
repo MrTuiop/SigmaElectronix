@@ -1,41 +1,55 @@
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  /* Было repeat(6, 1fr), теперь 4 крупные карточки в ряд */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
 .category-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 24px 16px 20px;
+  border-radius: 20px; /* Чуть сильнее скруглили */
+  padding: 36px 24px 32px; /* Сильно увеличили внутренние отступы */
   text-align: center;
   transition: var(--transition);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 16px; /* Расстояние между огромной иконкой и текстом */
   text-decoration: none;
   color: inherit;
 }
 
   .category-card:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12);
-    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(124, 58, 237, 0.12); /* Тень от карточки стала глубже */
+    transform: translateY(-6px); /* Взлетает чуть выше */
   }
 
 .cat-icon-wrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
   background: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary-color);
   transition: var(--transition);
+  overflow: hidden; /* <-- ВАЖНО: обрезает картинку по радиусу 24px */
+}
+
+.cat-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Картинка полностью заполнит квадрат 96х96. Если у тебя картинки с прозрачным фоном, лучше использовать 'contain' */
+  transition: transform 0.3s ease;
+}
+
+/* При наведении картинка будет слегка увеличиваться (красивый эффект) */
+.category-card:hover .cat-image {
+  transform: scale(1.08);
 }
 
 .category-card:hover .cat-icon-wrapper {
@@ -44,21 +58,58 @@
 }
 
 .cat-label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 18px; /* Было 13px, теперь текст читается отлично */
+  font-weight: 700; /* Сделали пожирнее */
   color: var(--text-main);
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
-/* Адаптивность */
-@media (max-width: 992px) {
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 1200px) {
   .category-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .category-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .category-card {
+    padding: 28px 16px 24px; /* На планшетах чуть уменьшаем паддинги */
+  }
+
+  .cat-icon-wrapper {
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+  }
+  /* Иконки в SVG внутри Angular (48px) сами подстроятся в центр, 
+     но визуально блок будет аккуратнее */
+  .cat-label {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr); /* Либо 1fr, если хочешь по одной на мобилках */
+    gap: 12px;
+  }
+
+  .cat-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
+
+  .cat-label {
+    font-size: 14px;
+  }
+
+  .category-card {
+    padding: 20px 12px 16px;
   }
 }

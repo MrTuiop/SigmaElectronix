@@ -5,6 +5,7 @@ export interface CategoryDto {
   name: string;
   slug: string;
   imageUrl?: string;
+  icon?: string;
   parentCategoryId?: number;
   parentCategoryName?: string;
   productsCount: number;
@@ -16,6 +17,7 @@ export interface CategoryTreeDto {
   name: string;
   slug: string;
   imageUrl?: string;
+  icon?: string;
   productsCount: number;
   subCategories: CategoryTreeDto[];
 }
@@ -24,6 +26,7 @@ export interface CreateCategoryDto {
   name: string;
   slug: string;
   imageUrl?: string;
+  icon?: string;
   parentCategoryId?: number;
 }
 
@@ -31,6 +34,7 @@ export interface UpdateCategoryDto {
   name: string;
   slug: string;
   imageUrl?: string;
+  icon?: string;
   parentCategoryId?: number;
 }
 

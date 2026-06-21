@@ -56,8 +56,12 @@
         <tr [class.unpublished]="!user.isActive">
           <td>
             <div class="product-cell-content">
-              <div class="img-preview" style="border-radius: 50%;">
+              <div class="img-preview" style="border-radius: 50%; overflow: hidden;">
+                @if (user.avatarUrl) {
+                <img [src]="user.avatarUrl" [alt]="user.userName" style="width: 100%; height: 100%; object-fit: cover;">
+                } @else {
                 <svg lucideUser size="20" color="#9ca3af" strokeWidth="1.5"></svg>
+                }
               </div>
               <div class="product-meta">
                 <span class="p-name">{{ getUserDisplayName(user) }}</span>

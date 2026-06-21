@@ -50,8 +50,25 @@
       </div>
 
       <div class="product-info">
-        <span class="brand">{{ product()?.brand?.name }}</span>
-        <h1 class="product-name">{{ product()?.name }}</h1>
+
+        <div class="product-header-top">
+          <div class="product-title-area">
+            <span class="brand">{{ product()?.brand?.name }}</span>
+            <h1 class="product-name">{{ product()?.name }}</h1>
+          </div>
+
+          @if (product()?.brand) {
+          <a [routerLink]="product()?.brand?.slug ? ['/brands', product()!.brand!.slug] : null"
+             class="brand-logo-wrap"
+             [title]="'Все товары ' + product()?.brand?.name">
+            @if (product()?.brand?.logoUrl) {
+            <img [src]="product()?.brand?.logoUrl" [alt]="product()?.brand?.name" class="brand-logo-img">
+            } @else {
+            <svg lucideAward size="28" strokeWidth="1.5" class="brand-fallback-icon"></svg>
+            }
+          </a>
+          }
+        </div>
 
         <div class="rating-row">
           <div class="stars">
@@ -79,8 +96,14 @@
           <span>Количество:</span>
           <div class="quantity-controls">
             <button (click)="quantity.set(quantity() - 1)" [disabled]="quantity() <= 1">–</button>
-            <input type="number" [(ngModel)]="quantity" min="1" />
-            <button (click)="quantity.set(quantity() + 1)">+</button>
+
+            <input type="number"
+                   [ngModel]="quantity()"
+                   (ngModelChange)="onQuantityChange($event)"
+                   min="1"
+                   max="10" />
+
+            <button (click)="quantity.set(quantity() + 1)" [disabled]="quantity() >= 10">+</button>
           </div>
         </div>
 
@@ -91,7 +114,7 @@
 
             @if (cartService.isInCart(product()?.id || 0)) {
             <svg lucideCheck size="20" strokeWidth="3"></svg>
-            В корзине ({{ cartService.getItemQuantity(product()?.id || 0) }} шт.)
+            Перейти в корзину ({{ cartService.getItemQuantity(product()?.id || 0) }} шт.)
             } @else {
             <svg lucideShoppingCart size="20" strokeWidth="2.5"></svg>
             В корзину
@@ -101,6 +124,22 @@
           <button class="wishlist-btn" (click)="toggleWishlist()" [class.in-wishlist]="inWishlist()">
             <svg lucideHeart size="20" strokeWidth="2.5" [class.filled]="inWishlist()"></svg>
           </button>
+        </div>
+
+        <div class="availability-block" [class.out-of-stock]="inStockStoresCount() === 0" (click)="showStoresModal.set(true)">
+          <div class="availability-icon">
+            <svg lucideStore size="18"></svg>
+          </div>
+          <div class="availability-text">
+            @if (inStockStoresCount() > 0) {
+            <span class="in-stock-title">В наличии в {{ inStockStoresCount() }} магазинах (г. {{ currentCityName() }})</span>
+            <span class="in-stock-subtitle">Нажмите, чтобы посмотреть список адресов</span>
+            } @else {
+            <span class="out-of-stock-title">Нет в наличии в г. {{ currentCityName() }}</span>
+            <span class="out-of-stock-subtitle">Доступно только под заказ со склада</span>
+            }
+          </div>
+          <svg lucideChevronRight size="18" class="availability-arrow"></svg>
         </div>
 
         <div class="delivery-info">
@@ -269,7 +308,7 @@
                 }
               </div>
             </div>
-            <input type="text" [(ngModel)]="editReviewTitle" class="review-title-input" />
+            <input type="text" [(ngModel)]="editReviewTitle" class="review-tiАtle-input" />
             <textarea [(ngModel)]="editReviewText" rows="3"></textarea>
             <div class="edit-actions">
               <button class="submit-review-btn" (click)="saveEditReview(review.id)">Сохранить</button>
@@ -362,6 +401,7 @@
     }
     }
   </div>
+
   @if (showAuthModal()) {
   <app-auth-modal (close)="closeAuthModal()"
                   (authenticated)="onAuthenticated()">
@@ -377,4 +417,45 @@
                      (cancel)="onCancelDelete()">
   </app-confirm-modal>
   }
+
+  @if (showStoresModal()) {
+  <div class="modal-overlay" (click)="showStoresModal.set(false)">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Наличие в г. {{ currentCityName() }}</h2>
+        <button class="close-btn" (click)="showStoresModal.set(false)" title="Закрыть">
+          <svg lucideX size="24"></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        @if (storeAvailability().length === 0) {
+        <div class="empty-state">
+          <svg lucideStore size="48" style="color: var(--text-muted); opacity: 0.5; margin-bottom: 12px;"></svg>
+          <p>В городе {{ currentCityName() }} пока нет магазинов или пунктов выдачи.</p>
+        </div>
+        } @else {
+        <div class="stores-list">
+          @for (item of storeAvailability(); track item.storeDetails.id) {
+          <div class="store-item" [class.out-of-stock-item]="item.quantity === 0">
+            <div class="store-info">
+              <h4>{{ item.storeDetails.name }}</h4>
+              <p class="store-address"><svg lucideMapPin size="14"></svg> {{ item.storeDetails.fullAddress || 'Адрес уточняется' }}</p>
+              <p class="store-hours"><svg lucideClock size="14"></svg> {{ item.storeDetails.workingHours || 'Уточняйте по телефону' }}</p>
+            </div>
+            <div class="store-stock">
+              @if (item.quantity > 0) {
+              <span class="stock-badge in-stock">{{ item.quantity }} шт.</span>
+              } @else {
+              <span class="stock-badge out-of-stock-badge">Под заказ (с {{ getDeliveryDate() | date:'dd.MM' }})</span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
 </div>

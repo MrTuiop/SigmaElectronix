@@ -10,7 +10,7 @@
   @if (error) {
   <div class="error-state">
     <p>{{ error }}</p>
-    <a routerLink="/brands" class="back-link">Вернуться к списку брендов</a>
+    <a routerLink="/brands" class="back-btn">Вернуться к списку брендов</a>
   </div>
   }
 
@@ -22,7 +22,7 @@
   </a>
 
   <section class="brand-hero"
-           [style.backgroundImage]="brand.heroImageUrl ? 'url(' + brand.heroImageUrl + ')' : 'var(--purple-gradient)'">
+           [style.backgroundImage]="brand.heroImageUrl ? 'url(' + brand.heroImageUrl + ')' : 'var(--accent-gradient)'">
     <div class="hero-overlay"></div>
     <div class="hero-content container">
       <h1 class="hero-title">{{ brand.heroTitle || brand.name }}</h1>
@@ -57,11 +57,7 @@
            [queryParams]="{ brand: brand.slug }"
            class="category-card">
           <div class="cat-icon-wrapper">
-            @if (cat.iconUrl) {
-            <img [src]="cat.iconUrl" alt="">
-            } @else {
-            <svg lucideFolder size="24"></svg>
-            }
+            <ng-container *ngComponentOutlet="getIconComponent(cat.icon); inputs: { size: 40, strokeWidth: 1.5 }"></ng-container>
           </div>
           <div class="cat-info">
             <span class="cat-name">{{ cat.categoryName }}</span>
@@ -90,18 +86,17 @@
     @if (uiProducts.length) {
     <section class="brand-products products-section">
       <div class="section-header">
-        <h3 class="section-title">Популярные товары {{ brand?.name }}</h3>
+        <h3 class="section-title">Популярные товары {{ brand.name }}</h3>
         <span class="total-count">Показано: {{ uiProducts.length }}</span>
       </div>
 
       <div class="products-grid">
         @for (product of uiProducts; track product.id) {
         <app-product-card [product]="product"
-                          [brandName]="brand?.name">
+                          [brandName]="brand.name">
         </app-product-card>
         }
       </div>
-
     </section>
     }
 

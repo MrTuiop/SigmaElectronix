@@ -1,12 +1,17 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpEventType } from '@angular/common/http'; // 👈 Добавлено для прогресс-бара
 import { CategoryService } from '../../../services/category-service';
+import { FileService } from '../../../services/file-service'; // 👈 Подключен сервис файлов
 import { CategoryDto, CreateCategoryDto, UpdateCategoryDto, CategoryTreeDto } from '../../../models/category-models';
 import {
   LucideFolderTree, LucidePlus, LucideTrash2, LucideEdit2,
   LucideChevronRight, LucideChevronDown, LucideSave, LucideX,
-  LucideImage, LucideFolder, LucideCheck
+  LucideImage, LucideFolder, LucideCheck,
+  LucideSmartphone, LucideLaptop, LucideHeadphones,
+  LucideWatch, LucideTv, LucideGamepad2,
+  LucideMonitor, LucideCamera
 } from '@lucide/angular';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 
@@ -24,38 +29,39 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner';
   templateUrl: './manager-categories.html',
   styleUrl: './manager-categories.css'
 })
-export class ManagerCategoriesComponent implements OnInit {
+export class ManagerCategoriesComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryService);
+  private fileService = inject(FileService); // 👈 Инжектируем
   private fb = inject(FormBuilder);
 
-  // Сигналы с данными (берем напрямую из кэша сервиса)
   categoryTree = this.categoryService.categoryTree;
   allCategories = this.categoryService.allCategories;
-
   loading = signal(false);
 
-  // UI состояния
   viewMode = signal<'list' | 'form'>('list');
   isEditing = signal(false);
   editingId = signal<number | null>(null);
-
-  // Храним ID раскрытых папок в дереве
   expandedNodes = signal<Set<number>>(new Set<number>());
 
   categoryForm!: FormGroup;
 
-  // --- Состояния для умного селекта родительской категории ---
   parentSearch = signal('');
   isParentDropdownOpen = signal(false);
   selectedParentDisplay = signal('');
 
-  // Вычисляем доступных родителей для выпадающего списка
-  // Вычисляем доступных родителей для выпадающего списка
+  // 🚀 СОСТОЯНИЯ ЗАГРУЗКИ И DRAG&DROP
+  isUploadingImage = signal(false);
+  isDragoverImage = signal(false);
+  imageUploadProgress = signal(0);
+
+  // 🚀 СБОРЩИК МУСОРА
+  private tempUploadedFiles: string[] = [];      // Временные файлы
+  private filesToDeleteOnSave: string[] = [];    // Оригиналы, которые нужно снести при сохранении
+  private originalImageUrl: string = '';         // Запомненный оригинал
+
   filteredParents = computed(() => {
     const search = this.parentSearch().toLowerCase().trim();
-    const all = this.allCategories(); // Берем полный список
-
-    // 1. Исключаем саму редактируемую категорию
+    const all = this.allCategories();
     const available = all.filter(c => c.id !== this.editingId());
 
     let options = available.map(cat => {
@@ -65,13 +71,9 @@ export class ManagerCategoriesComponent implements OnInit {
 
       while (current) {
         pathNames.unshift(current.name);
-
-        // Запоминаем, если в цепочке родителей есть та категория, которую мы сейчас редактируем
         if (this.editingId() && current.parentCategoryId === this.editingId()) {
           hasEditedItemInPath = true;
         }
-
-        // Ищем следующего родителя в ПОЛНОМ списке (all), а не в урезанном
         current = all.find(c => c.id === current.parentCategoryId);
       }
       return {
@@ -82,11 +84,7 @@ export class ManagerCategoriesComponent implements OnInit {
       };
     });
 
-    // 2. ОГРАНИЧЕНИЕ И ЗАЩИТА:
-    options = options.filter(o =>
-      o.level < 3 && // Разрешаем выбирать только 1-й (корневой) и 2-й уровни. 3-й уровень отсекается!
-      !o.hasEditedItemInPath // Защита от бесконечного цикла (нельзя положить родителя внутрь своего же ребенка)
-    );
+    options = options.filter(o => o.level < 3 && !o.hasEditedItemInPath);
 
     if (search) {
       options = options.filter(o => o.displayPath.toLowerCase().includes(search));
@@ -97,6 +95,20 @@ export class ManagerCategoriesComponent implements OnInit {
   ngOnInit(): void {
     this.loadData();
     this.initForm();
+  }
+
+  // Очистка при уходе со страницы
+  ngOnDestroy(): void {
+    this.cleanupTempFiles();
+  }
+
+  // 🚀 ОЧИСТКА МУСОРА
+  private cleanupTempFiles(): void {
+    this.tempUploadedFiles.forEach(url => {
+      this.fileService.deleteImage(url).subscribe();
+    });
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
   }
 
   loadData(): void {
@@ -117,6 +129,7 @@ export class ManagerCategoriesComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9\-_]+$/)]],
       imageUrl: [''],
+      icon: ['folder'],
       parentCategoryId: [null]
     });
 
@@ -128,6 +141,168 @@ export class ManagerCategoriesComponent implements OnInit {
     });
   }
 
+  // --- МЕТОДЫ DRAG AND DROP И ЗАГРУЗКИ ---
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImage.set(true);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImage.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImage.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.handleFileUpload(file);
+  }
+
+  onImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) this.handleFileUpload(file);
+  }
+
+  private handleFileUpload(file: File): void {
+    this.isUploadingImage.set(true);
+    this.imageUploadProgress.set(0);
+
+    this.fileService.uploadImageWithProgress(file, 'categories').subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.imageUploadProgress.set(Math.round(100 * event.loaded / event.total));
+        }
+        else if (event.type === HttpEventType.Response) {
+          const res = event.body;
+          if (res?.url) {
+            const prevUrl = this.categoryForm.get('imageUrl')?.value;
+
+            if (prevUrl) {
+              if (this.tempUploadedFiles.includes(prevUrl)) {
+                this.fileService.deleteImage(prevUrl).subscribe();
+                this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== prevUrl);
+              } else if (prevUrl === this.originalImageUrl) {
+                this.filesToDeleteOnSave.push(prevUrl);
+              }
+            }
+
+            this.categoryForm.patchValue({ imageUrl: res.url });
+            this.tempUploadedFiles.push(res.url);
+            this.isUploadingImage.set(false);
+          }
+        }
+      },
+      error: () => {
+        alert('Ошибка при загрузке картинки');
+        this.isUploadingImage.set(false);
+      }
+    });
+  }
+
+  removeImage(): void {
+    const currentUrl = this.categoryForm.get('imageUrl')?.value;
+    if (!currentUrl) return;
+
+    if (this.tempUploadedFiles.includes(currentUrl)) {
+      this.fileService.deleteImage(currentUrl).subscribe();
+      this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== currentUrl);
+    } else if (currentUrl === this.originalImageUrl) {
+      this.filesToDeleteOnSave.push(currentUrl);
+    }
+
+    this.categoryForm.patchValue({ imageUrl: '' });
+  }
+
+  // --- Навигация и работа с формой ---
+  openCreateMode(): void {
+    this.isEditing.set(false);
+    this.editingId.set(null);
+    this.categoryForm.reset({ icon: 'folder' });
+    this.selectedParentDisplay.set('Без родителя (Корневая)');
+    this.viewMode.set('form');
+
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+    this.originalImageUrl = '';
+  }
+
+  openEditMode(category: CategoryDto | CategoryTreeDto): void {
+    this.isEditing.set(true);
+    this.editingId.set(category.id);
+
+    const fullCategory = this.allCategories().find(c => c.id === category.id);
+
+    this.originalImageUrl = fullCategory?.imageUrl || category.imageUrl || '';
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+
+    this.categoryForm.patchValue({
+      name: fullCategory?.name || category.name,
+      slug: fullCategory?.slug || category.slug,
+      imageUrl: this.originalImageUrl,
+      icon: fullCategory?.icon || (category as any).icon || 'folder',
+      parentCategoryId: fullCategory?.parentCategoryId || null
+    });
+
+    if (fullCategory?.parentCategoryId) {
+      const parent = this.filteredParents().find(p => p.id === fullCategory.parentCategoryId);
+      this.selectedParentDisplay.set(parent ? parent.displayPath : '');
+    } else {
+      this.selectedParentDisplay.set('Без родителя (Корневая)');
+    }
+
+    this.viewMode.set('form');
+  }
+
+  closeForm(): void {
+    this.cleanupTempFiles(); // Очищаем незавершенную работу
+    this.viewMode.set('list');
+  }
+
+  saveCategory(): void {
+    if (this.categoryForm.invalid) return;
+
+    this.loading.set(true);
+
+    if (this.isEditing() && this.editingId()) {
+      const dto: UpdateCategoryDto = this.categoryForm.value;
+      this.categoryService.update(this.editingId()!, dto).subscribe({
+        next: () => this.onSaveSuccess(),
+        error: (err) => {
+          alert(err.error?.message || 'Ошибка обновления');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      const dto: CreateCategoryDto = this.categoryForm.value;
+      this.categoryService.create(dto).subscribe({
+        next: () => this.onSaveSuccess(),
+        error: (err) => {
+          alert(err.error?.message || 'Ошибка создания');
+          this.loading.set(false);
+        }
+      });
+    }
+  }
+
+  private onSaveSuccess(): void {
+    // Пользователь нажал "Сохранить" -> Удаляем старые оригиналы
+    this.filesToDeleteOnSave.forEach(url => this.fileService.deleteImage(url).subscribe());
+
+    // Сохраняем новые файлы
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+
+    this.loadData();
+    this.closeForm();
+  }
+
+  // --- Вспомогательные методы (Slug, Иконки и тд) ---
   slugify(text: string): string {
     const ru = {
       'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh',
@@ -146,11 +321,8 @@ export class ManagerCategoriesComponent implements OnInit {
 
   toggleNode(id: number): void {
     const current = new Set(this.expandedNodes());
-    if (current.has(id)) {
-      current.delete(id);
-    } else {
-      current.add(id);
-    }
+    if (current.has(id)) current.delete(id);
+    else current.add(id);
     this.expandedNodes.set(current);
   }
 
@@ -158,7 +330,6 @@ export class ManagerCategoriesComponent implements OnInit {
     return this.expandedNodes().has(id);
   }
 
-  // --- Методы для поиска родительской категории ---
   openParentSearch(): void {
     this.isParentDropdownOpen.set(true);
     this.parentSearch.set('');
@@ -179,74 +350,6 @@ export class ManagerCategoriesComponent implements OnInit {
     this.isParentDropdownOpen.set(false);
   }
 
-  openCreateMode(): void {
-    this.isEditing.set(false);
-    this.editingId.set(null);
-    this.categoryForm.reset();
-    this.selectedParentDisplay.set('Без родителя (Корневая)');
-    this.viewMode.set('form');
-  }
-
-  openEditMode(category: CategoryDto | CategoryTreeDto): void {
-    this.isEditing.set(true);
-    this.editingId.set(category.id);
-
-    const fullCategory = this.allCategories().find(c => c.id === category.id);
-
-    this.categoryForm.patchValue({
-      name: fullCategory?.name || category.name,
-      slug: fullCategory?.slug || category.slug,
-      imageUrl: fullCategory?.imageUrl || category.imageUrl,
-      parentCategoryId: fullCategory?.parentCategoryId || null
-    });
-
-    // Находим путь родителя для отображения в селекте
-    if (fullCategory?.parentCategoryId) {
-      const parent = this.filteredParents().find(p => p.id === fullCategory.parentCategoryId);
-      this.selectedParentDisplay.set(parent ? parent.displayPath : '');
-    } else {
-      this.selectedParentDisplay.set('Без родителя (Корневая)');
-    }
-
-    this.viewMode.set('form');
-  }
-
-  closeForm(): void {
-    this.viewMode.set('list');
-  }
-
-  saveCategory(): void {
-    if (this.categoryForm.invalid) return;
-
-    this.loading.set(true);
-
-    if (this.isEditing() && this.editingId()) {
-      const dto: UpdateCategoryDto = this.categoryForm.value;
-      this.categoryService.update(this.editingId()!, dto).subscribe({
-        next: () => {
-          this.loadData();
-          this.closeForm();
-        },
-        error: (err) => {
-          alert(err.error?.message || 'Ошибка обновления');
-          this.loading.set(false);
-        }
-      });
-    } else {
-      const dto: CreateCategoryDto = this.categoryForm.value;
-      this.categoryService.create(dto).subscribe({
-        next: () => {
-          this.loadData();
-          this.closeForm();
-        },
-        error: (err) => {
-          alert(err.error?.message || 'Ошибка создания');
-          this.loading.set(false);
-        }
-      });
-    }
-  }
-
   deleteCategory(id: number, name: string): void {
     if (confirm(`Удалить категорию "${name}"?\nВсе товары должны быть предварительно удалены или перенесены.`)) {
       this.loading.set(true);
@@ -258,5 +361,46 @@ export class ManagerCategoriesComponent implements OnInit {
         }
       });
     }
+  }
+
+  availableIcons: Array<{ id: string, name: string, component: any }> = [
+    { id: 'smartphone', name: 'Смартфоны', component: LucideSmartphone },
+    { id: 'laptop', name: 'Ноутбуки', component: LucideLaptop },
+    { id: 'headphones', name: 'Аудио', component: LucideHeadphones },
+    { id: 'watch', name: 'Часы', component: LucideWatch },
+    { id: 'tv', name: 'Телевизоры', component: LucideTv },
+    { id: 'gamepad-2', name: 'Игры', component: LucideGamepad2 },
+    { id: 'monitor', name: 'Мониторы', component: LucideMonitor },
+    { id: 'camera', name: 'Фото', component: LucideCamera },
+    { id: 'folder', name: 'Папка (по умолч.)', component: LucideFolder }
+  ];
+
+  isIconDropdownOpen = signal(false);
+
+  selectedIconDisplay = computed(() => {
+    const iconId = this.categoryForm?.get('icon')?.value || 'folder';
+    return this.availableIcons.find(i => i.id === iconId) || this.availableIcons.find(i => i.id === 'folder');
+  });
+
+  toggleIconDropdown() {
+    this.isIconDropdownOpen.update(v => !v);
+  }
+
+  selectIcon(iconId: string) {
+    this.categoryForm.patchValue({ icon: iconId });
+    this.isIconDropdownOpen.set(false);
+  }
+
+  getIconComponent(iconId: string | undefined): any {
+    if (!iconId) return LucideFolder;
+    const icon = this.availableIcons.find(i => i.id === iconId);
+    return icon ? icon.component : LucideFolder;
+  }
+
+  getSelectedIconLabel(): string {
+    const selectedId = this.categoryForm.get('icon')?.value;
+    if (!selectedId) return 'Выберите иконку...';
+    const icon = this.availableIcons.find(i => i.id === selectedId);
+    return icon ? icon.name : 'Выберите иконку...';
   }
 }

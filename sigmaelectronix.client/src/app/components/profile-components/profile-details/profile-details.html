@@ -1,9 +1,31 @@
 <div class="content-card fade-in">
   @if (data.user(); as user) {
   <div class="profile-header">
-    <div class="avatar-circle">
-      <svg lucideUser size="36" strokeWidth="2"></svg>
-    </div>
+
+    <label class="avatar-upload-wrapper">
+      <input type="file" accept="image/*" class="hidden-input"
+             (change)="onAvatarSelected($event)"
+             [disabled]="isUploadingAvatar()">
+
+      <div class="avatar-circle">
+        @if (user.avatarUrl) {
+        <img [src]="user.avatarUrl" alt="Avatar" class="avatar-img">
+        } @else {
+        <svg lucideUser size="36" strokeWidth="2"></svg>
+        }
+      </div>
+
+      <div class="avatar-overlay">
+        <svg lucideCamera size="24" strokeWidth="1.5"></svg>
+      </div>
+
+      @if (isUploadingAvatar()) {
+      <div class="avatar-loading-overlay">
+        <span class="progress-text">{{ avatarUploadProgress() }}%</span>
+      </div>
+      }
+    </label>
+
     <div class="profile-info">
       <h2>{{ (user.firstName || user.lastName) ? user.fullName : user.userName }}</h2>
       <span class="profile-meta">На сайте с {{ user.createdAt | date:'dd.MM.yyyy' }}</span>

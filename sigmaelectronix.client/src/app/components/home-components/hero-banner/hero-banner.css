@@ -1,0 +1,334 @@
+/* ===== HERO-БАННЕР ===== */
+.hero-section {
+  background: var(--purple-gradient);
+  padding: 60px 0 80px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.6s ease; /* Плавная смена фона */
+}
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none; /* Чтобы блик не перекрывал клики */
+  }
+
+  .hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+/* === Лента Слайдера === */
+.slider-wrapper {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  width: 100%;
+}
+
+.slide {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+/* === Кнопки навигации (Стрелки) === */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  opacity: 0; /* Скрыты по умолчанию */
+}
+
+.hero-section:hover .nav-btn {
+  opacity: 1; /* Показываем при наведении на баннер */
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.prev-btn {
+  left: 20px;
+}
+
+.next-btn {
+  right: 20px;
+}
+
+/* === Пагинация (Точки) === */
+.hero-dots {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+  .dot.active {
+    background: #ffffff;
+    transform: scale(1.4);
+    box-shadow: 0 0 8px rgba(255,255,255,0.6);
+  }
+
+/* === Контент Слайда === */
+.hero-content {
+  flex: 1;
+  color: #ffffff;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 16px;
+  letter-spacing: -1px;
+}
+
+  .hero-title .highlight {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+.hero-subtitle {
+  font-size: 17px;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin: 0 0 32px;
+  max-width: 480px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  font-size: 15px;
+  border-radius: 12px;
+}
+
+.btn-outline {
+  padding: 14px 32px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-block;
+}
+
+  .btn-outline:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+/* === Визуальная часть === */
+.hero-visual {
+  flex: 0 0 340px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image-placeholder {
+  width: 300px;
+  height: 340px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  backdrop-filter: blur(8px);
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+  .hero-image-placeholder.has-product:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+.hero-icon-main {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-product-img {
+  max-width: 80%;
+  max-height: 70%;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+  transition: transform 0.3s ease;
+}
+
+.hero-image-placeholder.has-product:hover .hero-product-img {
+  transform: scale(1.05); /* Легкое увеличение картинки товара при наведении */
+}
+
+/* Название товара поверх стекла */
+.product-name-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.floating-badge {
+  position: absolute;
+  bottom: -16px;
+  right: -20px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 2;
+}
+
+.price-badge .old-price {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.price-badge .new-price {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827; /* Сделали темным, чтобы подходило под любой фон слайдера */
+}
+
+/* Адаптивность для баннера */
+@media (max-width: 992px) {
+  .hero-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 40px;
+  }
+
+  .hero-subtitle {
+    max-width: 100%;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-visual {
+    flex: 0 0 auto;
+  }
+
+  .hero-title {
+    font-size: 36px;
+  }
+
+  .hero-image-placeholder {
+    width: 240px;
+    height: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .nav-btn {
+    display: none; /* Убираем стрелки на мобильных, остаются только точки */
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-lg, .btn-outline {
+    width: 100%;
+    text-align: center;
+  }
+}

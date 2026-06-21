@@ -1,0 +1,82 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideHardDrive size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Файловый менеджер</h2>
+        <p class="subtitle">Управление загруженными изображениями и очистка медиатеки</p>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <app-spinner message="Сканирование системы..."></app-spinner>
+  }
+
+  <div class="file-manager-body">
+
+    @if (!currentFolder()) {
+    <div class="folders-grid">
+      @for (folder of folders(); track folder.name) {
+      <div class="folder-card" (click)="openFolder(folder.name)">
+        <svg lucideFolder size="48" strokeWidth="1" class="folder-icon"></svg>
+        <span class="folder-name">{{ folder.name }}</span>
+        <span class="folder-count">{{ folder.filesCount }} файлов</span>
+      </div>
+      } @empty {
+      <div class="empty-state">Нет созданных папок.</div>
+      }
+    </div>
+    } @else {
+    <div class="folder-toolbar">
+      <button class="btn btn-secondary" (click)="goBack()">
+        <svg lucideArrowLeft size="16"></svg>
+        Назад к папкам
+      </button>
+      <span class="current-path">/uploads/images/<strong>{{ currentFolder() }}</strong>/</span>
+    </div>
+
+    <div class="files-grid">
+      @for (file of files(); track file.url) {
+      <div class="file-card" [class.is-orphaned]="!file.entityName">
+        <div class="file-preview">
+          <img [src]="file.url" [alt]="file.name">
+        </div>
+
+        <div class="file-info">
+          <div class="file-meta">
+            <span class="file-name" [title]="file.name">{{ file.name }}</span>
+            <span class="file-size">{{ formatBytes(file.sizeInBytes) }} • {{ file.createdAt | date:'dd.MM.yy HH:mm' }}</span>
+          </div>
+
+          @if (file.entityName) {
+          <div class="entity-badge linked" [title]="'Привязан к: ' + file.entityName">
+            <svg lucideLink size="12"></svg>
+            <span>{{ file.entityName }}</span>
+          </div>
+          } @else {
+          <div class="entity-badge orphaned">
+            <svg lucideUnlink size="12"></svg>
+            <span>Не привязан (Мусор)</span>
+          </div>
+          }
+
+          <div class="file-actions">
+            <a [href]="file.url" target="_blank" class="action-icon" title="Открыть оригинал">
+              <svg lucideExternalLink size="16"></svg>
+            </a>
+            <button class="action-icon delete" (click)="deleteFile(file)" title="Удалить файл">
+              <svg lucideTrash2 size="16"></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      } @empty {
+      <div class="empty-state">Эта папка пуста.</div>
+      }
+    </div>
+    }
+  </div>
+</div>

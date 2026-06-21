@@ -1,18 +1,26 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoryService } from '../../../services/category-service';
 import { BrandService } from '../../../services/brand-service';
-import { ProductListDto, CreateProductDto, UpdateProductDto } from '../../../models/product-models';
+import { FileService } from '../../../services/file-service'; // 👈 Подключили FileService
+import { ProductListDto, CreateProductDto } from '../../../models/product-models';
 import { BrandListDto } from '../../../models/brand-models';
+import { HttpEventType } from '@angular/common/http';
 import {
   LucidePackage, LucidePlus, LucideTrash2, LucideEdit2,
   LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
   LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX,
-  LucideChevronDown, LucideSearch, LucideChevronUp
+  LucideChevronDown, LucideSearch, LucideChevronUp,
+  LucideImagePlus, LucideStar // 👈 Добавлены иконки для галереи
 } from '@lucide/angular';
 import { ProductService } from '../../../services/product-service';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
+
+interface ProductImageUI {
+  url: string;
+  isMain: boolean;
+}
 
 @Component({
   selector: 'app-manager-products',
@@ -22,45 +30,68 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner';
     ReactiveFormsModule,
     LucidePackage, LucidePlus, LucideTrash2, LucideEdit2,
     LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
-    LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX, LucideChevronDown, LucideSearch, LucideChevronUp,
+    LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX,
+    LucideChevronDown, LucideSearch, LucideChevronUp, LucideImagePlus, LucideStar,
     SpinnerComponent
   ],
   templateUrl: './manager-products.html',
   styleUrl: './manager-products.css'
 })
-export class ManagerProductsComponent implements OnInit {
+export class ManagerProductsComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private brandService = inject(BrandService);
+  private fileService = inject(FileService);
   private fb = inject(FormBuilder);
 
   // --- Состояния таблицы ---
   products = signal<ProductListDto[]>([]);
   totalCount = signal(0);
   pageNumber = signal(1);
-  pageSize = signal(15); // Загружаем по 15 штук за раз
+  pageSize = signal(15);
 
   loading = signal(false);
-  isLoadingMore = signal(false); // Отдельный лоадер для догрузки снизу
+  isLoadingMore = signal(false);
 
   searchQuery = signal('');
-  currentSort = signal('date_desc'); // По умолчанию сортируем по дате (новые сверху)
+  currentSort = signal('date_desc');
   private searchTimeout: any;
 
-  // Справочники для выпадающих списков
   categories = this.categoryService.allCategories;
 
-  // --- Состояния для Умного поиска категорий ---
+  // --- Состояния для Умного поиска ---
   categorySearch = signal('');
   isCatDropdownOpen = signal(false);
-  selectedCatDisplay = signal(''); // Здесь храним выбранный путь для отображения
+  selectedCatDisplay = signal('');
+
+  brandSearch = signal('');
+  isBrandDropdownOpen = signal(false);
+  selectedBrandDisplay = signal('');
+  brands = signal<BrandListDto[]>([]);
 
   // --- Состояния для автокомплита характеристик ---
   availableSpecs = signal<Record<string, string[]>>({});
   availableSpecKeys = computed(() => Object.keys(this.availableSpecs()));
 
+  // UI Состояния
+  viewMode = signal<'list' | 'form'>('list');
+  currentStep = signal(1);
+  isEditing = signal(false);
+  editingId = signal<number | null>(null);
 
-  // 1. УМНАЯ ФИЛЬТРАЦИЯ С ПОИСКОМ
+  productForm!: FormGroup;
+
+  // 🚀 ГАЛЕРЕЯ ИЗОБРАЖЕНИЙ ТОВАРА
+  productImages = signal<ProductImageUI[]>([]);
+  isUploadingImages = signal(false);
+  isDragoverImages = signal(false);
+
+  // 🚀 СБОРЩИК МУСОРА
+  private tempUploadedFiles: string[] = [];      // Картинки, загруженные в текущей сессии
+  private filesToDeleteOnSave: string[] = [];    // Оригиналы, удаленные из режима редактирования
+  private originalImages: string[] = [];         // Запоминаем изначальные картинки
+
+  // 1. УМНАЯ ФИЛЬТРАЦИЯ КАТЕГОРИЙ
   filteredGroupedCategories = computed(() => {
     const allCats = this.categories();
     const leaves = allCats.filter(c => c.subCategoriesCount === 0);
@@ -75,19 +106,14 @@ export class ManagerProductsComponent implements OnInit {
 
       while (current) {
         pathNames.unshift(current.name);
-        if (!current.parentCategoryId) {
-          rootName = current.name;
-        }
+        if (!current.parentCategoryId) rootName = current.name;
         current = allCats.find(c => c.id === current.parentCategoryId);
       }
 
       if (pathNames.length > 1) pathNames.shift();
       const displayPath = pathNames.join(' → ');
 
-      // ФИЛЬТРАЦИЯ: Если есть запрос, пропускаем то, что не совпадает (ищем и в пути, и в корне)
-      if (search && !displayPath.toLowerCase().includes(search) && !rootName.toLowerCase().includes(search)) {
-        return;
-      }
+      if (search && !displayPath.toLowerCase().includes(search) && !rootName.toLowerCase().includes(search)) return;
 
       if (!groups.has(rootName)) groups.set(rootName, []);
       groups.get(rootName)!.push({ id: cat.id, displayPath });
@@ -97,7 +123,7 @@ export class ManagerProductsComponent implements OnInit {
       groupName: name,
       categories: items.sort((a, b) => a.displayPath.localeCompare(b.displayPath))
     })).sort((a, b) => a.groupName.localeCompare(b.groupName))
-      .filter(g => g.categories.length > 0); // Убираем пустые группы после поиска
+      .filter(g => g.categories.length > 0);
   });
 
   filteredBrands = computed(() => {
@@ -105,41 +131,6 @@ export class ManagerProductsComponent implements OnInit {
     if (!search) return this.brands();
     return this.brands().filter(b => b.name.toLowerCase().includes(search));
   });
-
-  // --- Методы для поиска брендов ---
-  openBrandSearch(): void {
-    this.isBrandDropdownOpen.set(true);
-    this.brandSearch.set('');
-  }
-
-  closeBrandSearch(): void {
-    setTimeout(() => this.isBrandDropdownOpen.set(false), 200);
-  }
-
-  onBrandSearch(event: Event): void {
-    this.brandSearch.set((event.target as HTMLInputElement).value);
-    this.isBrandDropdownOpen.set(true);
-  }
-
-  selectBrand(id: number, name: string): void {
-    this.productForm.patchValue({ brandId: id });
-    this.selectedBrandDisplay.set(name);
-    this.isBrandDropdownOpen.set(false);
-  }
-
-  brands = signal<BrandListDto[]>([]);
-
-  // UI Состояния
-  viewMode = signal<'list' | 'form'>('list');
-  currentStep = signal(1);
-  isEditing = signal(false);
-  editingId = signal<number | null>(null);
-
-  productForm!: FormGroup;
-
-  brandSearch = signal('');
-  isBrandDropdownOpen = signal(false);
-  selectedBrandDisplay = signal('');
 
   ngOnInit(): void {
     this.initForm();
@@ -151,8 +142,110 @@ export class ManagerProductsComponent implements OnInit {
     this.brandService.getBrands(1, 100).subscribe(res => this.brands.set(res.items));
   }
 
+  ngOnDestroy(): void {
+    this.cleanupTempFiles();
+  }
+
+  // --- ЛОГИКА ГАЛЕРЕИ ---
+  onDragOverImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImages.set(true);
+  }
+
+  onDragLeaveImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImages.set(false);
+  }
+
+  onDropImages(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragoverImages.set(false);
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) this.uploadFiles(files);
+  }
+
+  onImagesSelected(event: Event): void {
+    const files = Array.from((event.target as HTMLInputElement).files || []);
+    if (files.length > 0) this.uploadFiles(files);
+  }
+
+  private uploadFiles(files: File[]): void {
+    this.isUploadingImages.set(true);
+    let completedCount = 0;
+
+    files.forEach(file => {
+      // ИСПОЛЬЗУЕМ ТОТ ЖЕ МЕТОД, ЧТО И В БРЕНДАХ (Он надежнее читает ответ)
+      this.fileService.uploadImageWithProgress(file, 'products').subscribe({
+        next: (event: any) => {
+          if (event.type === HttpEventType.Response) {
+            const res = event.body;
+
+            // Подстраховка на случай разного формата ответа от бэкенда
+            const imageUrl = res?.url || res?.Url || (typeof res === 'string' ? res : null);
+
+            if (imageUrl) {
+              this.tempUploadedFiles.push(imageUrl); // В мусорку на случай отмены
+
+              this.productImages.update(imgs => {
+                // Если это первая картинка, делаем ее главной автоматически
+                const isFirst = imgs.length === 0;
+                return [...imgs, { url: imageUrl, isMain: isFirst }];
+              });
+            }
+
+            completedCount++;
+            if (completedCount === files.length) {
+              this.isUploadingImages.set(false);
+            }
+          }
+        },
+        error: () => {
+          alert('Ошибка при загрузке одной из картинок');
+          completedCount++;
+          if (completedCount === files.length) {
+            this.isUploadingImages.set(false);
+          }
+        }
+      });
+    });
+  }
+
+  removeProductImage(url: string): void {
+    // 1. Убираем из UI
+    this.productImages.update(imgs => {
+      const filtered = imgs.filter(img => img.url !== url);
+      // Если удалили главную, делаем главной первую оставшуюся
+      if (imgs.find(i => i.url === url)?.isMain && filtered.length > 0) {
+        filtered[0].isMain = true;
+      }
+      return filtered;
+    });
+
+    // 2. Логика Сборщика мусора
+    if (this.tempUploadedFiles.includes(url)) {
+      this.fileService.deleteImage(url).subscribe(); // Сносим сразу, так как загружено только что
+      this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== url);
+    } else if (this.originalImages.includes(url)) {
+      this.filesToDeleteOnSave.push(url); // Ставим в очередь на удаление при сохранении
+    }
+  }
+
+  setMainImage(url: string): void {
+    this.productImages.update(imgs =>
+      imgs.map(img => ({ ...img, isMain: img.url === url }))
+    );
+  }
+
+  private cleanupTempFiles(): void {
+    this.tempUploadedFiles.forEach(url => this.fileService.deleteImage(url).subscribe());
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+  }
+
   initForm(): void {
-    // 1. СОЗДАЕМ ФОРМУ (скорее всего, этот блок случайно удалился)
     this.productForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       slug: ['', Validators.required],
@@ -167,7 +260,6 @@ export class ManagerProductsComponent implements OnInit {
       specifications: this.fb.array([])
     });
 
-    // 2. Авто-генерация slug
     this.productForm.get('name')?.valueChanges.subscribe(name => {
       if (name && !this.isEditing()) {
         const generatedSlug = this.slugify(name);
@@ -175,25 +267,19 @@ export class ManagerProductsComponent implements OnInit {
       }
     });
 
-    // 3. АВТОЗАПОЛНЕНИЕ ХАРАКТЕРИСТИК И ПОДСКАЗОК при выборе категории
     this.productForm.get('categoryId')?.valueChanges.subscribe(categoryId => {
-      // Делаем это только при создании нового товара
       if (categoryId && !this.isEditing()) {
         this.loading.set(true);
         this.productService.getFilters(categoryId).subscribe({
           next: (filters) => {
-            // СОХРАНЯЕМ базу подсказок для datalist
             this.availableSpecs.set(filters.specifications || {});
+            this.specsArray.clear();
 
-            this.specsArray.clear(); // Очищаем старые поля
-
-            // Если в категории уже есть товары и фильтры
             if (filters.specifications && Object.keys(filters.specifications).length > 0) {
               const keys = Object.keys(filters.specifications);
-              // Создаем пустые поля для каждого известного ключа
               keys.forEach(key => this.addSpecification(key, ''));
             } else {
-              this.addSpecification(); // Если категория пустая, даем 1 пустую строку
+              this.addSpecification();
             }
             this.loading.set(false);
           },
@@ -206,22 +292,10 @@ export class ManagerProductsComponent implements OnInit {
     });
   }
 
-  // --- Методы для поиска категорий ---
-  openCategorySearch(): void {
-    this.isCatDropdownOpen.set(true);
-    this.categorySearch.set(''); // Очищаем поиск при открытии
-  }
-
-  closeCategorySearch(): void {
-    // Небольшая задержка, чтобы успел сработать клик по элементу списка
-    setTimeout(() => this.isCatDropdownOpen.set(false), 200);
-  }
-
-  onCatSearch(event: Event): void {
-    this.categorySearch.set((event.target as HTMLInputElement).value);
-    this.isCatDropdownOpen.set(true);
-  }
-
+  /* ... Методы поиска категорий и брендов (без изменений) ... */
+  openCategorySearch(): void { this.isCatDropdownOpen.set(true); this.categorySearch.set(''); }
+  closeCategorySearch(): void { setTimeout(() => this.isCatDropdownOpen.set(false), 200); }
+  onCatSearch(event: Event): void { this.categorySearch.set((event.target as HTMLInputElement).value); this.isCatDropdownOpen.set(true); }
   selectCategory(id: number, path: string): void {
     this.productForm.patchValue({ categoryId: id });
     this.selectedCatDisplay.set(path);
@@ -229,7 +303,15 @@ export class ManagerProductsComponent implements OnInit {
     this.productForm.get('categoryId')?.updateValueAndValidity();
   }
 
-  // --- Метод для значений характеристик ---
+  openBrandSearch(): void { this.isBrandDropdownOpen.set(true); this.brandSearch.set(''); }
+  closeBrandSearch(): void { setTimeout(() => this.isBrandDropdownOpen.set(false), 200); }
+  onBrandSearch(event: Event): void { this.brandSearch.set((event.target as HTMLInputElement).value); this.isBrandDropdownOpen.set(true); }
+  selectBrand(id: number, name: string): void {
+    this.productForm.patchValue({ brandId: id });
+    this.selectedBrandDisplay.set(name);
+    this.isBrandDropdownOpen.set(false);
+  }
+
   getValuesForSpecKey(key: string): string[] {
     if (!key) return [];
     return this.availableSpecs()[key.trim()] || [];
@@ -242,75 +324,59 @@ export class ManagerProductsComponent implements OnInit {
     this.productService.getAdminProducts({
       pageNumber: this.pageNumber(),
       pageSize: this.pageSize(),
-      searchQuery: this.searchQuery(), // Передаем поиск
-      sortBy: this.currentSort()       // Передаем сортировку
+      searchQuery: this.searchQuery(),
+      sortBy: this.currentSort()
     }).subscribe({
       next: (res) => {
-        if (this.pageNumber() === 1) {
-          this.products.set(res.items); // Заменяем список (при поиске/сортировке)
-        } else {
-          // ДОБАВЛЯЕМ в конец списка (при скролле вниз)
-          this.products.update(prev => [...prev, ...res.items]);
-        }
+        if (this.pageNumber() === 1) this.products.set(res.items);
+        else this.products.update(prev => [...prev, ...res.items]);
         this.totalCount.set(res.totalCount);
         this.loading.set(false);
         this.isLoadingMore.set(false);
       },
-      error: () => {
-        this.loading.set(false);
-        this.isLoadingMore.set(false);
-      }
+      error: () => { this.loading.set(false); this.isLoadingMore.set(false); }
     });
   }
 
-  // --- Работа с характеристиками ---
-  get specsArray(): FormArray {
-    return this.productForm.get('specifications') as FormArray;
-  }
-
+  get specsArray(): FormArray { return this.productForm.get('specifications') as FormArray; }
   addSpecification(key = '', value = ''): void {
-    const specGroup = this.fb.group({
-      key: [key, Validators.required],
-      value: [value, Validators.required]
-    });
-    this.specsArray.push(specGroup);
+    this.specsArray.push(this.fb.group({ key: [key, Validators.required], value: [value, Validators.required] }));
   }
+  removeSpecification(index: number): void { this.specsArray.removeAt(index); }
 
-  removeSpecification(index: number): void {
-    this.specsArray.removeAt(index);
-  }
-
-  // --- Навигация мастера ---
   openCreateMode(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
     this.productForm.reset({ price: 0, isPublished: true });
     this.specsArray.clear();
-    this.selectedCatDisplay.set('');    // очищаем отображение категории
-    this.selectedBrandDisplay.set('');  // очищаем отображение бренда
+    this.selectedCatDisplay.set('');
+    this.selectedBrandDisplay.set('');
+
+    // Очищаем галерею
+    this.productImages.set([]);
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+    this.originalImages = [];
+
     this.currentStep.set(1);
     this.viewMode.set('form');
-    this.productForm.reset({ price: 0, isPublished: true, tagsText: '' });
   }
 
   closeForm(): void {
+    this.cleanupTempFiles(); // Очищаем мусор при отмене
     this.viewMode.set('list');
   }
 
-  // 2. ПРОВЕРКА ВАЛИДНОСТИ ШАГА
   isStepValid(step: number): boolean {
     const f = this.productForm.controls;
-    if (step === 1) {
-      return f['name'].valid && f['slug'].valid && f['categoryId'].valid && f['brandId'].valid;
-    }
-    if (step === 2) {
-      return f['price'].valid && f['discountPrice'].valid;
-    }
-    return true; // 3-й шаг проверяется целиком всей формой
+    if (step === 1) return f['name'].valid && f['slug'].valid && f['categoryId'].valid && f['brandId'].valid;
+    if (step === 2) return f['price'].valid && f['discountPrice'].valid;
+    if (step === 3) return f['shortDescription'].valid;
+    return true; // 4 шаг (картинки) опционален
   }
 
   nextStep(): void {
-    if (this.currentStep() < 3 && this.isStepValid(this.currentStep())) {
+    if (this.currentStep() < 4 && this.isStepValid(this.currentStep())) {
       this.currentStep.update(s => s + 1);
     }
   }
@@ -319,7 +385,6 @@ export class ManagerProductsComponent implements OnInit {
     if (this.currentStep() > 1) this.currentStep.update(s => s - 1);
   }
 
-  // --- Сохранение ---
   saveProduct(): void {
     if (this.productForm.invalid) {
       alert('Пожалуйста, заполните все обязательные поля корректно.');
@@ -331,28 +396,28 @@ export class ManagerProductsComponent implements OnInit {
 
     const specsRecord: Record<string, string> = {};
     formValue.specifications.forEach((spec: { key: string, value: string }) => {
-      if (spec.key && spec.value) {
-        specsRecord[spec.key.trim()] = spec.value.trim();
-      }
+      if (spec.key && spec.value) specsRecord[spec.key.trim()] = spec.value.trim();
     });
 
-    // 1. Превращаем строку с запятыми в чистый массив тегов
     let parsedTags: string[] = [];
     if (formValue.tagsText) {
-      parsedTags = formValue.tagsText
-        .split(',')
-        .map((t: string) => t.trim())
-        .filter((t: string) => t.length > 0);
+      parsedTags = formValue.tagsText.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
     }
 
-    // 2. Исключаем 'tagsText' из отправляемых данных (чтобы не мусорить в запросе)
     const { tagsText, ...cleanFormValue } = formValue;
 
-    // 3. Формируем финальный payload
-    const payload: CreateProductDto = {
+    // Подготавливаем картинки для отправки
+    const formattedImages = this.productImages().map((img, idx) => ({
+      url: img.url,
+      isPrimary: img.isMain,
+      sortOrder: idx // Порядок как в массиве
+    }));
+
+    const payload = {
       ...cleanFormValue,
       specifications: specsRecord,
-      tags: parsedTags // 👈 ВОТ ОНО! Теперь мы точно отправляем массив тегов!
+      tags: parsedTags,
+      images: formattedImages // 👈 Отправляем массив картинок
     };
 
     if (this.isEditing() && this.editingId()) {
@@ -369,6 +434,11 @@ export class ManagerProductsComponent implements OnInit {
   }
 
   private onSaveSuccess(): void {
+    // Удаляем с сервера оригиналы, от которых отказались
+    this.filesToDeleteOnSave.forEach(url => this.fileService.deleteImage(url).subscribe());
+    this.tempUploadedFiles = [];
+    this.filesToDeleteOnSave = [];
+
     this.loadProducts();
     this.viewMode.set('list');
   }
@@ -383,19 +453,13 @@ export class ManagerProductsComponent implements OnInit {
     }
   }
 
-  // --- Редактирование товара ---
   editProduct(productListItem: ProductListDto): void {
     this.loading.set(true);
-
-    // Переводим форму в режим редактирования ДО заполнения данных, 
-    // чтобы не сработал автокомплит характеристик из Шага 1
     this.isEditing.set(true);
     this.editingId.set(productListItem.id);
 
-    // Запрашиваем полные данные товара (с характеристиками и полным описанием)
     this.productService.getProductById(productListItem.id).subscribe({
       next: (fullProduct) => {
-        // Заполняем основные поля формы (patchValue)
         const tagsString = fullProduct.tags ? fullProduct.tags.join(', ') : '';
         this.productForm.patchValue({
           name: fullProduct.name,
@@ -404,28 +468,38 @@ export class ManagerProductsComponent implements OnInit {
           brandId: fullProduct.brand?.id || null,
           price: fullProduct.price,
           discountPrice: fullProduct.discountPrice,
-          // Берем isPublished из элемента списка
           isPublished: productListItem.isPublished,
           shortDescription: fullProduct.shortDescription,
           fullDescription: fullProduct.fullDescription,
           tagsText: tagsString
         });
 
-        // Заполняем характеристики
         this.specsArray.clear();
         if (fullProduct.specifications && Object.keys(fullProduct.specifications).length > 0) {
           Object.entries(fullProduct.specifications).forEach(([key, value]) => {
             this.addSpecification(key, value as string);
           });
         } else {
-          this.addSpecification(); // пустая строка, если характеристик нет
+          this.addSpecification();
         }
 
-        // Обновляем текст в наших кастомных селектах
+        // 👈 Загружаем картинки товара
+        this.tempUploadedFiles = [];
+        this.filesToDeleteOnSave = [];
+        if (fullProduct.images) {
+          this.productImages.set(fullProduct.images.map(img => ({
+            url: img.url,
+            isMain: img.isPrimary
+          })));
+          this.originalImages = fullProduct.images.map(img => img.url);
+        } else {
+          this.productImages.set([]);
+          this.originalImages = [];
+        }
+
         this.selectedCatDisplay.set(fullProduct.categoryName || '');
         this.selectedBrandDisplay.set(fullProduct.brand?.name || '');
 
-        // Открываем форму на первом шаге
         this.currentStep.set(1);
         this.viewMode.set('form');
         this.loading.set(false);
@@ -454,36 +528,23 @@ export class ManagerProductsComponent implements OnInit {
     return newSlug.replace(/[^a-z0-9\-_]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
   }
 
-  // --- Переключение статуса товара ---
   togglePublish(product: ProductListDto): void {
-    // Сохраняем оригинальный статус на случай ошибки
     const originalStatus = product.isPublished;
-
-    // Мгновенно меняем статус в UI (Оптимистичный UI)
     product.isPublished = !product.isPublished;
-
     this.productService.togglePublishStatus(product.id).subscribe({
-      next: () => {
-        // Успешно переключено (можешь добавить вызов Toast-уведомления, если хочешь)
-      },
+      next: () => { },
       error: () => {
-        // Если сервер выдал ошибку, возвращаем статус как было
         product.isPublished = originalStatus;
         alert('Не удалось изменить статус товара');
       }
     });
   }
 
-  // --- СОРТИРОВКА И ПОИСК ---
-  resetAndLoad(): void {
-    this.pageNumber.set(1);
-    this.loadProducts();
-  }
+  resetAndLoad(): void { this.pageNumber.set(1); this.loadProducts(); }
 
   onSearchChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     clearTimeout(this.searchTimeout);
-    // Ждем 500мс после того как юзер перестал печатать, чтобы не спамить бэкенд
     this.searchTimeout = setTimeout(() => {
       this.searchQuery.set(value);
       this.resetAndLoad();
@@ -494,33 +555,35 @@ export class ManagerProductsComponent implements OnInit {
     const current = this.currentSort();
     let nextSort = 'date_desc';
 
-    if (column === 'name') {
-      nextSort = current === 'name_asc' ? 'name_desc' : 'name_asc';
-    } else if (column === 'price') {
-      nextSort = current === 'price_asc' ? 'price_desc' : 'price_asc';
-    } else if (column === 'date') {
-      nextSort = current === 'date_desc' ? 'date_asc' : 'date_desc';
-    } else if (column === 'brand') {
-      nextSort = current === 'brand_asc' ? 'brand_desc' : 'brand_asc';
-    } else if (column === 'category') {
-      nextSort = current === 'category_asc' ? 'category_desc' : 'category_asc';
-    } else if (column === 'status') {
-      nextSort = current === 'status_desc' ? 'status_asc' : 'status_desc';
-    }
+    if (column === 'name') nextSort = current === 'name_asc' ? 'name_desc' : 'name_asc';
+    else if (column === 'price') nextSort = current === 'price_asc' ? 'price_desc' : 'price_asc';
+    else if (column === 'date') nextSort = current === 'date_desc' ? 'date_asc' : 'date_desc';
+    else if (column === 'brand') nextSort = current === 'brand_asc' ? 'brand_desc' : 'brand_asc';
+    else if (column === 'category') nextSort = current === 'category_asc' ? 'category_desc' : 'category_asc';
+    else if (column === 'status') nextSort = current === 'status_desc' ? 'status_asc' : 'status_desc';
 
     this.currentSort.set(nextSort);
     this.resetAndLoad();
   }
 
-  // --- БЕСКОНЕЧНЫЙ СКРОЛЛ ---
   onTableScroll(event: Event): void {
     const target = event.target as HTMLElement;
-    // Если доскроллили почти до конца (осталось 100px)
     if (target.scrollHeight - target.scrollTop - target.clientHeight < 100) {
-      // Если сейчас не грузим и если загружены еще не все товары
       if (!this.loading() && !this.isLoadingMore() && this.products().length < this.totalCount()) {
         this.pageNumber.update(p => p + 1);
         this.loadProducts();
+      }
+    }
+  }
+
+  goToStep(step: number): void {
+    // При редактировании разрешаем переходить на любой шаг свободно
+    if (this.isEditing()) {
+      this.currentStep.set(step);
+    } else {
+      // При создании разрешаем только возвращаться на уже пройденные шаги
+      if (step < this.currentStep()) {
+        this.currentStep.set(step);
       }
     }
   }

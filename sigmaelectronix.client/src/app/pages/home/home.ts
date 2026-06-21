@@ -11,6 +11,7 @@ import { FeaturedBrandsComponent } from '../../components/home-components/featur
 import { BestSellersComponent } from '../../components/home-components/best-sellers/best-sellers';
 import { NewProductsComponent } from '../../components/home-components/new-products/new-products';
 import { CategoriesComponent } from '../../components/home-components/categories/categories';
+import { HeroBannerComponent } from '../../components/home-components/hero-banner/hero-banner';
 
 interface Advantage {
   icon: string;
@@ -28,6 +29,7 @@ interface Advantage {
     BestSellersComponent,
     NewProductsComponent,
     CategoriesComponent,
+    HeroBannerComponent,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch,
     LucideTv, LucideGamepad2, LucideArrowRight, LucideHeart,
     LucideShoppingCart, LucideStar, LucideTruck, LucideShieldCheck,

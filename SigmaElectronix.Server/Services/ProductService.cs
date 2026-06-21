@@ -162,7 +162,16 @@ namespace SigmaElectronix.Server.Services
                 Specifications = dto.Specifications ?? new Dictionary<string, string>(),
                 Tags = dto.Tags ?? new List<string>(),
                 IsPublished = dto.IsPublished,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+
+                // 👇 ДОБАВЛЕНО: Маппинг картинок при создании
+                Images = dto.Images?.Select(i => new ProductImage
+                {
+                    Url = i.Url,
+                    IsPrimary = i.IsPrimary,
+                    SortOrder = i.SortOrder,
+                    AltText = i.AltText
+                }).ToList() ?? new List<ProductImage>()
             };
 
             _context.Products.Add(product);
@@ -173,7 +182,11 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<ProductDetailDto?> UpdateProductAsync(int id, UpdateProductDto dto)
         {
-            var product = await _context.Products.FindAsync(id);
+            // 👇 ВАЖНО: Добавили .Include(p => p.Images), чтобы EF Core подтянул старые картинки для замены
+            var product = await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (product == null || product.IsDeleted) return null;
 
             // Если имя или переданный slug изменились, генерируем новый slug
@@ -193,6 +206,16 @@ namespace SigmaElectronix.Server.Services
             product.Specifications = dto.Specifications ?? new Dictionary<string, string>();
             product.Tags = dto.Tags ?? new List<string>();
             product.IsPublished = dto.IsPublished;
+
+            // 👇 ДОБАВЛЕНО: Обновление картинок (очищаем старые и записываем новые)
+            _context.ProductImages.RemoveRange(product.Images); // Удаляем старые связи
+            product.Images = dto.Images?.Select(i => new ProductImage
+            {
+                Url = i.Url,
+                IsPrimary = i.IsPrimary,
+                SortOrder = i.SortOrder,
+                AltText = i.AltText
+            }).ToList() ?? new List<ProductImage>();
 
             await _context.SaveChangesAsync();
             return await GetProductByIdAsync(id);

@@ -13,5 +13,6 @@
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public IList<string> Roles { get; set; } = new List<string>();
+        public string? AvatarUrl { get; set; }
     }
 }

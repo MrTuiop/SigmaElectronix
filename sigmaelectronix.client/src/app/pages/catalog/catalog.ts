@@ -97,7 +97,12 @@ export class CatalogPage implements OnInit {
         id: 0,
         name: 'Каталог товаров',
         slug: '',
-        subcategories: tree.map(c => ({ name: c.name, slug: c.slug, icon: 'folder' }))
+        subcategories: tree.map(c => ({
+          name: c.name,
+          slug: c.slug,
+          icon: 'folder',
+          imageUrl: c.imageUrl // <-- Добавили
+        }))
       });
       this.breadcrumbs.set([{ label: 'Каталог' }]);
       return;
@@ -114,7 +119,8 @@ export class CatalogPage implements OnInit {
         subcategories: result.category.subCategories?.map((c: any) => ({
           name: c.name,
           slug: c.slug,
-          icon: 'folder'
+          icon: 'folder',
+          imageUrl: c.imageUrl // <-- Добавили
         })) || []
       });
 

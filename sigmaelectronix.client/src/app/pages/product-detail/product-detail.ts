@@ -1,5 +1,5 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule, KeyValuePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -7,38 +7,41 @@ import {
   LucideStar, LucideShoppingCart, LucideHeart, LucideShieldCheck, LucideTruck, LucideRefreshCw,
   LucideBell, LucideCheck, LucidePackage,
   LucideChevronLeft, LucideChevronRight,
-  LucideThumbsUp, LucideThumbsDown, LucideMessageSquare, LucideUser, LucideSend, // <-- НОВЫЕ ИКОНКИ
-  LucideEdit2,
-  LucideX,
-  LucideTrash2
+  LucideThumbsUp, LucideThumbsDown, LucideMessageSquare, LucideUser, LucideSend,
+  LucideEdit2, LucideX, LucideTrash2,
+  LucideStore, LucideMapPin, LucideClock, LucideAward
 } from '@lucide/angular';
 import { ProductService } from '../../services/product-service';
 import { CartService } from '../../services/cart-service';
 import { WishlistService } from '../../services/wishlist-service';
 import { ToastService } from '../../services/toast';
-import { ReviewService } from '../../services/review-service'; // <-- ТВОЙ СЕРВИС
-import { AuthService } from '../../services/auth-service';     // <-- СЕРВИС АВТОРИЗАЦИИ
+import { ReviewService } from '../../services/review-service';
+import { AuthService } from '../../services/auth-service';
 
 import { ProductDetailDto } from '../../models/product-models';
 import { ProductListDto } from '../../models/brand-models';
-import { ReviewDto } from '../../models/review-models'; // Убедись в правильности пути
+import { ReviewDto } from '../../models/review-models';
 import { AuthModalComponent } from '../../components/auth-components/auth-modal/auth-modal';
 import { ConfirmModalComponent } from '../../components/shared-components/confirm-modal/confirm-modal';
 import { CategoryService } from '../../services/category-service';
+
+import { StoreInventoryService } from '../../services/store-inventory-service';
+import { StoreService } from '../../services/store-service';
+import { StoreInventoryDto } from '../../models/store-inventory-models';
+import { StoreDto } from '../../models/store-models';
+import { CurrentLocationService } from '../../services/current-location-service';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterLink,
-    FormsModule,
-    KeyValuePipe,
+    CommonModule, RouterLink, FormsModule, KeyValuePipe,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
     LucideStar, LucideShoppingCart, LucideHeart, LucideShieldCheck, LucideTruck, LucideRefreshCw,
     LucideBell, LucideCheck, LucidePackage,
     LucideChevronLeft, LucideChevronRight,
     LucideThumbsUp, LucideThumbsDown, LucideMessageSquare, LucideUser, LucideSend, LucideEdit2, LucideX, LucideTrash2,
+    LucideStore, LucideMapPin, LucideClock, LucideAward,
     AuthModalComponent, ConfirmModalComponent
   ],
   templateUrl: './product-detail.html',
@@ -52,14 +55,20 @@ export class ProductDetailPage implements OnInit {
   public cartService = inject(CartService);
   private wishlistService = inject(WishlistService);
   private toastService = inject(ToastService);
-  public authService = inject(AuthService); // <-- Делаем public для HTML
+  public authService = inject(AuthService);
   private reviewService = inject(ReviewService);
   private categoryService = inject(CategoryService);
+  private router = inject(Router);
+
+  private currentLocationService = inject(CurrentLocationService);
+
+  private storeInventoryService = inject(StoreInventoryService);
+  private storeService = inject(StoreService);
 
   breadcrumbs = signal<{ label: string; slug?: string }[]>([]);
   product = signal<ProductDetailDto | null>(null);
   relatedProducts = signal<ProductListDto[]>([]);
-  reviews = signal<ReviewDto[]>([]); // <-- Сигнал для отзывов
+  reviews = signal<ReviewDto[]>([]);
   hasLeftReview = computed(() => this.reviews().some(r => r.isMine));
 
   isLoading = signal(true);
@@ -69,17 +78,45 @@ export class ProductDetailPage implements OnInit {
   quantity = signal(1);
   priceAlertRequested = signal(false);
 
+  // --- СОСТОЯНИЯ ДЛЯ ОСТАТКОВ И МАГАЗИНОВ ---
+  inventory = signal<StoreInventoryDto[]>([]);
+  stores = signal<StoreDto[]>([]);
+  showStoresModal = signal(false);
+
+  currentCityName = computed(() => this.currentLocationService.currentCityName());
+
+  storeAvailability = computed(() => {
+    const inv = this.inventory();
+    const st = this.stores();
+    const city = this.currentCityName().toLowerCase().trim();
+
+    // 1. Оставляем только магазины текущего города (и активные)
+    const cityStores = st.filter(s => s.cityName.toLowerCase() === city && s.isActive);
+
+    // 2. Связываем их с инвентарем
+    return cityStores.map(store => {
+      const inventoryItem = inv.find(i => i.storeId === store.id);
+      return {
+        storeDetails: store,
+        quantity: inventoryItem ? inventoryItem.quantity : 0
+      };
+    });
+  });
+
+  // 👇 Вычисляем, в скольких магазинах ТЕКУЩЕГО ГОРОДА товар есть в наличии
+  inStockStoresCount = computed(() => {
+    return this.storeAvailability().filter(item => item.quantity > 0).length;
+  });
+
   // --- Состояния для отзывов ---
   newReviewRating = signal(5);
   newReviewText = signal('');
   isSubmittingReview = signal(false);
 
-  // --- Состояния для комментариев ---
   replyingToReviewId = signal<number | null>(null);
   newCommentText = signal('');
   newReviewTitle = signal('');
 
-  // --- Состояния для РЕДАКТИРОВАНИЯ ---
   editingReviewId = signal<number | null>(null);
   editReviewRating = signal(5);
   editReviewTitle = signal('');
@@ -90,58 +127,41 @@ export class ProductDetailPage implements OnInit {
 
   showAuthModal = signal(false);
 
-  openAuthModal(): void {
-    this.showAuthModal.set(true);
-  }
-
-  closeAuthModal(): void {
-    this.showAuthModal.set(false);
-  }
+  openAuthModal(): void { this.showAuthModal.set(true); }
+  closeAuthModal(): void { this.showAuthModal.set(false); }
 
   onAuthenticated(): void {
     this.showAuthModal.set(false);
-    // При успешном входе обновляем отзывы, чтобы подтянулась инфа (лайки и т.д.)
     if (this.product()) {
       this.loadReviews(this.product()!.id);
     }
   }
 
-  // --- Состояния для сворачивания комментариев ---
   expandedReviews = signal<Set<number>>(new Set<number>());
 
-  // Метод для переключения видимости комментариев
   toggleComments(reviewId: number): void {
     const current = new Set(this.expandedReviews());
-    if (current.has(reviewId)) {
-      current.delete(reviewId);
-    } else {
-      current.add(reviewId);
-    }
+    if (current.has(reviewId)) current.delete(reviewId);
+    else current.add(reviewId);
     this.expandedReviews.set(current);
   }
 
-  // ===== МЕТОДЫ РЕДАКТИРОВАНИЯ ОТЗЫВА =====
   startEditReview(review: ReviewDto): void {
     this.editingReviewId.set(review.id);
     this.editReviewRating.set(review.rating);
     this.editReviewTitle.set(review.title);
     this.editReviewText.set(review.comment);
   }
-
-  cancelEditReview(): void {
-    this.editingReviewId.set(null);
-  }
+  cancelEditReview(): void { this.editingReviewId.set(null); }
 
   saveEditReview(reviewId: number): void {
     if (!this.editReviewText().trim()) return;
-
     const dto = {
       productId: this.product()!.id,
       rating: this.editReviewRating(),
       title: this.editReviewTitle() || 'Без заголовка',
       comment: this.editReviewText()
     };
-
     this.reviewService.updateReview(reviewId, dto).subscribe({
       next: () => {
         this.toastService.success('Отзыв обновлен и отправлен на модерацию');
@@ -152,19 +172,14 @@ export class ProductDetailPage implements OnInit {
     });
   }
 
-  // ===== МЕТОДЫ РЕДАКТИРОВАНИЯ КОММЕНТАРИЯ =====
   startEditComment(comment: any): void {
     this.editingCommentId.set(comment.id);
     this.editCommentText.set(comment.text);
   }
-
-  cancelEditComment(): void {
-    this.editingCommentId.set(null);
-  }
+  cancelEditComment(): void { this.editingCommentId.set(null); }
 
   saveEditComment(commentId: number): void {
     if (!this.editCommentText().trim()) return;
-
     this.reviewService.updateComment(commentId, this.editCommentText()).subscribe({
       next: () => {
         this.toastService.success('Комментарий обновлен');
@@ -199,46 +214,48 @@ export class ProductDetailPage implements OnInit {
         this.isLoading.set(false);
         this.activeImageIndex.set(0);
         this.quantity.set(1);
-
-        // 🌟 Генерируем хлебные крошки
         this.buildBreadcrumbs(data);
-
-        // Загружаем отзывы и похожие товары
         this.loadReviews(data.id);
+        this.loadInventory(data.id);
         this.productService.getRelatedProducts(data.id, 4).subscribe({
           next: (related) => this.relatedProducts.set(related)
         });
       },
-      error: (err) => {
+      error: () => {
         this.error.set('Товар не найден или удален');
         this.isLoading.set(false);
       }
     });
   }
 
+  private loadInventory(productId: number): void {
+    this.storeInventoryService.getInventoryByProduct(productId).subscribe({
+      next: (inv) => this.inventory.set(inv),
+      error: () => console.error('Не удалось загрузить остатки')
+    });
+
+    if (this.stores().length === 0) {
+      this.storeService.getAllStores(false).subscribe({
+        next: (st) => this.stores.set(st),
+        error: () => console.error('Не удалось загрузить магазины')
+      });
+    }
+  }
+
   private buildBreadcrumbs(product: any): void {
     const tree = this.categoryService.categoryTree();
-
     const generate = (categories: any[]) => {
       const crumbs: { label: string; slug?: string }[] = [
         { label: 'Главная', slug: '' },
         { label: 'Каталог', slug: 'catalog' }
       ];
-
-      // Ищем категорию товара в дереве по ID или Названию
       const result = this.findCategoryInTree(categories, product.categoryId, product.categoryName);
-
       if (result) {
-        // Добавляем всех родителей (например: Электроника)
         result.path.forEach(p => crumbs.push({ label: p.name, slug: `catalog/${p.slug}` }));
-        // Добавляем саму категорию (например: Смартфоны)
         crumbs.push({ label: result.category.name, slug: `catalog/${result.category.slug}` });
       } else if (product.categoryName) {
-        // Резервный вариант
         crumbs.push({ label: product.categoryName, slug: 'catalog' });
       }
-
-      // Добавляем название самого товара
       crumbs.push({ label: product.name });
       this.breadcrumbs.set(crumbs);
     };
@@ -263,10 +280,6 @@ export class ProductDetailPage implements OnInit {
     return null;
   }
 
-  // ==========================================
-  //               ЛОГИКА ОТЗЫВОВ
-  // ==========================================
-
   private loadReviews(productId: number): void {
     this.reviewService.getProductReviews(productId).subscribe({
       next: (res) => this.reviews.set(res),
@@ -274,31 +287,26 @@ export class ProductDetailPage implements OnInit {
     });
   }
 
-  setRating(stars: number): void {
-    this.newReviewRating.set(stars);
-  }
+  setRating(stars: number): void { this.newReviewRating.set(stars); }
 
   submitReview(): void {
     if (!this.newReviewText().trim()) {
       this.toastService.error('Напишите текст отзыва');
       return;
     }
-
     this.isSubmittingReview.set(true);
     const dto = {
       productId: this.product()!.id,
       rating: this.newReviewRating(),
       title: this.newReviewTitle() || 'Без заголовка',
-      comment: this.newReviewText() // Или 'text', зависит от твоей CreateReviewDto
+      comment: this.newReviewText()
     };
-
     this.reviewService.createReview(dto).subscribe({
       next: () => {
         this.toastService.success('Отзыв отправлен на модерацию');
         this.newReviewText.set('');
         this.newReviewRating.set(5);
         this.isSubmittingReview.set(false);
-        // Опционально: можно перезагрузить отзывы, если модерация не строгая
       },
       error: () => {
         this.toastService.error('Ошибка отправки отзыва');
@@ -309,25 +317,20 @@ export class ProductDetailPage implements OnInit {
 
   reactToReview(reviewId: number, isLike: boolean): void {
     if (!this.authService.isAuthenticated()) {
-      this.openAuthModal(); // <-- Открываем модалку
+      this.openAuthModal();
       return;
     }
-
-    // 1. МГНОВЕННО обновляем UI (Оптимистичный UI)
     this.reviews.update(current => current.map(r => {
       if (r.id === reviewId) {
         const isRemoving = r.userReaction === (isLike ? 'Like' : 'Dislike');
         let newLikes = r.likesCount;
         let newDislikes = r.dislikesCount;
-
         if (r.userReaction === 'Like') newLikes--;
         if (r.userReaction === 'Dislike') newDislikes--;
-
         if (!isRemoving) {
           if (isLike) newLikes++;
           else newDislikes++;
         }
-
         return {
           ...r,
           likesCount: newLikes,
@@ -337,18 +340,12 @@ export class ProductDetailPage implements OnInit {
       }
       return r;
     }));
-
-    // 2. Отправляем на сервер в фоне (без перезагрузки списка)
     this.reviewService.reactToReview(reviewId, isLike).subscribe();
   }
 
-  // ==========================================
-  //             ЛОГИКА КОММЕНТАРИЕВ
-  // ==========================================
-
   openReplyForm(reviewId: number): void {
     if (!this.authService.isAuthenticated()) {
-      this.openAuthModal(); // <-- Открываем модалку
+      this.openAuthModal();
       return;
     }
     this.replyingToReviewId.set(this.replyingToReviewId() === reviewId ? null : reviewId);
@@ -357,12 +354,10 @@ export class ProductDetailPage implements OnInit {
 
   submitComment(reviewId: number): void {
     if (!this.newCommentText().trim()) return;
-
     if (!this.authService.isAuthenticated()) {
-      this.openAuthModal(); // <-- Открываем модалку
+      this.openAuthModal();
       return;
     }
-
     this.reviewService.addComment(reviewId, this.newCommentText()).subscribe({
       next: () => {
         this.toastService.success('Комментарий добавлен');
@@ -376,13 +371,9 @@ export class ProductDetailPage implements OnInit {
 
   reactToComment(commentId: number, isLike: boolean): void {
     if (!this.authService.isAuthenticated()) {
-      this.openAuthModal(); // <-- Открываем модалку
+      this.openAuthModal();
       return;
     }
-
-    if (!this.authService.isAuthenticated()) return;
-
-    // Мгновенное обновление лайков у комментария
     this.reviews.update(current => current.map(r => {
       return {
         ...r,
@@ -391,43 +382,49 @@ export class ProductDetailPage implements OnInit {
             const isRemoving = c.userReaction === (isLike ? 'Like' : 'Dislike');
             let newLikes = c.likesCount;
             let newDislikes = c.dislikesCount;
-
             if (c.userReaction === 'Like') newLikes--;
             if (c.userReaction === 'Dislike') newDislikes--;
-
             if (!isRemoving) {
               if (isLike) newLikes++;
               else newDislikes++;
             }
-
             return { ...c, likesCount: newLikes, dislikesCount: newDislikes, userReaction: isRemoving ? null : (isLike ? 'Like' : 'Dislike') };
           }
           return c;
         })
       };
     }));
-
     this.reviewService.reactToComment(commentId, isLike).subscribe();
   }
 
-
-
-  // 🔹 4. Реальное добавление в корзину (с тостом)
   addToCart(): void {
     const p = this.product();
     if (!p) return;
+
+    // 1. Если товар уже в корзине — не добавляем снова, а переходим в корзину
+    if (this.cartService.isInCart(p.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    // 2. Если товара еще нет — добавляем
     const price = p.discountPrice || p.price;
     this.cartService.addItem({
       productId: p.id,
       quantity: this.quantity(),
       price: price
     }).subscribe({
-      next: () => this.toastService.success('Товар добавлен в корзину'),
+      next: () => {
+        this.toastService.success('Товар добавлен в корзину');
+
+        // 💡 ОПЦИОНАЛЬНО: Если вы хотите, чтобы юзера перекидывало в корзину 
+        // СРАЗУ ЖЕ после первого нажатия (автоматически), раскомментируйте строку ниже:
+        // this.router.navigate(['/cart']);
+      },
       error: () => this.toastService.error('Ошибка при добавлении в корзину')
     });
   }
 
-  // 🔹 5. Реальное добавление в избранное с уведомлением
   toggleWishlist(): void {
     const p = this.product();
     if (!p) return;
@@ -444,7 +441,6 @@ export class ProductDetailPage implements OnInit {
     });
   }
 
-  // Навигация по картинкам
   nextImage(): void {
     const images = this.product()?.images;
     if (!images || images.length === 0) return;
@@ -489,8 +485,7 @@ export class ProductDetailPage implements OnInit {
 
   onConfirmDelete(): void {
     const config = this.confirmModalConfig();
-    this.showConfirmModal.set(false); // Сразу закрываем модалку
-
+    this.showConfirmModal.set(false);
     if (config.actionType === 'review') {
       this.reviewService.deleteReview(config.targetId).subscribe({
         next: () => {
@@ -516,24 +511,33 @@ export class ProductDetailPage implements OnInit {
 
   showConfirmModal = signal(false);
   confirmModalConfig = signal({
-    title: '',
-    message: '',
-    confirmText: 'Удалить',
-    actionType: 'none' as 'review' | 'comment' | 'none',
-    targetId: 0
+    title: '', message: '', confirmText: 'Удалить', actionType: 'none' as 'review' | 'comment' | 'none', targetId: 0
   });
 
-  // Склонение слова "отзыв" в зависимости от числа
   getReviewWord(count: number | undefined): string {
     if (count === undefined) return 'отзывов';
-
     const value = Math.abs(count) % 100;
     const num = count % 10;
+    if (value > 10 && value < 20) return 'отзывов';
+    if (num > 1 && num < 5) return 'отзыва';
+    if (num === 1) return 'отзыв';
+    return 'отзывов';
+  }
 
-    if (value > 10 && value < 20) return 'отзывов'; // 11-19 отзывов
-    if (num > 1 && num < 5) return 'отзыва';        // 2-4 отзыва
-    if (num === 1) return 'отзыв';                  // 1 отзыв
+  getDeliveryDate(): Date {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date;
+  }
 
-    return 'отзывов';                               // 0, 5-9 отзывов
+  // Проверка ручного ввода количества товара
+  onQuantityChange(value: number): void {
+    if (value > 10) {
+      this.quantity.set(10); // Если ввели больше 10, сбрасываем до 10
+    } else if (value < 1 || !value) {
+      this.quantity.set(1);  // Если ввели меньше 1 или удалили цифру, ставим 1
+    } else {
+      this.quantity.set(value);
+    }
   }
 }

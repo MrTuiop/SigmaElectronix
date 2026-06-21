@@ -60,6 +60,7 @@ export interface BrandCategoryDto {
   categoryName: string;
   categorySlug: string;
   iconUrl?: string;
+  icon?: string;
   productsCount: number;
 }
 

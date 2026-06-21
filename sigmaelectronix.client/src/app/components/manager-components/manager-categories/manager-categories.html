@@ -101,7 +101,6 @@
 
           @if (isParentDropdownOpen()) {
           <div class="dropdown-options animate-fade">
-            <!-- 👇 Новая стилизованная кнопка "Сделать корневой" -->
             <div class="option-item root-option" (click)="selectParent(null, 'Без родителя (Корневая)')">
               <div class="root-option-content">
                 <svg lucideFolderTree size="16" strokeWidth="2"></svg>
@@ -122,12 +121,78 @@
           <p class="input-hint">Если не выбрано, категория станет главным разделом в меню.</p>
         </div>
 
-        <div class="form-group flex-1">
-          <label>Иконка / Изображение (URL)</label>
-          <div class="input-with-icon">
-            <svg lucideImage size="18" class="input-icon" strokeWidth="1.5"></svg>
-            <input type="text" formControlName="imageUrl" placeholder="/assets/icons/laptop.svg">
+        <div class="form-group flex-1 relative">
+          <label>Системная иконка (для меню) *</label>
+
+          <div class="icon-select-trigger custom-search-select"
+               (click)="toggleIconDropdown()"
+               [class.input-error]="categoryForm.get('icon')?.invalid && categoryForm.get('icon')?.touched">
+
+            <div class="selected-icon-preview">
+              <span [style.color]="categoryForm.get('icon')?.value ? '#334155' : '#9ca3af'">
+                {{ getSelectedIconLabel() }}
+              </span>
+            </div>
+
+            <svg lucideChevronDown size="16" class="select-icon"></svg>
           </div>
+
+          @if (isIconDropdownOpen()) {
+          <div class="icon-dropdown-panel animate-fade">
+            <div class="icon-grid">
+              @for (icon of availableIcons; track icon.id) {
+              <div class="icon-option"
+                   [class.active]="categoryForm.get('icon')?.value === icon.id"
+                   (click)="selectIcon(icon.id)">
+                <div class="icon-box">
+                  <ng-container *ngComponentOutlet="icon.component; inputs: { size: 20 }"></ng-container>
+                </div>
+                <span class="icon-name">{{ icon.name }}</span>
+              </div>
+              }
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label>Изображение категории (Обложка)</label>
+
+          <div class="image-upload-wrapper"
+               [class.dragover]="isDragoverImage()"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+
+            @if (isUploadingImage()) {
+            <div class="upload-placeholder">
+              <app-spinner message=""></app-spinner>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" [style.width.%]="imageUploadProgress()"></div>
+              </div>
+              <span class="progress-text">Загрузка: {{ imageUploadProgress() }}%</span>
+            </div>
+            } @else if (categoryForm.get('imageUrl')?.value) {
+            <div class="image-preview-box hero-preview">
+              <img [src]="categoryForm.get('imageUrl')?.value" alt="Обложка">
+              <button type="button" class="btn-remove-img" (click)="removeImage()" title="Удалить обложку">
+                <svg lucideX size="16" strokeWidth="2"></svg>
+              </button>
+            </div>
+            } @else {
+            <label class="upload-placeholder cursor-pointer">
+              <input type="file" accept="image/*" class="hidden-input" (change)="onImageSelected($event)">
+              <svg lucideImage size="32" strokeWidth="1.5"></svg>
+              <span class="upload-text">
+                <strong>Нажмите для загрузки</strong><br>
+                или перетащите обложку
+              </span>
+            </label>
+            }
+          </div>
+
         </div>
       </div>
 
@@ -163,7 +228,9 @@
         <span class="expand-placeholder"></span>
         }
 
-        <svg lucideFolder size="18" class="folder-icon" [class.root-icon]="level === 0" strokeWidth="1.5"></svg>
+        <div class="folder-icon" [class.root-icon]="level === 0" style="display: flex; align-items: center;">
+          <ng-container *ngComponentOutlet="getIconComponent(node.icon); inputs: { size: 18, strokeWidth: 1.5 }"></ng-container>
+        </div>
         <span class="node-title">{{ node.name }}</span>
       </div>
     </div>
