@@ -7,7 +7,7 @@ import { StoreInventoryService } from '../../../services/store-inventory-service
 import { StoreService } from '../../../services/store-service';
 import { ProductService } from '../../../services/product-service';
 import { CityService } from '../../../services/city-service';
-import { ToastService } from '../../../services/toast'; // <-- 1. Подключили ToastService
+import { ToastService } from '../../../services/toast';
 
 // Модели
 import { StoreInventoryDto, TransactionHistoryDto } from '../../../models/store-inventory-models';
@@ -42,7 +42,7 @@ export class ManagerInventoryComponent implements OnInit {
   private storeService = inject(StoreService);
   private productService = inject(ProductService);
   private cityService = inject(CityService);
-  private toastService = inject(ToastService); // <-- 2. Инжектируем сервис уведомлений
+  private toastService = inject(ToastService);
 
   viewMode = signal<'store' | 'product'>('store');
 
@@ -53,8 +53,8 @@ export class ManagerInventoryComponent implements OnInit {
   loading = signal(false);
 
   availableStores = signal<StoreDto[]>([]);
-  availableProducts = signal<ProductListDto[]>([]);
-  cities = signal<CityDto[]>([]); // Сохраняем города для регионов
+  availableProducts = signal<readonly ProductListDto[]>([]); // ✅ Добавлен readonly
+  cities = signal<CityDto[]>([]);
 
   // --- Состояния умных списков ---
   storeSearch = signal('');
@@ -149,7 +149,6 @@ export class ManagerInventoryComponent implements OnInit {
   }
 
   loadCitiesAndStores(): void {
-    // Сначала загружаем города, чтобы работала группировка
     this.cityService.getAll().subscribe(cities => {
       this.cities.set(cities);
 
@@ -165,7 +164,7 @@ export class ManagerInventoryComponent implements OnInit {
         },
         error: (err) => {
           console.error('Ошибка при загрузке магазинов:', err);
-          this.toastService.error('Не удалось загрузить список магазинов'); // <-- Обработка ошибки
+          this.toastService.error('Не удалось загрузить список магазинов');
         }
       });
     });
@@ -178,7 +177,7 @@ export class ManagerInventoryComponent implements OnInit {
       },
       error: (err) => {
         console.error('Ошибка при загрузке товаров:', err);
-        this.toastService.error('Не удалось загрузить список товаров'); // <-- Обработка ошибки
+        this.toastService.error('Не удалось загрузить список товаров');
       }
     });
   }
@@ -230,7 +229,7 @@ export class ManagerInventoryComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
-          this.toastService.error('Ошибка при загрузке остатков'); // <-- Уведомление
+          this.toastService.error('Ошибка при загрузке остатков');
         }
       });
     } else if (this.viewMode() === 'product' && this.selectedProductId()) {
@@ -241,7 +240,7 @@ export class ManagerInventoryComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
-          this.toastService.error('Ошибка при загрузке остатков'); // <-- Уведомление
+          this.toastService.error('Ошибка при загрузке остатков');
         }
       });
     } else {
@@ -249,20 +248,28 @@ export class ManagerInventoryComponent implements OnInit {
     }
   }
 
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД (иммутабельный подход)
   toggleReservable(item: StoreInventoryDto): void {
     const originalStatus = item.isReservable;
-    item.isReservable = !item.isReservable;
+    const newStatus = !originalStatus;
 
-    this.inventoryService.updateReservableStatus(item.storeId, item.productId, item.isReservable)
+    // Оптимистичный UI: создаём НОВЫЙ массив с обновлённым элементом
+    this.inventory.update(items =>
+      items.map(i => i.id === item.id ? { ...i, isReservable: newStatus } : i)
+    );
+
+    this.inventoryService.updateReservableStatus(item.storeId, item.productId, newStatus)
       .subscribe({
         next: () => {
-          // 3. Заменили alert на красивый Toast + вывели успех!
-          const statusText = item.isReservable ? 'разрешен' : 'запрещен';
+          const statusText = newStatus ? 'разрешен' : 'запрещен';
           this.toastService.success(`Резерв для товара ${statusText}`);
         },
         error: () => {
-          item.isReservable = originalStatus;
-          this.toastService.error('Не удалось изменить статус резервирования'); // <-- Ошибка через Toast
+          // Откат: создаём новый массив с исходным статусом
+          this.inventory.update(items =>
+            items.map(i => i.id === item.id ? { ...i, isReservable: originalStatus } : i)
+          );
+          this.toastService.error('Не удалось изменить статус резервирования');
         }
       });
   }
@@ -277,7 +284,6 @@ export class ManagerInventoryComponent implements OnInit {
         this.isHistoryLoading.set(false);
       },
       error: () => {
-        // 4. Убрали alert при ошибке истории
         this.toastService.error('Не удалось загрузить историю движения товара');
         this.isHistoryLoading.set(false);
         this.closeHistory();

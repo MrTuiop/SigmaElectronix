@@ -1,51 +1,39 @@
 export interface ReviewDto {
-  id: number;
-  productId: number;
-  userName: string;
-  rating: number;
-  title: string;
-  comment: string;
-  createdAt: string; // В Angular даты приходят строками (ISO)
-  adminResponse?: string;
-  adminResponseDate?: string;
-}
-
-export interface CreateReviewDto {
-  productId: number;
-  rating: number;
-  title: string;
-  comment: string;
-}
-
-export interface ModerateReviewDto {
-  isApproved: boolean;
-  adminResponse?: string;
+  readonly id: number;
+  readonly productId: number;
+  readonly userName: string;
+  readonly rating: number;
+  readonly title: string;
+  readonly comment: string;
+  readonly createdAt: string;
+  readonly adminResponse?: string;
+  readonly adminResponseDate?: string;
+  readonly likesCount: number;
+  readonly dislikesCount: number;
+  readonly userReaction?: 'Like' | 'Dislike' | null;
+  readonly comments: readonly CommentDto[];
+  readonly isMine: boolean;
 }
 
 export interface CommentDto {
-  id: number;
-  userName: string;
-  text: string;
-  createdAt: string;
-  likesCount: number;
-  dislikesCount: number;
-  userReaction?: 'Like' | 'Dislike' | null;
-  isMine: boolean;
+  readonly id: number;
+  readonly userName: string;
+  readonly text: string;
+  readonly createdAt: string;
+  readonly likesCount: number;
+  readonly dislikesCount: number;
+  readonly userReaction?: 'Like' | 'Dislike' | null;
+  readonly isMine: boolean;
 }
 
-export interface ReviewDto {
-  id: number;
-  productId: number;
-  userName: string;
-  rating: number;
-  title: string;
-  comment: string;
-  createdAt: string;
-  adminResponse?: string;
-  adminResponseDate?: string;
-  likesCount: number;
-  dislikesCount: number;
-  userReaction?: 'Like' | 'Dislike' | null;
-  comments: CommentDto[];
-  isMine: boolean;
+export interface CreateReviewDto {
+  readonly productId: number;
+  readonly rating: number;
+  readonly title: string;
+  readonly comment: string;
+}
+
+export interface ModerateReviewDto {
+  readonly isApproved: boolean;
+  readonly adminResponse?: string;
 }

@@ -1,111 +1,92 @@
+import { WishlistProduct } from './wishlist-product-models';
+
 // ========== Профиль пользователя ==========
 export interface UserProfile {
-  id: string;
-  userName: string
-  email: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  phoneNumber: string;
-  avatarUrl?: string | null;
-  preferredCityId?: number | null;
-  preferredStoreId?: number | null;
-  createdAt: string;               // ISO дата
-  bonusBalance: number;            // <-- новое поле с сервера
+  readonly id: string;
+  readonly userName: string;
+  readonly email: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly fullName: string;
+  readonly phoneNumber: string;
+  readonly avatarUrl?: string | null;
+  readonly preferredCityId?: number | null;
+  readonly preferredStoreId?: number | null;
+  readonly createdAt: string;
+  readonly bonusBalance: number;
 }
 
-// ========== Заказ ==========
+// ========== Заказ (в истории профиля) ==========
 export interface Order {
-  id: string;
-  createdAt: string;
-  status: string;
-  totalAmount: number;
-  itemsCount: number;              // или свойство items (массив), смотрите серверный ответ
-  statusColor?: string;            // будем вычислять на клиенте
-  date?: string;                   // форматированная дата
-  total?: number;                  // синоним totalAmount
-  items?: number;                  // синоним itemsCount
+  readonly id: string;
+  readonly createdAt: string;
+  readonly status: string;
+  readonly totalAmount: number;
+  readonly itemsCount: number;
+  readonly statusColor?: string;
+  readonly date?: string;
+  readonly total?: number;
+  readonly items?: number;
 }
 
 // ========== Адрес ==========
-// DTO для отправки на сервер
 export interface CreateUpdateAddressDto {
-  title: string;
-  cityId: number; // 👈 Меняем cityName: string на cityId: number
-  street: string;
-  building: string;
-  apartment?: string;
-  postalCode: string;
-  isDefault: boolean;
-  recipientName?: string;
-  recipientPhone?: string;
+  readonly title: string;
+  readonly cityId: number;
+  readonly street: string;
+  readonly building: string;
+  readonly apartment?: string;
+  readonly postalCode: string;
+  readonly isDefault: boolean;
+  readonly recipientName?: string;
+  readonly recipientPhone?: string;
 }
 
-// Убедись, что твой интерфейс Address выглядит так:
 export interface Address {
-  id: number;
-  title: string;
-  street: string;
-  city: string;
-  zip: string;
-  isDefault: boolean;
-  // Поля для формы редактирования:
-  cityId: number;
-  originalStreet: string;
-  originalBuilding: string;
-  originalApartment?: string;
+  readonly id: number;
+  readonly title: string;
+  readonly street: string;
+  readonly city: string;
+  readonly zip: string;
+  readonly isDefault: boolean;
+  readonly cityId: number;
+  readonly originalStreet: string;
+  readonly originalBuilding: string;
+  readonly originalApartment?: string;
 }
 
-// ========== Бонусная транзакция (DTO с сервера) ==========
+// ========== Бонусная транзакция ==========
 export interface BonusTransaction {
-  id: number;
-  amount: number;
-  reason: string;
-  createdAt: string;
-  orderId?: number | null;
-  orderNumber?: string | null;
+  readonly id: number;
+  readonly amount: number;
+  readonly reason: string;
+  readonly createdAt: string;
+  readonly orderId?: number | null;
+  readonly orderNumber?: string | null;
 }
 
-// ========== DTO для запросов (остаются без изменений) ==========
-export interface UpdateUsernameRequest {
-  userName: string;
-}
-export interface UpdateFirstNameRequest { firstName: string; }
-export interface UpdateLastNameRequest { lastName: string; }
-export interface UpdateEmailRequest { email: string; }
-export interface UpdatePhoneRequest { phoneNumber: string; }
+// ========== DTO для запросов ==========
+export interface UpdateUsernameRequest { readonly userName: string; }
+export interface UpdateFirstNameRequest { readonly firstName: string; }
+export interface UpdateLastNameRequest { readonly lastName: string; }
+export interface UpdateEmailRequest { readonly email: string; }
+export interface UpdatePhoneRequest { readonly phoneNumber: string; }
+export interface UpdateAvatarRequest { readonly avatarUrl: string; }
+export interface UpdatePreferredCityRequest { readonly cityId: number | null; }
+export interface UpdatePreferredStoreRequest { readonly storeId: number | null; }
+
 export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmNewPassword: string;
+  readonly currentPassword: string;
+  readonly newPassword: string;
+  readonly confirmNewPassword: string;
 }
-export interface UpdateAvatarRequest { avatarUrl: string; }
-export interface UpdatePreferredCityRequest { cityId: number | null; }
-export interface UpdatePreferredStoreRequest { storeId: number | null; }
 
-// ========== Вспомогательные типы для UI (временные, пока нет своих API) ==========
+// ========== Вспомогательные типы для UI ==========
 export interface NotificationState {
-  email: boolean;
-  sms: boolean;
-  push: boolean;
+  readonly email: boolean;
+  readonly sms: boolean;
+  readonly push: boolean;
 }
 
-export interface Review {
-  product: string;
-  rating: number;
-  text: string;
-  date: string;
-}
-
-export interface WishlistProduct {
-  id: number;
-  name: string;
-  brand: string;
-  price: number;
-  oldPrice: number | null;
-  discount: number;
-  rating: number;
-  reviews: number;
-  gradient: string;
-  icon: string;
-}
+// Реэкспортируем WishlistProduct для удобства
+export type { WishlistProduct };

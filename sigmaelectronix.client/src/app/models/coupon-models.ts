@@ -1,35 +1,35 @@
 export interface CouponDto {
-  id: number;
-  code: string;
-  description: string;
-  discountValue: number;
-  isPercentage: boolean;
-  minOrderAmount: number;
-  startDate: string; // ISO 8601 string из C# DateTime
-  endDate: string;
-  maxUsageCount: number;
-  currentUsageCount: number;
-  isActive: boolean;
+  readonly id: number;
+  readonly code: string;
+  readonly description: string;
+  readonly discountValue: number;
+  readonly isPercentage: boolean;
+  readonly minOrderAmount: number;
+  readonly startDate: string; // ISO 8601
+  readonly endDate: string;
+  readonly maxUsageCount: number;
+  readonly currentUsageCount: number;
+  readonly isActive: boolean;
 }
 
 export interface CreateUpdateCouponDto {
-  code: string;
-  description: string;
-  discountValue: number;
-  isPercentage: boolean;
-  minOrderAmount: number;
-  startDate: string;
-  endDate: string;
-  maxUsageCount: number;
-  isActive: boolean;
+  readonly code: string;
+  readonly description: string;
+  readonly discountValue: number;
+  readonly isPercentage: boolean;
+  readonly minOrderAmount: number;
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly maxUsageCount: number;
+  readonly isActive: boolean;
 }
 
 export interface ValidateCouponRequest {
-  code: string;
-  cartTotal: number;
+  readonly code: string;
+  readonly cartTotal: number;
 }
 
 export interface ValidateCouponResponse {
-  message: string;
-  coupon?: CouponDto;
+  readonly message: string;
+  readonly coupon?: CouponDto;
 }

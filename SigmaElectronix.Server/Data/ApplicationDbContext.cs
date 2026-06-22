@@ -6,6 +6,7 @@ using SigmaElectronix.Server.Entities.CartModels;
 using SigmaElectronix.Server.Entities.OrderModels;
 using SigmaElectronix.Server.Entities.ProductModels;
 using SigmaElectronix.Server.Entities.StoreModels;
+using SigmaElectronix.Server.Entities.Translation;
 using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Entities.WishlistModels;
 using System.Text.Json;
@@ -67,6 +68,14 @@ namespace SigmaElectronix.Server.Data
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<WishlistItem> WishlistItems { get; set; }
 
+        // Перевод
+        public DbSet<Language> Languages { get; set; } // 🆕 ДОБАВЛЕНО
+        public DbSet<CategoryTranslation> CategoryTranslations { get; set; } // 🆕 Добавлено
+
+        public DbSet<BrandTranslation> BrandTranslations { get; set; } // 🆕 Добавлено
+
+        public DbSet<ProductTranslation> ProductTranslations { get; set; } // 🆕 Добавлено
+
         #endregion
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -85,18 +94,6 @@ namespace SigmaElectronix.Server.Data
                 entity.Property(p => p.Price).HasPrecision(18, 2);
                 entity.Property(p => p.DiscountPrice).HasPrecision(18, 2);
 
-                // Конвертация Dictionary в JSON строку для базы данных
-                entity.Property(p => p.Specifications)
-                    .HasColumnType("jsonb") // ИСПРАВЛЕНО для PostgreSQL
-                    .HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                        v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, (JsonSerializerOptions)null!) ?? new Dictionary<string, string>())
-                    // Этот метод указывает EF Core, как правильно отслеживать изменения внутри словаря
-                    .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, string>>(
-                        (c1, c2) => c1!.SequenceEqual(c2!),
-                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Key.GetHashCode(), v.Value.GetHashCode())),
-                        c => c.ToDictionary(k => k.Key, v => v.Value)));
-
                 // Связь с Категорией (Защита от удаления)
                 entity.HasOne(p => p.Category)
                     .WithMany(c => c.Products)
@@ -109,10 +106,58 @@ namespace SigmaElectronix.Server.Data
                     .HasForeignKey(p => p.BrandId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Ограничения строк для индексов и SEO
-                entity.Property(p => p.Name).IsRequired().HasMaxLength(255);
-                entity.Property(p => p.Slug).IsRequired().HasMaxLength(255);
-                entity.HasIndex(p => p.Slug).IsUnique();
+                // ❌ ВНИМАНИЕ: Настройки Name, Slug, Specifications и Tags отсюда УДАЛЕНЫ!
+            });
+
+            // 🆕 Настройки для переводов товаров
+            modelBuilder.Entity<ProductTranslation>(entity =>
+            {
+                entity.HasKey(pt => pt.Id);
+
+                // 1. Связь с товаром: если удаляем товар, удаляются и все его переводы
+                entity.HasOne(pt => pt.Product)
+                    .WithMany(p => p.Translations)
+                    .HasForeignKey(pt => pt.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // 2. Ограничения колонок
+                entity.Property(pt => pt.LanguageCode).IsRequired().HasMaxLength(10); // "ru", "en", "uz-UZ"
+                entity.Property(pt => pt.Name).IsRequired().HasMaxLength(255);
+                entity.Property(pt => pt.Slug).IsRequired().HasMaxLength(255);
+
+                // 3. 🎯 КРИТИЧЕСКИЕ ИНДЕКСЫ
+                // У одного товара не может быть двух переводов на один и тот же язык
+                entity.HasIndex(pt => new { pt.ProductId, pt.LanguageCode }).IsUnique();
+
+                // Slug должен быть уникальным в рамках ОДНОГО языка (чтобы ссылки не пересекались)
+                entity.HasIndex(pt => new { pt.Slug, pt.LanguageCode }).IsUnique();
+
+                // 4. 🎯 ПЕРЕНОС JSONB ДЛЯ POSTGRESQL (Характеристики)
+                entity.Property(pt => pt.Specifications)
+                    .HasColumnType("jsonb")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                        v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, (JsonSerializerOptions)null!) ?? new Dictionary<string, string>())
+                    .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, string>>(
+                        (c1, c2) => c1!.SequenceEqual(c2!),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.Key.GetHashCode(), v.Value.GetHashCode())),
+                        c => c.ToDictionary(k => k.Key, v => v.Value)));
+
+                // 5. 🎯 ПЕРЕНОС JSONB ДЛЯ POSTGRESQL (Теги)
+                entity.Property(pt => pt.Tags)
+                    .HasColumnType("jsonb")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>())
+                    .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
+                        (c1, c2) => c1!.SequenceEqual(c2!),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        c => c.ToList()));
+
+                entity.HasOne(pt => pt.Language)
+                    .WithMany()
+                    .HasForeignKey(pt => pt.LanguageCode)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Картинки товаров
@@ -127,23 +172,77 @@ namespace SigmaElectronix.Server.Data
             // Категория
             modelBuilder.Entity<Category>(entity =>
             {
-                entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
-                entity.Property(c => c.Slug).IsRequired().HasMaxLength(100);
-                entity.HasIndex(c => c.Slug).IsUnique();
-
-                // Настройка иерархической связи (Самоссылающаяся таблица: Главная -> Подкатегории)
+                // Оставляем только настройку иерархии
                 entity.HasOne(c => c.ParentCategory)
                     .WithMany(c => c.SubCategories)
                     .HasForeignKey(c => c.ParentCategoryId)
-                    .OnDelete(DeleteBehavior.Restrict); // Запрещаем удалять родительскую категорию, если есть подкатегории
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<CategoryTranslation>(entity =>
+            {
+                entity.HasKey(ct => ct.Id);
+
+                entity.Property(ct => ct.LanguageCode).IsRequired().HasMaxLength(10);
+                entity.Property(ct => ct.Name).IsRequired().HasMaxLength(100);
+                entity.Property(ct => ct.Slug).IsRequired().HasMaxLength(100);
+
+                // Связь с категорией
+                entity.HasOne(ct => ct.Category)
+                    .WithMany(c => c.Translations)
+                    .HasForeignKey(ct => ct.CategoryId)
+                    .OnDelete(DeleteBehavior.Cascade); // Удаляем категорию -> удаляются её переводы
+
+                // Индексы уникальности
+                entity.HasIndex(ct => new { ct.CategoryId, ct.LanguageCode }).IsUnique();
+                entity.HasIndex(ct => new { ct.Slug, ct.LanguageCode }).IsUnique();
+
+                // Теги в JSONB
+                entity.Property(ct => ct.Tags)
+                    .HasColumnType("jsonb")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!) ?? new List<string>())
+                    .Metadata.SetValueComparer(new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<string>>(
+                        (c1, c2) => c1!.SequenceEqual(c2!),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        c => c.ToList()));
+
+                entity.HasOne(ct => ct.Language)
+                    .WithMany()
+                    .HasForeignKey(ct => ct.LanguageCode)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Бренд
             modelBuilder.Entity<Brand>(entity =>
             {
-                entity.Property(b => b.Name).IsRequired().HasMaxLength(100);
-                entity.Property(b => b.Slug).IsRequired().HasMaxLength(150);
-                entity.HasIndex(b => b.Slug).IsUnique();
+                entity.HasKey(b => b.Id);
+                // Name и Slug здесь больше нет
+            });
+
+            modelBuilder.Entity<BrandTranslation>(entity =>
+            {
+                entity.HasKey(bt => bt.Id);
+
+                entity.Property(bt => bt.LanguageCode).IsRequired().HasMaxLength(10);
+                entity.Property(bt => bt.Name).IsRequired().HasMaxLength(100);
+                entity.Property(bt => bt.Slug).IsRequired().HasMaxLength(150);
+
+                // Связь с брендом
+                entity.HasOne(bt => bt.Brand)
+                    .WithMany(b => b.Translations)
+                    .HasForeignKey(bt => bt.BrandId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Индексы уникальности
+                entity.HasIndex(bt => new { bt.BrandId, bt.LanguageCode }).IsUnique();
+                entity.HasIndex(bt => new { bt.Slug, bt.LanguageCode }).IsUnique();
+
+                entity.HasOne(bt => bt.Language)
+                    .WithMany()
+                    .HasForeignKey(bt => bt.LanguageCode)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<BrandImage>(entity =>
@@ -284,22 +383,6 @@ namespace SigmaElectronix.Server.Data
                     .WithMany(c => c.Stores)
                     .HasForeignKey(s => s.CityId)
                     .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<StoreInventory>(entity =>
-            {
-                // Создаем уникальный индекс: один и тот же товар в одном магазине может упоминаться только 1 раз
-                entity.HasIndex(si => new { si.StoreId, si.ProductId }).IsUnique();
-
-                entity.HasOne(si => si.Store)
-                    .WithMany(s => s.Inventory)
-                    .HasForeignKey(si => si.StoreId)
-                    .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(si => si.Product)
-                    .WithMany() // Навигационное свойство из Product к инвентарю мы не делали, оставляем пустым
-                    .HasForeignKey(si => si.ProductId)
-                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<StoreInventory>(entity =>
@@ -506,6 +589,17 @@ namespace SigmaElectronix.Server.Data
                     .WithMany()
                     .HasForeignKey(pv => pv.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            #endregion
+
+            #region 8. Языки (Language)
+
+            modelBuilder.Entity<Language>(entity =>
+            {
+                entity.HasKey(l => l.Code); // 🎯 КРИТИЧЕСКИ ВАЖНО: Code - это первичный ключ!
+                entity.Property(l => l.Code).HasMaxLength(10); // Ограничиваем длину (ru, en-US)
+                entity.Property(l => l.Name).IsRequired().HasMaxLength(50);
             });
 
             #endregion

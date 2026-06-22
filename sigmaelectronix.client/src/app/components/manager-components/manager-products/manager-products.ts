@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoryService } from '../../../services/category-service';
 import { BrandService } from '../../../services/brand-service';
-import { FileService } from '../../../services/file-service'; // 👈 Подключили FileService
+import { FileService } from '../../../services/file-service';
 import { ProductListDto, CreateProductDto } from '../../../models/product-models';
 import { BrandListDto } from '../../../models/brand-models';
 import { HttpEventType } from '@angular/common/http';
@@ -12,10 +12,17 @@ import {
   LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
   LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX,
   LucideChevronDown, LucideSearch, LucideChevronUp,
-  LucideImagePlus, LucideStar // 👈 Добавлены иконки для галереи
+  LucideImagePlus, LucideStar
 } from '@lucide/angular';
 import { ProductService } from '../../../services/product-service';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
+
+type ProductSortOption =
+  | 'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc'
+  | 'rating' | 'popular' | 'date_desc' | 'date_asc'
+  | 'brand_asc' | 'brand_desc'
+  | 'category_asc' | 'category_desc'
+  | 'status_asc' | 'status_desc';
 
 interface ProductImageUI {
   url: string;
@@ -45,7 +52,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
 
   // --- Состояния таблицы ---
-  products = signal<ProductListDto[]>([]);
+  products = signal<readonly ProductListDto[]>([]);
   totalCount = signal(0);
   pageNumber = signal(1);
   pageSize = signal(15);
@@ -54,7 +61,8 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   isLoadingMore = signal(false);
 
   searchQuery = signal('');
-  currentSort = signal('date_desc');
+  // ✅ Типизирован расширенным типом сортировок
+  currentSort = signal<ProductSortOption>('date_desc');
   private searchTimeout: any;
 
   categories = this.categoryService.allCategories;
@@ -67,10 +75,10 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   brandSearch = signal('');
   isBrandDropdownOpen = signal(false);
   selectedBrandDisplay = signal('');
-  brands = signal<BrandListDto[]>([]);
+  brands = signal<readonly BrandListDto[]>([]);
 
   // --- Состояния для автокомплита характеристик ---
-  availableSpecs = signal<Record<string, string[]>>({});
+  availableSpecs = signal<Readonly<Record<string, readonly string[]>>>({});
   availableSpecKeys = computed(() => Object.keys(this.availableSpecs()));
 
   // UI Состояния
@@ -81,15 +89,13 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
 
   productForm!: FormGroup;
 
-  // 🚀 ГАЛЕРЕЯ ИЗОБРАЖЕНИЙ ТОВАРА
   productImages = signal<ProductImageUI[]>([]);
   isUploadingImages = signal(false);
   isDragoverImages = signal(false);
 
-  // 🚀 СБОРЩИК МУСОРА
-  private tempUploadedFiles: string[] = [];      // Картинки, загруженные в текущей сессии
-  private filesToDeleteOnSave: string[] = [];    // Оригиналы, удаленные из режима редактирования
-  private originalImages: string[] = [];         // Запоминаем изначальные картинки
+  private tempUploadedFiles: string[] = [];
+  private filesToDeleteOnSave: string[] = [];
+  private originalImages: string[] = [];
 
   // 1. УМНАЯ ФИЛЬТРАЦИЯ КАТЕГОРИЙ
   filteredGroupedCategories = computed(() => {
@@ -177,20 +183,16 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     let completedCount = 0;
 
     files.forEach(file => {
-      // ИСПОЛЬЗУЕМ ТОТ ЖЕ МЕТОД, ЧТО И В БРЕНДАХ (Он надежнее читает ответ)
       this.fileService.uploadImageWithProgress(file, 'products').subscribe({
         next: (event: any) => {
           if (event.type === HttpEventType.Response) {
             const res = event.body;
-
-            // Подстраховка на случай разного формата ответа от бэкенда
             const imageUrl = res?.url || res?.Url || (typeof res === 'string' ? res : null);
 
             if (imageUrl) {
-              this.tempUploadedFiles.push(imageUrl); // В мусорку на случай отмены
+              this.tempUploadedFiles.push(imageUrl);
 
               this.productImages.update(imgs => {
-                // Если это первая картинка, делаем ее главной автоматически
                 const isFirst = imgs.length === 0;
                 return [...imgs, { url: imageUrl, isMain: isFirst }];
               });
@@ -214,22 +216,19 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   }
 
   removeProductImage(url: string): void {
-    // 1. Убираем из UI
     this.productImages.update(imgs => {
       const filtered = imgs.filter(img => img.url !== url);
-      // Если удалили главную, делаем главной первую оставшуюся
       if (imgs.find(i => i.url === url)?.isMain && filtered.length > 0) {
         filtered[0].isMain = true;
       }
       return filtered;
     });
 
-    // 2. Логика Сборщика мусора
     if (this.tempUploadedFiles.includes(url)) {
-      this.fileService.deleteImage(url).subscribe(); // Сносим сразу, так как загружено только что
+      this.fileService.deleteImage(url).subscribe();
       this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== url);
     } else if (this.originalImages.includes(url)) {
-      this.filesToDeleteOnSave.push(url); // Ставим в очередь на удаление при сохранении
+      this.filesToDeleteOnSave.push(url);
     }
   }
 
@@ -292,7 +291,6 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /* ... Методы поиска категорий и брендов (без изменений) ... */
   openCategorySearch(): void { this.isCatDropdownOpen.set(true); this.categorySearch.set(''); }
   closeCategorySearch(): void { setTimeout(() => this.isCatDropdownOpen.set(false), 200); }
   onCatSearch(event: Event): void { this.categorySearch.set((event.target as HTMLInputElement).value); this.isCatDropdownOpen.set(true); }
@@ -312,7 +310,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     this.isBrandDropdownOpen.set(false);
   }
 
-  getValuesForSpecKey(key: string): string[] {
+  getValuesForSpecKey(key: string): readonly string[] {
     if (!key) return [];
     return this.availableSpecs()[key.trim()] || [];
   }
@@ -352,7 +350,6 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     this.selectedCatDisplay.set('');
     this.selectedBrandDisplay.set('');
 
-    // Очищаем галерею
     this.productImages.set([]);
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
@@ -363,7 +360,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   }
 
   closeForm(): void {
-    this.cleanupTempFiles(); // Очищаем мусор при отмене
+    this.cleanupTempFiles();
     this.viewMode.set('list');
   }
 
@@ -372,7 +369,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     if (step === 1) return f['name'].valid && f['slug'].valid && f['categoryId'].valid && f['brandId'].valid;
     if (step === 2) return f['price'].valid && f['discountPrice'].valid;
     if (step === 3) return f['shortDescription'].valid;
-    return true; // 4 шаг (картинки) опционален
+    return true;
   }
 
   nextStep(): void {
@@ -406,18 +403,17 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
 
     const { tagsText, ...cleanFormValue } = formValue;
 
-    // Подготавливаем картинки для отправки
     const formattedImages = this.productImages().map((img, idx) => ({
       url: img.url,
       isPrimary: img.isMain,
-      sortOrder: idx // Порядок как в массиве
+      sortOrder: idx
     }));
 
     const payload = {
       ...cleanFormValue,
       specifications: specsRecord,
       tags: parsedTags,
-      images: formattedImages // 👈 Отправляем массив картинок
+      images: formattedImages
     };
 
     if (this.isEditing() && this.editingId()) {
@@ -434,7 +430,6 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   }
 
   private onSaveSuccess(): void {
-    // Удаляем с сервера оригиналы, от которых отказались
     this.filesToDeleteOnSave.forEach(url => this.fileService.deleteImage(url).subscribe());
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
@@ -483,7 +478,6 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
           this.addSpecification();
         }
 
-        // 👈 Загружаем картинки товара
         this.tempUploadedFiles = [];
         this.filesToDeleteOnSave = [];
         if (fullProduct.images) {
@@ -528,13 +522,25 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     return newSlug.replace(/[^a-z0-9\-_]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
   }
 
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД (иммутабельный подход)
   togglePublish(product: ProductListDto): void {
     const originalStatus = product.isPublished;
-    product.isPublished = !product.isPublished;
+    const newStatus = !originalStatus;
+
+    // Optimistic UI: создаём НОВЫЙ массив
+    this.products.update(items =>
+      items.map(p => p.id === product.id ? { ...p, isPublished: newStatus } : p)
+    );
+
     this.productService.togglePublishStatus(product.id).subscribe({
-      next: () => { },
+      next: () => {
+        // Успех — UI уже обновлён
+      },
       error: () => {
-        product.isPublished = originalStatus;
+        // Rollback: создаём новый массив с исходным статусом
+        this.products.update(items =>
+          items.map(p => p.id === product.id ? { ...p, isPublished: originalStatus } : p)
+        );
         alert('Не удалось изменить статус товара');
       }
     });
@@ -553,7 +559,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
 
   toggleSort(column: 'name' | 'price' | 'date' | 'brand' | 'category' | 'status'): void {
     const current = this.currentSort();
-    let nextSort = 'date_desc';
+    let nextSort: ProductSortOption = 'date_desc';
 
     if (column === 'name') nextSort = current === 'name_asc' ? 'name_desc' : 'name_asc';
     else if (column === 'price') nextSort = current === 'price_asc' ? 'price_desc' : 'price_asc';
@@ -577,11 +583,9 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
   }
 
   goToStep(step: number): void {
-    // При редактировании разрешаем переходить на любой шаг свободно
     if (this.isEditing()) {
       this.currentStep.set(step);
     } else {
-      // При создании разрешаем только возвращаться на уже пройденные шаги
       if (step < this.currentStep()) {
         this.currentStep.set(step);
       }

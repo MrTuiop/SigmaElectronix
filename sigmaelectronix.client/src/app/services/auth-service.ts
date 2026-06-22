@@ -72,10 +72,11 @@ export class AuthService {
     );
   }
 
+  // ✅ ИСПРАВЛЕНО: Errors → errors (camelCase как в ASP.NET Core)
   private handleError(error: HttpErrorResponse) {
     let message = 'Произошла ошибка';
-    if (error.status === 400 && error.error?.Errors) {
-      message = (error.error as ApiError).Errors?.join('\n') ?? message;
+    if (error.status === 400 && error.error?.errors) {
+      message = (error.error as ApiError).errors?.join('\n') ?? message;
     } else if (error.error?.message) {
       message = error.error.message;
     }
@@ -84,9 +85,6 @@ export class AuthService {
 
   // === НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С РОЛЯМИ ===
 
-  /**
-   * Получает все роли текущего пользователя из JWT токена
-   */
   getRoles(): string[] {
     const currentToken = this.token();
     if (!currentToken) return [];
@@ -94,39 +92,26 @@ export class AuthService {
     const decodedToken = this.decodeJwt(currentToken);
     if (!decodedToken) return [];
 
-    // Важно: по умолчанию ASP.NET Core записывает ClaimTypes.Role под этим длинным ключом.
-    // Иногда он может быть сокращен до 'role', поэтому проверяем оба варианта.
     const roleClaim = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decodedToken['role'];
 
     if (!roleClaim) return [];
 
-    // Если у юзера одна роль, токен вернет строку. Если несколько — массив строк.
     return Array.isArray(roleClaim) ? roleClaim : [roleClaim];
   }
 
-  /**
-   * Проверяет, есть ли у пользователя конкретная роль
-   */
   hasRole(role: string): boolean {
     const roles = this.getRoles();
     return roles.includes(role);
   }
 
-  /**
-   * Удобные хелперы для конкретных ролей
-   */
   isAdmin(): boolean {
     return this.hasRole('Admin');
   }
 
   isManager(): boolean {
-    // Обычно Админ тоже имеет права Менеджера, поэтому разрешаем обоим
     return this.hasRole('Manager') || this.hasRole('Admin');
   }
 
-  /**
-   * Безопасный метод для декодирования JWT токена (без сторонних библиотек)
-   */
   private decodeJwt(token: string): any {
     try {
       const base64Url = token.split('.')[1];
@@ -145,13 +130,10 @@ export class AuthService {
   }
 
   constructor() {
-    // 1. Избранное загружаем ВСЕГДА (и для гостей, и для авторизованных)
-    // Используем setTimeout, чтобы избежать проблемы с циклическими зависимостями или ранней инициализацией
     setTimeout(() => {
       this.getWishlistService().loadWishlist().subscribe();
     });
 
-    // 2. А профиль загружаем ТОЛЬКО если есть токен (пользователь авторизован)
     if (this.token()) {
       setTimeout(() => {
         this.getProfileService().loadProfile().subscribe();

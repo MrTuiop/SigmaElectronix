@@ -1,25 +1,25 @@
 export interface SearchSuggestDto {
-  categories: SuggestCategoryDto[];
-  brands: SuggestBrandDto[];
-  products: SuggestProductDto[];
+  readonly categories: readonly SuggestCategoryDto[];
+  readonly brands: readonly SuggestBrandDto[];
+  readonly products: readonly SuggestProductDto[];
 }
 
 export interface SuggestCategoryDto {
-  name: string;
-  slug: string;
+  readonly name: string;
+  readonly slug: string;
 }
 
 export interface SuggestBrandDto {
-  name: string;
-  slug: string;
-  logoUrl?: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly logoUrl?: string;
 }
 
 export interface SuggestProductDto {
-  id: number;
-  name: string;
-  slug: string;
-  price: number;
-  discountPrice?: number;
-  imageUrl?: string;
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly price: number;
+  readonly discountPrice?: number;
+  readonly imageUrl?: string;
 }

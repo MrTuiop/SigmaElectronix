@@ -14,13 +14,12 @@ export class CategoryService {
   private http = inject(HttpClient);
   private baseUrl = '/api/category';
 
-  // Кэшируемые данные (аналогично ProductService)
+  // Кэшируемые данные (сигналы — zoneless-friendly)
   readonly allCategories = signal<CategoryDto[]>([]);
   readonly categoryTree = signal<CategoryTreeDto[]>([]);
 
-  // ---------- Чтение ----------
+  // ============ Чтение ============
 
-  // Получить все категории (плоский список) и закэшировать
   loadAll(): Observable<CategoryDto[]> {
     return this.http.get<CategoryDto[]>(this.baseUrl).pipe(
       tap(categories => this.allCategories.set(categories)),
@@ -28,7 +27,6 @@ export class CategoryService {
     );
   }
 
-  // Получить дерево категорий и закэшировать
   loadTree(): Observable<CategoryTreeDto[]> {
     return this.http.get<CategoryTreeDto[]>(`${this.baseUrl}/tree`).pipe(
       tap(tree => this.categoryTree.set(tree)),
@@ -36,21 +34,18 @@ export class CategoryService {
     );
   }
 
-  // Категория по ID
   getById(id: number): Observable<CategoryDto> {
     return this.http.get<CategoryDto>(`${this.baseUrl}/${id}`).pipe(
       catchError(this.handleError)
     );
   }
 
-  // Категория по slug
   getBySlug(slug: string): Observable<CategoryDto> {
     return this.http.get<CategoryDto>(`${this.baseUrl}/slug/${slug}`).pipe(
       catchError(this.handleError)
     );
   }
 
-  // Проверка доступности slug
   checkSlug(slug: string, excludeId?: number): Observable<SlugCheckResponse> {
     let params = new HttpParams().set('slug', slug);
     if (excludeId != null) {
@@ -61,7 +56,7 @@ export class CategoryService {
     );
   }
 
-  // ---------- Мутации (только для админов, авторизация разруливается на уровне HTTP-интерсептора) ----------
+  // ============ Мутации (админка) ============
 
   create(dto: CreateCategoryDto): Observable<CategoryDto> {
     return this.http.post<CategoryDto>(this.baseUrl, dto).pipe(
@@ -84,7 +79,7 @@ export class CategoryService {
     );
   }
 
-  // ---------- Управление кэшем ----------
+  // ============ Управление кэшем ============
 
   clearCache(): void {
     this.allCategories.set([]);
@@ -92,7 +87,6 @@ export class CategoryService {
   }
 
   private invalidateCache(): void {
-    // После любой мутации сбрасываем кэш, чтобы данные не расходились
     this.clearCache();
   }
 

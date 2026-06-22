@@ -29,7 +29,6 @@ export class ManagerStoresComponent implements OnInit {
   private cityService = inject(CityService);
   private fb = inject(FormBuilder);
 
-  // Состояния
   stores = signal<StoreDto[]>([]);
   loading = signal(false);
   viewMode = signal<'list' | 'form'>('list');
@@ -39,7 +38,6 @@ export class ManagerStoresComponent implements OnInit {
 
   storeForm!: FormGroup;
 
-  // Справочник типов магазинов для выпадающего списка
   storeTypes = [
     { value: StoreType.Retail, label: 'Розничный магазин' },
     { value: StoreType.PickupPoint, label: 'Пункт выдачи' },
@@ -47,7 +45,6 @@ export class ManagerStoresComponent implements OnInit {
     { value: StoreType.ServiceCenter, label: 'Сервисный центр' }
   ];
 
-  // Локальный поиск по загруженным магазинам
   filteredStores = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const all = this.stores();
@@ -60,13 +57,11 @@ export class ManagerStoresComponent implements OnInit {
     );
   });
 
-  // --- Состояния для Умного выбора города ---
   allCities = signal<CityDto[]>([]);
   citySearch = signal('');
   isCityDropdownOpen = signal(false);
   selectedCityDisplay = signal('');
 
-  // Группировка и фильтрация городов
   groupedCities = computed(() => {
     const query = this.citySearch().toLowerCase().trim();
     const cities = this.allCities();
@@ -105,7 +100,6 @@ export class ManagerStoresComponent implements OnInit {
   initForm(): void {
     this.storeForm = this.fb.group({
       name: ['', Validators.required],
-      // code удален из формы, генерируется автоматически
       cityId: [null, Validators.required],
       fullAddress: ['', Validators.required],
       latitude: [0, Validators.required],
@@ -120,7 +114,6 @@ export class ManagerStoresComponent implements OnInit {
 
   loadStores(): void {
     this.loading.set(true);
-    // Для админки запрашиваем ВСЕ магазины (includeInactive = true)
     this.storeService.getAllStores(true).subscribe({
       next: (data) => {
         this.stores.set(data);
@@ -141,7 +134,6 @@ export class ManagerStoresComponent implements OnInit {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
-  // --- Методы для поиска городов ---
   openCitySearch(): void {
     this.isCityDropdownOpen.set(true);
     this.citySearch.set('');
@@ -164,7 +156,6 @@ export class ManagerStoresComponent implements OnInit {
     this.storeForm.get('cityId')?.updateValueAndValidity();
   }
 
-  // --- Навигация ---
   openCreateMode(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
@@ -177,16 +168,12 @@ export class ManagerStoresComponent implements OnInit {
     this.viewMode.set('list');
   }
 
-  // --- Редактирование ---
+  // ✅ ИСПРАВЛЕН: используем вспомогательный метод для маппинга строки в enum
   editStore(store: StoreDto): void {
     this.isEditing.set(true);
     this.editingId.set(store.id);
 
-    // Мапим строковый тип с бэкенда обратно в Enum для формы
-    let typeEnum = StoreType.Retail;
-    if (store.type === 'PickupPoint') typeEnum = StoreType.PickupPoint;
-    if (store.type === 'Warehouse') typeEnum = StoreType.Warehouse;
-    if (store.type === 'ServiceCenter') typeEnum = StoreType.ServiceCenter;
+    const typeEnum = this.mapStringToStoreType(store.type);
 
     this.storeForm.patchValue({
       name: store.name,
@@ -201,7 +188,6 @@ export class ManagerStoresComponent implements OnInit {
       type: typeEnum
     });
 
-    // Находим город для отображения
     const city = this.allCities().find(c => c.id === store.cityId);
     if (city) {
       this.selectedCityDisplay.set(`${city.name} (${city.regionName || 'Другие регионы'})`);
@@ -212,7 +198,17 @@ export class ManagerStoresComponent implements OnInit {
     this.viewMode.set('form');
   }
 
-  // --- Сохранение ---
+  // ✅ НОВЫЙ ВСПОМОГАТЕЛЬНЫЙ МЕТОД
+  private mapStringToStoreType(typeStr: string): StoreType {
+    switch (typeStr) {
+      case 'PickupPoint': return StoreType.PickupPoint;
+      case 'Warehouse': return StoreType.Warehouse;
+      case 'ServiceCenter': return StoreType.ServiceCenter;
+      case 'Retail':
+      default: return StoreType.Retail;
+    }
+  }
+
   saveStore(): void {
     if (this.storeForm.invalid) {
       this.storeForm.markAllAsTouched();
@@ -221,7 +217,6 @@ export class ManagerStoresComponent implements OnInit {
 
     this.loading.set(true);
 
-    // Подтягиваем старый код (если редактируем) или генерируем новый (если создаем)
     let storeCode = `STORE-${Date.now()}`;
     if (this.isEditing() && this.editingId()) {
       const existingStore = this.stores().find(s => s.id === this.editingId());
@@ -232,8 +227,8 @@ export class ManagerStoresComponent implements OnInit {
 
     const payload: CreateStoreDto = {
       ...this.storeForm.value,
-      code: storeCode, // Скрытно передаем код на бэкенд
-      type: Number(this.storeForm.value.type) // Убеждаемся, что отправляем число (Enum)
+      code: storeCode,
+      type: Number(this.storeForm.value.type)
     };
 
     if (this.isEditing() && this.editingId()) {
@@ -260,21 +255,28 @@ export class ManagerStoresComponent implements OnInit {
     this.viewMode.set('list');
   }
 
-  // --- Изменение статуса (Мягкое удаление) ---
+  // ✅ Иммутабельный подход
   toggleStatus(store: StoreDto): void {
     const originalStatus = store.isActive;
-    store.isActive = !store.isActive; // Оптимистичный UI
+    const newStatus = !originalStatus;
+
+    this.stores.update(items =>
+      items.map(s => s.id === store.id ? { ...s, isActive: newStatus } : s)
+    );
 
     this.storeService.toggleStoreStatus(store.id).subscribe({
-      next: () => { }, // Успешно
+      next: () => {
+        // Успех — UI уже обновлён
+      },
       error: () => {
-        store.isActive = originalStatus; // Откат при ошибке
+        this.stores.update(items =>
+          items.map(s => s.id === store.id ? { ...s, isActive: originalStatus } : s)
+        );
         alert('Не удалось изменить статус магазина');
       }
     });
   }
 
-  // Вспомогательный метод для красивого вывода типа
   getTypeLabel(typeStr: string): string {
     switch (typeStr) {
       case 'Retail': return 'Розница';

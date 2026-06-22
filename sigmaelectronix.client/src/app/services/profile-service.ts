@@ -7,7 +7,6 @@ import {
   Address,
   BonusTransaction,
   NotificationState,
-  Review,
   WishlistProduct,
   UpdateFirstNameRequest,
   UpdateLastNameRequest,
@@ -21,18 +20,19 @@ import {
   CreateUpdateAddressDto
 } from '../models/profile-models';
 
+// ✅ Импортируем ReviewDto и даём ему алиас Review
+import { ReviewDto as Review } from '../models/review-models';
+
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private http = inject(HttpClient);
   private baseUrl = '/api/profile';
 
-  // Основные состояния с сервера
   readonly user = signal<UserProfile | null>(null);
   readonly orders = signal<Order[]>([]);
   readonly addresses = signal<Address[]>([]);
   readonly bonusHistory = signal<BonusTransaction[]>([]);
 
-  // Состояния, ожидающие будущих API (пока с локальными значениями по умолчанию)
   readonly notifications = signal<NotificationState>({
     email: true,
     sms: false,
@@ -41,7 +41,6 @@ export class ProfileService {
   readonly reviews = signal<Review[]>([]);
   readonly wishlistItems = signal<WishlistProduct[]>([]);
 
-  // ===== Загрузка профиля =====
   loadProfile(): Observable<UserProfile> {
     return this.http.get<UserProfile>(this.baseUrl).pipe(
       tap(profile => this.user.set(profile)),
@@ -52,7 +51,6 @@ export class ProfileService {
     );
   }
 
-  // ===== Загрузка заказов с преобразованием =====
   loadOrders(): Observable<Order[]> {
     return this.http.get<any[]>(`${this.baseUrl}/orders`).pipe(
       tap(orders => {
@@ -72,9 +70,8 @@ export class ProfileService {
     );
   }
 
-  /// ===== Загрузка адресов =====
   loadAddresses(): Observable<Address[]> {
-    return this.http.get<Address[]>('/api/addresses').pipe( // <-- Изменили URL
+    return this.http.get<Address[]>('/api/addresses').pipe(
       tap(addresses => this.addresses.set(addresses)),
       catchError(error => {
         console.error('Ошибка загрузки адресов', error);
@@ -83,9 +80,8 @@ export class ProfileService {
     );
   }
 
-  // ===== Создание адреса =====
   createAddress(dto: CreateUpdateAddressDto): Observable<Address> {
-    return this.http.post<Address>('/api/addresses', dto).pipe( // <-- Изменили URL
+    return this.http.post<Address>('/api/addresses', dto).pipe(
       tap(newAddress => {
         this.addresses.update(addrs => {
           let current = [...addrs];
@@ -98,9 +94,8 @@ export class ProfileService {
     );
   }
 
-  // ===== Обновление адреса =====
   updateAddress(id: number, dto: CreateUpdateAddressDto): Observable<Address> {
-    return this.http.put<Address>(`/api/addresses/${id}`, dto).pipe( // <-- Изменили URL
+    return this.http.put<Address>(`/api/addresses/${id}`, dto).pipe(
       tap(updatedAddress => {
         this.addresses.update(addrs => {
           let current = [...addrs];
@@ -113,16 +108,14 @@ export class ProfileService {
     );
   }
 
-  // ===== Удаление адреса =====
   deleteAddress(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/addresses/${id}`).pipe( // <-- Изменили URL
+    return this.http.delete<void>(`/api/addresses/${id}`).pipe(
       tap(() => {
         this.addresses.update(addrs => addrs.filter(a => a.id !== id));
       })
     );
   }
 
-  // ===== Загрузка истории бонусов =====
   loadBonusHistory(): Observable<BonusTransaction[]> {
     return this.http.get<BonusTransaction[]>(`${this.baseUrl}/bonus-history`).pipe(
       tap(history => this.bonusHistory.set(history)),
@@ -140,7 +133,6 @@ export class ProfileService {
     );
   }
 
-  // ===== Методы обновления профиля (без изменений) =====
   updateFirstName(firstName: string): Observable<{ firstName: string; fullName: string }> {
     const body: UpdateFirstNameRequest = { firstName };
     return this.http.put<{ firstName: string; fullName: string }>(`${this.baseUrl}/first-name`, body).pipe(
@@ -194,7 +186,6 @@ export class ProfileService {
     );
   }
 
-  // ===== Локальные методы-заглушки для избранного и уведомлений =====
   removeFromWishlist(productId: number): void {
     this.wishlistItems.update(items => items.filter(i => i.id !== productId));
   }
@@ -203,7 +194,6 @@ export class ProfileService {
     this.notifications.update(n => ({ ...n, [type]: !n[type] }));
   }
 
-  // ===== Сброс данных =====
   clearAll(): void {
     this.user.set(null);
     this.orders.set([]);
@@ -214,7 +204,6 @@ export class ProfileService {
     this.wishlistItems.set([]);
   }
 
-  // Вспомогательная функция цвета статуса заказа
   private getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'Доставлен': '#10b981',

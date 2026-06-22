@@ -13,6 +13,7 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<OrderService> _logger;
+        private const string DefaultLanguage = "ru"; // 🎯 Дефолтный язык
 
         public OrderService(ApplicationDbContext db, ILogger<OrderService> logger)
         {
@@ -54,8 +55,11 @@ namespace SigmaElectronix.Server.Services
                 };
 
                 var productIds = dto.Items.Select(i => i.ProductId).ToList();
+
+                // 🚀 ДОБАВЛЕНО: Подтягиваем переводы товаров
                 var products = await _db.Products
                     .Include(p => p.Images)
+                    .Include(p => p.Translations)
                     .Where(p => productIds.Contains(p.Id))
                     .ToDictionaryAsync(p => p.Id);
 
@@ -74,11 +78,16 @@ namespace SigmaElectronix.Server.Services
                     if (!products.TryGetValue(item.ProductId, out var product))
                         throw new InvalidOperationException($"Товар {item.ProductId} не найден");
 
+                    // 🚀 ИЗВЛЕКАЕМ ИМЯ ТОВАРА ИЗ ПЕРЕВОДОВ (Делаем "снимок" для истории заказа)
+                    var productName = product.Translations.FirstOrDefault(t => t.LanguageCode == DefaultLanguage)?.Name
+                                   ?? product.Translations.FirstOrDefault()?.Name
+                                   ?? $"Товар #{product.Id}";
+
                     var primaryImage = product.Images.FirstOrDefault(i => i.IsPrimary)
                                     ?? product.Images.FirstOrDefault();
 
                     if (!stockByProduct.TryGetValue(product.Id, out var productInventories))
-                        throw new InvalidOperationException($"Товар {product.Name} отсутствует на складах");
+                        throw new InvalidOperationException($"Товар {productName} отсутствует на складах");
 
                     var inventory = await FindAndReserveStockAsync(
                         productInventories, dto.StoreId, item.Quantity);
@@ -89,9 +98,9 @@ namespace SigmaElectronix.Server.Services
                         {
                             StoreId = inventory.StoreId,
                             ProductId = item.ProductId,
-                            QuantityChange = -item.Quantity, // Минус, так как товар уходит клиенту
+                            QuantityChange = -item.Quantity,
                             TransactionType = InventoryTransactionType.Sale,
-                            ReferenceId = order.OrderNumber, // Записываем номер заказа
+                            ReferenceId = order.OrderNumber,
                             CreatedAt = DateTime.UtcNow
                         });
                     }
@@ -100,7 +109,7 @@ namespace SigmaElectronix.Server.Services
                     {
                         var totalStock = productInventories.Sum(i => i.Quantity);
                         throw new InvalidOperationException(
-                            $"Недостаточно товара {product.Name}. Доступно: {totalStock}");
+                            $"Недостаточно товара {productName}. Доступно: {totalStock}");
                     }
 
                     var orderItem = new OrderItem
@@ -108,7 +117,7 @@ namespace SigmaElectronix.Server.Services
                         Order = order,
                         ProductId = item.ProductId,
                         StoreId = inventory.StoreId,
-                        ProductName = product.Name,
+                        ProductName = productName, // 🚀 Сохраняем "снимок" названия
                         ProductImageUrl = primaryImage?.Url,
                         UnitPrice = product.DiscountPrice ?? product.Price,
                         Quantity = item.Quantity
@@ -137,7 +146,7 @@ namespace SigmaElectronix.Server.Services
                             throw new InvalidOperationException("Некорректная сумма списания бонусов");
 
                         bonusesSpent = dto.BonusesToSpend;
-                        user.BonusBalance -= bonusesSpent; // Списываем сразу (резервируем)
+                        user.BonusBalance -= bonusesSpent;
                     }
                 }
 
@@ -145,7 +154,7 @@ namespace SigmaElectronix.Server.Services
                 order.TotalAmount = subtotal + dto.ShippingCost - promoDiscount - bonusesSpent;
 
                 _db.Orders.Add(order);
-                await _db.SaveChangesAsync(); // Сохраняем заказ, чтобы получить order.Id
+                await _db.SaveChangesAsync();
 
                 // ЗАПИСЬ ТРАНЗАКЦИИ О СПИСАНИИ В ИСТОРИЮ
                 if (userId != null && bonusesSpent > 0)
@@ -154,7 +163,7 @@ namespace SigmaElectronix.Server.Services
                     {
                         UserId = userId,
                         OrderId = order.Id,
-                        Amount = -bonusesSpent, // Отрицательное = списание
+                        Amount = -bonusesSpent,
                         Reason = "Списание для оплаты заказа",
                         CreatedAt = DateTime.UtcNow
                     });
@@ -181,16 +190,13 @@ namespace SigmaElectronix.Server.Services
             var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
             if (order == null || string.IsNullOrEmpty(order.UserId)) return;
 
-            // Начисляем только если заказ реально оплачен
             if (order.PaymentStatus != PaymentStatus.Paid) return;
 
-            // 1. Проверяем, не начисляли ли мы уже кэшбек (защита от двойного начисления)
             bool alreadyAwarded = await _db.Set<BonusTransaction>()
                 .AnyAsync(bt => bt.OrderId == orderId && bt.Amount > 0 && bt.Reason == "Кэшбек за покупку");
 
             if (alreadyAwarded) return;
 
-            // 2. Проверяем, не списывал ли юзер баллы в этом заказе (если списал - кэшбек не даем)
             bool wasBonusesSpent = await _db.Set<BonusTransaction>()
                 .AnyAsync(bt => bt.OrderId == orderId && bt.Amount < 0);
 
@@ -199,7 +205,6 @@ namespace SigmaElectronix.Server.Services
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == order.UserId);
             if (user != null)
             {
-                // Рассчитываем кэшбек: 5% от стоимости товаров (без учета стоимости доставки)
                 decimal baseAmount = order.TotalAmount - order.ShippingCost;
                 if (baseAmount > 0)
                 {
@@ -211,7 +216,7 @@ namespace SigmaElectronix.Server.Services
                     {
                         UserId = user.Id,
                         OrderId = order.Id,
-                        Amount = cashback, // Плюсовое = начисление
+                        Amount = cashback,
                         Reason = "Кэшбек за покупку",
                         CreatedAt = DateTime.UtcNow
                     });
@@ -280,7 +285,6 @@ namespace SigmaElectronix.Server.Services
             await using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                // 1. Возвращаем товары в те же магазины
                 foreach (var item in order.Items)
                 {
                     var inventory = await _db.Set<StoreInventory>()
@@ -297,7 +301,7 @@ namespace SigmaElectronix.Server.Services
                         {
                             StoreId = inventory.StoreId,
                             ProductId = item.ProductId,
-                            QuantityChange = item.Quantity, // Плюс, так как товар вернулся
+                            QuantityChange = item.Quantity,
                             TransactionType = InventoryTransactionType.Return,
                             ReferenceId = order.OrderNumber,
                             CreatedAt = DateTime.UtcNow
@@ -305,7 +309,6 @@ namespace SigmaElectronix.Server.Services
                     }
                 }
 
-                // 2. ОТМЕНА БОНУСОВ (возврат баланса)
                 var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
                 var bonusTxs = await _db.Set<BonusTransaction>().Where(bt => bt.OrderId == order.Id).ToListAsync();
 
@@ -313,14 +316,13 @@ namespace SigmaElectronix.Server.Services
                 {
                     foreach (var tx in bonusTxs)
                     {
-                        // Если списали -> возвращаем (+), если начислили -> забираем (-)
                         user.BonusBalance -= tx.Amount;
 
                         _db.Set<BonusTransaction>().Add(new BonusTransaction
                         {
                             UserId = userId,
                             OrderId = order.Id,
-                            Amount = -tx.Amount, // Инвертируем значение транзакции
+                            Amount = -tx.Amount,
                             Reason = "Отмена заказа",
                             CreatedAt = DateTime.UtcNow
                         });
@@ -345,7 +347,6 @@ namespace SigmaElectronix.Server.Services
 
         private static string GenerateOrderNumber()
         {
-            // Формат: ORD-20260606-XXXXX
             var date = DateTime.UtcNow.ToString("yyyyMMdd");
             var random = Random.Shared.Next(10000, 99999);
             return $"ORD-{date}-{random}";
@@ -355,7 +356,6 @@ namespace SigmaElectronix.Server.Services
         {
             var normalizedCode = code.Trim().ToUpperInvariant();
 
-            // ВАЖНО: Достаем без AsNoTracking, чтобы Entity Framework отслеживал изменения!
             var coupon = await _db.Coupons.FirstOrDefaultAsync(c => c.Code == normalizedCode);
 
             if (coupon == null)
@@ -374,20 +374,16 @@ namespace SigmaElectronix.Server.Services
             if (subtotal < coupon.MinOrderAmount)
                 throw new InvalidOperationException($"Минимальная сумма заказа для применения: {coupon.MinOrderAmount} ₽");
 
-            // 1. Вычисляем скидку
             decimal discountAmount = 0;
             if (coupon.IsPercentage)
             {
-                // Процентная скидка
                 discountAmount = Math.Round(subtotal * (coupon.DiscountValue / 100m), 2);
             }
             else
             {
-                // Фиксированная скидка (скидка не может превышать стоимость самих товаров)
                 discountAmount = Math.Min(subtotal, coupon.DiscountValue);
             }
 
-            // 🚀 2. ГЛАВНОЕ: Увеличиваем счетчик использований!
             coupon.CurrentUsageCount++;
 
             return discountAmount;
@@ -398,14 +394,14 @@ namespace SigmaElectronix.Server.Services
             Id = o.Id,
             OrderNumber = o.OrderNumber,
             UserId = o.UserId,
-            StoreId = o.StoreId, // <-- Не забываем передать ID магазина (для самовывоза)
+            StoreId = o.StoreId,
             TotalAmount = o.TotalAmount,
             ShippingCost = o.ShippingCost,
             DiscountAmount = o.DiscountAmount,
             Status = o.Status.ToString(),
-            PaymentStatus = o.PaymentStatus.ToString(), // <-- Добавили статус оплаты
-            PaymentMethod = o.PaymentMethod.ToString(), // <-- Добавили метод оплаты
-            PaidAt = o.PaidAt,                          // <-- Добавили дату оплаты
+            PaymentStatus = o.PaymentStatus.ToString(),
+            PaymentMethod = o.PaymentMethod.ToString(),
+            PaidAt = o.PaidAt,
             ReservationExpiresAt = o.ReservationExpiresAt,
             ShippingFullName = o.ShippingFullName,
             ShippingPhone = o.ShippingPhone,
@@ -427,11 +423,10 @@ namespace SigmaElectronix.Server.Services
         };
 
         private async Task<StoreInventory?> FindAndReserveStockAsync(
-    List<StoreInventory> inventories,
-    int? preferredStoreId,
-    int quantity)
+            List<StoreInventory> inventories,
+            int? preferredStoreId,
+            int quantity)
         {
-            // 1. Сначала ищем в предпочтительном магазине
             if (preferredStoreId.HasValue)
             {
                 var preferred = inventories.FirstOrDefault(
@@ -447,8 +442,6 @@ namespace SigmaElectronix.Server.Services
                 }
             }
 
-            // 2. Если там нет — берём из любого другого магазина
-            // (логика "товар придёт из другого магазина")
             var anyAvailable = inventories
                 .Where(i => i.IsReservable && i.Quantity >= quantity)
                 .OrderByDescending(i => i.Quantity)
@@ -465,19 +458,16 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<bool> LinkGuestOrderAsync(string orderNumber, string userId)
         {
-            // Ищем заказ по номеру (игнорируя регистр на всякий случай)
             var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderNumber.ToLower() == orderNumber.ToLower());
 
-            if (order == null) return false; // Заказ не найден
+            if (order == null) return false;
 
-            // Защита: если у заказа уже есть владелец
             if (!string.IsNullOrEmpty(order.UserId))
             {
-                if (order.UserId == userId) return true; // Уже привязан к этому юзеру
+                if (order.UserId == userId) return true;
                 throw new InvalidOperationException("Этот заказ уже привязан к другому аккаунту.");
             }
 
-            // Привязываем заказ к пользователю
             order.UserId = userId;
             order.UpdatedAt = DateTime.UtcNow;
 
@@ -487,12 +477,11 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<int> LinkGuestOrdersByPhoneAsync(string phone, string userId)
         {
-            // Ищем все заказы, у которых нет владельца и совпадает номер телефона
             var orders = await _db.Orders
                 .Where(o => o.UserId == null && o.ShippingPhone == phone)
                 .ToListAsync();
 
-            if (!orders.Any()) return 0; // Ничего не нашли
+            if (!orders.Any()) return 0;
 
             foreach (var order in orders)
             {
@@ -502,9 +491,7 @@ namespace SigmaElectronix.Server.Services
 
             await _db.SaveChangesAsync();
 
-            return orders.Count; // Возвращаем количество привязанных заказов
+            return orders.Count;
         }
-
     }
-
 }

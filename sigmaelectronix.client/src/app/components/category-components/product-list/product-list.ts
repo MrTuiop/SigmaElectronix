@@ -10,7 +10,7 @@ import { CartService } from '../../../services/cart-service';
 import { WishlistService } from '../../../services/wishlist-service';
 import { ToastService } from '../../../services/toast';
 import { ProductService } from '../../../services/product-service';
-import { ProductListDto, ProductFilterDto } from '../../../models/product-models';
+import { ProductListDto, ProductFilterDto, BrandSummaryDto } from '../../../models/product-models';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -48,12 +48,12 @@ export class ProductListComponent implements OnInit, OnChanges {
   // === СИГНАЛЫ ФИЛЬТРОВ ===
   priceRange = signal({ min: 0, max: 200000 });
   selectedBrandIds = signal<number[]>([]);
-  sortBy = signal<'popular' | 'price_asc' | 'price_desc' | 'new'>('popular'); // <-- Теперь это СИГНАЛ!
+  sortBy = signal<'popular' | 'price_asc' | 'price_desc' | 'newest'>('popular');
 
   // Доступные фильтры с бэкенда
-  availableBrands = signal<{ id: number, name: string }[]>([]);
-  availableSpecs = signal<{ key: string, values: string[] }[]>([]);
-  selectedSpecs = signal<Record<string, string[]>>({});
+  availableBrands = signal<readonly BrandSummaryDto[]>([]); // ✅ Добавлен readonly
+  availableSpecs = signal<{ key: string, values: readonly string[] }[]>([]);
+  selectedSpecs = signal<Record<string, readonly string[]>>({});
 
   private gradientCache = new Map<number, string>();
 
@@ -63,10 +63,8 @@ export class ProductListComponent implements OnInit, OnChanges {
   toggleFilter(key: string) {
     this.expandedFilters.update(filters => {
       if (filters.includes(key)) {
-        // Если фильтр был открыт — закрываем (удаляем из массива)
         return filters.filter(f => f !== key);
       } else {
-        // Если был закрыт — открываем (добавляем в массив)
         return [...filters, key];
       }
     });
@@ -82,21 +80,18 @@ export class ProductListComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['categoryId']) {
-      // Маршрутизатор виртуальных сортировок
       if (this.categoryId === -2) {
-        this.sortBy.set('new');       // Для новинок принудительно ставим "новые"
+        this.sortBy.set('newest');
       } else if (this.categoryId === -3) {
-        this.sortBy.set('popular');   // Для хитов принудительно ставим "популярные"
+        this.sortBy.set('popular');
       } else {
-        this.sortBy.set('popular');   // Для обычных категорий тоже популярные по умолчанию
+        this.sortBy.set('popular');
       }
       this.loadFiltersAndProducts();
     }
   }
 
-  // 1. Загружаем доступные фильтры для этой категории
   loadFiltersAndProducts(): void {
-    // ЗАЩИТА: На бэкенд передаем undefined, если id отрицательный (виртуальный)
     const dbCategoryId = (this.categoryId && this.categoryId > 0) ? this.categoryId : undefined;
 
     this.productService.getFilters(dbCategoryId).subscribe({
@@ -114,25 +109,21 @@ export class ProductListComponent implements OnInit, OnChanges {
     });
   }
 
-  // 2. Добавляем метод клика по характеристике
   toggleSpec(key: string, value: string): void {
     const current = this.selectedSpecs();
-    const currentValuesForKey = current[key] || []; // Текущие выбранные значения для этой харакеристики
+    const currentValuesForKey = current[key] || [];
 
-    let newValuesForKey: string[];
+    let newValuesForKey: readonly string[];
 
     if (currentValuesForKey.includes(value)) {
-      // Если значение уже было выбрано — удаляем его из массива
       newValuesForKey = currentValuesForKey.filter(v => v !== value);
     } else {
-      // Иначе — добавляем в массив
       newValuesForKey = [...currentValuesForKey, value];
     }
 
     const newSpecs = { ...current };
 
     if (newValuesForKey.length === 0) {
-      // Если массив опустел, вообще удаляем этот ключ, чтобы не слать пустые запросы
       delete newSpecs[key];
     } else {
       newSpecs[key] = newValuesForKey;
@@ -143,20 +134,16 @@ export class ProductListComponent implements OnInit, OnChanges {
   }
 
   toggleWishlist(product: UiProduct): void {
-    // 1. Мгновенно меняем визуальное состояние в интерфейсе (Оптимистичный UI)
     product.inWishlist = !product.inWishlist;
 
-    // 2. Сразу показываем уведомление пользователю
     if (product.inWishlist) {
       this.toastService.success('Добавлено в избранное');
     } else {
       this.toastService.info('Удалено из избранного');
     }
 
-    // 3. Отправляем запрос на сервер в фоновом режиме
     this.wishlistService.toggleItem(product.id).subscribe({
       error: () => {
-        // Если сервер вернул ошибку (например, пропал интернет), откатываем визуал назад
         product.inWishlist = !product.inWishlist;
         this.toastService.error('Не удалось обновить избранное');
       }
@@ -183,8 +170,6 @@ export class ProductListComponent implements OnInit, OnChanges {
     return this.cartService.isInCart(productId);
   }
 
-  // === ЛОГИКА ФИЛЬТРАЦИИ И ЗАГРУЗКИ С СЕРВЕРА ===
-
   resetAndLoad(): void {
     this.displayedProducts.set([]);
     this.page.set(1);
@@ -201,14 +186,12 @@ export class ProductListComponent implements OnInit, OnChanges {
       pageSize: this.pageSize,
       minPrice: this.priceRange().min,
       maxPrice: this.priceRange().max,
-      // ЗАЩИТА: Аналогично не отправляем -2 на сервер
       categoryId: (this.categoryId && this.categoryId > 0) ? this.categoryId : undefined,
       sortBy: this.sortBy(),
       brandIds: this.selectedBrandIds().length > 0 ? this.selectedBrandIds() : undefined,
       specifications: Object.keys(this.selectedSpecs()).length > 0 ? this.selectedSpecs() : undefined
     };
 
-    // Отправляем запрос
     this.productService.getProducts(filter).subscribe({
       next: (res) => {
         const mapped: UiProduct[] = res.items.map(p => ({
@@ -238,9 +221,8 @@ export class ProductListComponent implements OnInit, OnChanges {
     this.selectedSpecs.set({});
     this.priceRange.set({ min: 0, max: 200000 });
 
-    // Возвращаем правильную сортировку после сброса
     if (this.categoryId === -2) {
-      this.sortBy.set('new');
+      this.sortBy.set('newest');
     } else {
       this.sortBy.set('popular');
     }
@@ -248,7 +230,6 @@ export class ProductListComponent implements OnInit, OnChanges {
     this.resetAndLoad();
   }
 
-  // Теперь переключаем ID бренда, а не строку
   toggleBrand(brandId: number): void {
     this.selectedBrandIds.update(v =>
       v.includes(brandId) ? v.filter(id => id !== brandId) : [...v, brandId]
@@ -256,7 +237,6 @@ export class ProductListComponent implements OnInit, OnChanges {
     this.resetAndLoad();
   }
 
-  // Если юзер меняет сортировку в селекте
   onSortChange(newSort: any): void {
     this.sortBy.set(newSort);
     this.resetAndLoad();

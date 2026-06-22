@@ -10,7 +10,7 @@ namespace SigmaElectronix.Server.Controllers
     public class FileController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
-        private readonly ApplicationDbContext _context; // 👈 Добавили контекст БД
+        private readonly ApplicationDbContext _context;
         private const string UploadsFolderName = "uploads";
         private const string RequestPathPrefix = "/uploads";
 
@@ -132,7 +132,9 @@ namespace SigmaElectronix.Server.Controllers
                 return NotFound(new { message = "Папка не найдена" });
 
             var filePaths = Directory.GetFiles(targetFolder);
-            var filesList = new List<object>();
+
+            // 🆕 Используем конкретный тип вместо object, чтобы избежать warning CS8605 и медленной рефлексии
+            var filesList = new List<FileItemVm>();
 
             foreach (var file in filePaths)
             {
@@ -145,18 +147,31 @@ namespace SigmaElectronix.Server.Controllers
                 {
                     if (folder == "brands")
                     {
-                        var brand = await _context.Brands.FirstOrDefaultAsync(b => b.LogoUrl == url || b.HeroImageUrl == url);
-                        entityName = brand?.Name;
+                        var brand = await _context.Brands
+                            .Include(b => b.Translations) // 🚀 Подтягиваем переводы
+                            .FirstOrDefaultAsync(b => b.LogoUrl == url || b.HeroImageUrl == url);
+
+                        // Ищем сначала русский перевод, если нет - берем любой первый
+                        entityName = brand?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                                  ?? brand?.Translations.FirstOrDefault()?.Name;
                     }
                     else if (folder == "categories")
                     {
-                        var cat = await _context.Categories.FirstOrDefaultAsync(c => c.ImageUrl == url);
-                        entityName = cat?.Name;
+                        var cat = await _context.Categories
+                            .Include(c => c.Translations) // 🚀 Подтягиваем переводы
+                            .FirstOrDefaultAsync(c => c.ImageUrl == url);
+
+                        entityName = cat?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                                  ?? cat?.Translations.FirstOrDefault()?.Name;
                     }
                     else if (folder == "products" || folder == "product-gallery")
                     {
-                        var product = await _context.Products.FirstOrDefaultAsync(p => p.Images.Any(i => i.Url == url));
-                        entityName = product?.Name;
+                        var product = await _context.Products
+                            .Include(p => p.Translations) // 🚀 Подтягиваем переводы
+                            .FirstOrDefaultAsync(p => p.Images.Any(i => i.Url == url));
+
+                        entityName = product?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                                  ?? product?.Translations.FirstOrDefault()?.Name;
                     }
                     else if (folder == "avatars")
                     {
@@ -166,14 +181,13 @@ namespace SigmaElectronix.Server.Controllers
                         if (user != null)
                         {
                             var fullName = $"{user.FirstName} {user.LastName}".Trim();
-                            // Если имя не указано, выводим UserName, чтобы бейдж не был пустым
                             entityName = string.IsNullOrEmpty(fullName) ? user.UserName : fullName;
                         }
                     }
                 }
                 catch { /* Игнорируем ошибки привязки, чтобы файл все равно вывелся */ }
 
-                filesList.Add(new
+                filesList.Add(new FileItemVm
                 {
                     Name = fileName,
                     Url = url,
@@ -183,9 +197,19 @@ namespace SigmaElectronix.Server.Controllers
                 });
             }
 
-            // Сортируем новые файлы наверх
-            var sortedFiles = filesList.OrderByDescending(f => (DateTime)f.GetType().GetProperty("CreatedAt")!.GetValue(f, null)).ToList();
+            // Сортируем новые файлы наверх (теперь без рефлексии и варнингов!)
+            var sortedFiles = filesList.OrderByDescending(f => f.CreatedAt).ToList();
             return Ok(new { folders = new List<object>(), files = sortedFiles });
+        }
+
+        // 🆕 Вспомогательный приватный класс для типобезопасного списка файлов
+        private class FileItemVm
+        {
+            public string Name { get; set; } = string.Empty;
+            public string Url { get; set; } = string.Empty;
+            public long SizeInBytes { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public string? EntityName { get; set; }
         }
     }
 }

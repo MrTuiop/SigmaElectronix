@@ -6,6 +6,7 @@ import localeRu from '@angular/common/locales/ru'; // <-- Импортирова
 
 import { routes } from './app-routing';
 import { authInterceptor } from './interceptors/auth-interceptor';
+import { languageInterceptor } from './interceptors/language-interceptor';
 
 // 🎯 Обязательно регистрируем русскую локаль в системе Angular перед объявлением конфига
 registerLocaleData(localeRu);
@@ -25,6 +26,6 @@ export const appConfig: ApplicationConfig = {
     ),
 
     // Подключает HTTP-клиент для отправки запросов на ASP.NET Core бэкенд
-    provideHttpClient(withInterceptors([authInterceptor]))
+    provideHttpClient(withInterceptors([authInterceptor, languageInterceptor]))
   ]
 };

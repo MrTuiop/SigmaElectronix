@@ -1,6 +1,6 @@
 ﻿using SigmaElectronix.Server.DTOs.BrandDTOs;
 
-namespace SigmaElectronix.Server.DTOs.ProductDTOs
+namespace SigmaElectronix.Server.DTOs.CategoryDTOs
 {
     public class CategoryFilterDto
     {

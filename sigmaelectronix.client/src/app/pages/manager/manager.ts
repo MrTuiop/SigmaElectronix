@@ -21,7 +21,8 @@ import {
   LucideBoxes,
   LucideShield,
   LucideFileEdit, // <-- ДОБАВИЛИ НОВУЮ ИКОНКУ
-  LucideHardDrive
+  LucideHardDrive,
+  LucideLanguages
 } from '@lucide/angular';
 
 @Component({
@@ -47,7 +48,8 @@ import {
     LucideBoxes,
     LucideShield,
     LucideFileEdit,
-    LucideHardDrive
+    LucideHardDrive,
+    LucideLanguages
   ],
   templateUrl: './manager.html',
   styleUrl: './manager.css'

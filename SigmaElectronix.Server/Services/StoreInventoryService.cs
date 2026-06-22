@@ -25,7 +25,12 @@ namespace SigmaElectronix.Server.Services
                     StoreId = i.StoreId,
                     StoreName = i.Store.Name,
                     ProductId = i.ProductId,
-                    ProductName = i.Product.Name,
+                    // 🚀 Извлекаем название товара из переводов
+                    // Приоритет: сначала русский (0), потом любой другой (1)
+                    ProductName = i.Product.Translations
+                        .OrderBy(t => t.LanguageCode == "ru" ? 0 : 1)
+                        .Select(t => t.Name)
+                        .FirstOrDefault() ?? "Unknown",
                     Quantity = i.Quantity,
                     LastUpdated = i.LastUpdated,
                     IsReservable = i.IsReservable
@@ -44,7 +49,11 @@ namespace SigmaElectronix.Server.Services
                     StoreId = i.StoreId,
                     StoreName = i.Store.Name,
                     ProductId = i.ProductId,
-                    ProductName = i.Product.Name,
+                    // 🚀 Та же логика извлечения названия
+                    ProductName = i.Product.Translations
+                        .OrderBy(t => t.LanguageCode == "ru" ? 0 : 1)
+                        .Select(t => t.Name)
+                        .FirstOrDefault() ?? "Unknown",
                     Quantity = i.Quantity,
                     LastUpdated = i.LastUpdated,
                     IsReservable = i.IsReservable

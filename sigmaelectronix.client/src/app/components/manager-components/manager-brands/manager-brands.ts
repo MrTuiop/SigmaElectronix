@@ -31,7 +31,7 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
   private fb = inject(FormBuilder);
   private fileService = inject(FileService);
 
-  brands = signal<BrandListDto[]>([]);
+  brands = signal<readonly BrandListDto[]>([]);
   pageNumber = signal(1);
   pageSize = signal(15);
   totalCount = signal(0);

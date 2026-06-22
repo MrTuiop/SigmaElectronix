@@ -1,4 +1,5 @@
 ﻿using SigmaElectronix.Server.Common;
+using SigmaElectronix.Server.DTOs.CategoryDTOs;
 using SigmaElectronix.Server.DTOs.ProductDTOs;
 
 namespace SigmaElectronix.Server.Services.Interfaces

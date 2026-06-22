@@ -10,16 +10,15 @@ import {
 } from '@lucide/angular';
 import { WishlistService } from '../../../services/wishlist-service';
 import { CartService } from '../../../services/cart-service';
-import { ProductListDto } from '../../../models/brand-models';
+import { ProductListDto } from '../../../models/product-models';
 import { ToastService } from '../../../services/toast';
 
 // Экспортируем интерфейс отсюда, чтобы родители его использовали
 export interface UiProduct extends ProductListDto {
   inWishlist: boolean;
-  isNew?: boolean;
   discount?: number;
   gradient?: string;
-  [key: string]: any;
+  // ✅ isNew уже наследуется из ProductListDto как обязательное поле boolean
 }
 
 @Component({
@@ -40,7 +39,7 @@ export interface UiProduct extends ProductListDto {
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: UiProduct;
-  @Input() brandName?: string; // Опционально: если хотим явно передать имя бренда
+  @Input() brandName?: string;
 
   private wishlistService = inject(WishlistService);
   private cartService = inject(CartService);
@@ -50,7 +49,6 @@ export class ProductCardComponent {
   toggleWishlist(product: UiProduct): void {
     this.wishlistService.toggleItem(product.id).subscribe({
       next: () => {
-        // Локальное обновление для мгновенной реакции UI
         product.inWishlist = !product.inWishlist;
 
         if (product.inWishlist) {

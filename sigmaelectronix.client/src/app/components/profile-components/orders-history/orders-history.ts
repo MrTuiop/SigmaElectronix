@@ -1,8 +1,8 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // <-- ДОБАВЛЕНО
-import { ToastService } from '../../../services/toast'; // <-- ДОБАВЛЕНО
+import { FormsModule } from '@angular/forms';
+import { ToastService } from '../../../services/toast';
 import {
   LucidePackage,
   LucideChevronDown,
@@ -11,11 +11,11 @@ import {
   LucideCreditCard,
   LucideReceipt,
   LucideLoader2,
-  LucideSearch, // <-- ДОБАВЛЕНО
-  LucideX       // <-- ДОБАВЛЕНО
+  LucideSearch,
+  LucideX
 } from '@lucide/angular';
 import { OrderService } from '../../../services/order-service';
-import { OrderDto } from '../../../models/order-model';
+import { OrderDto, OrderItemDto } from '../../../models/order-models'; // ✅ Исправлено: order-models + импорт OrderItemDto
 import { ProfileService } from '../../../services/profile-service';
 
 @Component({
@@ -24,7 +24,7 @@ import { ProfileService } from '../../../services/profile-service';
   imports: [
     CommonModule,
     RouterLink,
-    FormsModule, // <-- ДОБАВЛЕНО
+    FormsModule,
     LucidePackage,
     LucideChevronDown,
     LucideChevronUp,
@@ -32,15 +32,15 @@ import { ProfileService } from '../../../services/profile-service';
     LucideCreditCard,
     LucideReceipt,
     LucideLoader2,
-    LucideSearch, // <-- ДОБАВЛЕНО
-    LucideX       // <-- ДОБАВЛЕНО
+    LucideSearch,
+    LucideX
   ],
   templateUrl: './orders-history.html',
   styleUrl: './orders-history.css',
 })
 export class OrdersHistoryComponent implements OnInit {
   private orderService = inject(OrderService);
-  private toastService = inject(ToastService); // <-- ДОБАВЛЕНО
+  private toastService = inject(ToastService);
   private profileService = inject(ProfileService);
 
   ordersList = signal<any[]>([]);
@@ -51,9 +51,9 @@ export class OrdersHistoryComponent implements OnInit {
 
   // 🔹 Сигналы для модального окна поиска заказа
   showLinkModal = signal(false);
-  linkMode = signal<'number' | 'phone'>('number'); // Переключатель
+  linkMode = signal<'number' | 'phone'>('number');
   linkOrderNumber = signal('');
-  linkPhone = signal(''); // Для поля телефона
+  linkPhone = signal('');
   isLinking = signal(false);
 
   currentOrderDetails = computed(() => {
@@ -74,7 +74,8 @@ export class OrdersHistoryComponent implements OnInit {
           date: new Date(o.createdAt).toLocaleDateString('ru-RU'),
           statusColor: this.getStatusColor(o.status),
           statusName: this.getStatusName(o.status),
-          itemsCount: o.items ? o.items.reduce((sum, i) => sum + i.quantity, 0) : 0
+          // ✅ Исправлено: добавлены типы параметров
+          itemsCount: o.items ? o.items.reduce((sum: number, i: OrderItemDto) => sum + i.quantity, 0) : 0
         }));
 
         this.ordersList.set(mappedOrders);
@@ -119,11 +120,10 @@ export class OrdersHistoryComponent implements OnInit {
     this.showLinkModal.set(true);
     this.linkOrderNumber.set('');
 
-    // 🔹 УМНАЯ ПОДСТАНОВКА: Берём телефон из профиля (если он есть)
     const currentUser = this.profileService.user();
     this.linkPhone.set(currentUser?.phoneNumber || '');
 
-    this.linkMode.set('number'); // По умолчанию открываем вкладку поиска по номеру
+    this.linkMode.set('number');
   }
 
   closeLinkModal() {
@@ -145,7 +145,7 @@ export class OrdersHistoryComponent implements OnInit {
       next: () => {
         this.toastService.success('Заказ успешно добавлен в ваш профиль!');
         this.closeLinkModal();
-        this.loadMyOrders(); // Обновляем список, чтобы заказ сразу появился
+        this.loadMyOrders();
         this.isLinking.set(false);
       },
       error: (err) => {
@@ -156,7 +156,6 @@ export class OrdersHistoryComponent implements OnInit {
   }
 
   submitLink() {
-    // В зависимости от режима, вызываем нужный метод
     if (this.linkMode() === 'number') {
       const orderNum = this.linkOrderNumber().trim();
       if (!orderNum) return;
@@ -197,7 +196,7 @@ export class OrdersHistoryComponent implements OnInit {
 
   private finalizeLinking() {
     this.closeLinkModal();
-    this.loadMyOrders(); // Обновляем список заказов
+    this.loadMyOrders();
     this.isLinking.set(false);
   }
 

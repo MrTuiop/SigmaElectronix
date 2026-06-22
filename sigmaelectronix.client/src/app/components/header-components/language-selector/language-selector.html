@@ -1,0 +1,43 @@
+<div class="lang-selector-wrapper">
+  <button class="lang-trigger" (click)="toggleMenu($event)" [class.active]="isOpen()">
+    <svg lucideGlobe size="14" strokeWidth="2.5"></svg>
+    <span class="lang-code">{{ currentLanguageDisplay() }}</span>
+    <svg lucideChevronDown size="12" strokeWidth="2" class="chevron" [class.rotated]="isOpen()"></svg>
+  </button>
+
+  @if (isOpen()) {
+  <div class="lang-dropdown animate-fade" (click)="$event.stopPropagation()">
+    <div class="dropdown-header">
+      <span>Выберите язык</span>
+    </div>
+
+    <ul class="lang-list">
+      @for (lang of languages(); track lang.code) {
+      <li class="lang-item"
+          [class.selected]="lang.code === currentLangCode()"
+          (click)="selectLanguage(lang.code)">
+
+        <div class="lang-info">
+          @if (lang.iconUrl) {
+          <img [src]="lang.iconUrl" alt="flag" class="lang-flag" />
+          }
+          <span class="lang-name">{{ lang.nativeName }}</span>
+
+          @if (lang.isDefault) {
+          <span class="default-badge">По умолч.</span>
+          }
+        </div>
+
+        @if (lang.code === currentLangCode()) {
+        <svg lucideCheck size="16" strokeWidth="2.5" class="check-icon"></svg>
+        }
+      </li>
+      }
+
+      @if (languages().length === 0) {
+      <li class="lang-item empty">Загрузка языков...</li>
+      }
+    </ul>
+  </div>
+  }
+</div>

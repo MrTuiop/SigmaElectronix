@@ -1,14 +1,14 @@
 export interface ReceiveStockDto {
-  storeId: number;
-  productId: number;
-  quantity: number;
-  referenceId?: string; // Накладная (опционально)
+  readonly storeId: number;
+  readonly productId: number;
+  readonly quantity: number;
+  readonly referenceId?: string;
 }
 
 export interface TransferStockDto {
-  fromStoreId: number;
-  toStoreId: number;
-  productId: number;
-  quantity: number;
-  referenceId?: string;
+  readonly fromStoreId: number;
+  readonly toStoreId: number;
+  readonly productId: number;
+  readonly quantity: number;
+  readonly referenceId?: string;
 }

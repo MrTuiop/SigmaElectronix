@@ -1,22 +1,24 @@
+import { WishlistProduct } from './wishlist-product-models';
+
 export interface WishlistDto {
-  id: number;
-  userId: string | null;
-  items: WishlistItemDto[];
-  totalItems: number;
+  readonly id: number;
+  readonly userId: string | null;
+  readonly items: readonly WishlistItemDto[];
+  readonly totalItems: number;
 }
 
 export interface WishlistItemDto {
-  id: number;
-  productId: number;
-  productName: string;
-  productImage: string | null;
-  price: number;
-
-  // 🎯 Добавляем новые поля, чтобы TypeScript не ругался
-  brandName?: string;
-  averageRating: number;
-  reviewsCount: number;
-  discountPrice?: number;
-
-  isNew: boolean;
+  readonly id: number;
+  readonly productId: number;
+  readonly productName: string;
+  readonly productImage: string | null;
+  readonly price: number;
+  readonly brandName?: string;
+  readonly averageRating: number;
+  readonly reviewsCount: number;
+  readonly discountPrice?: number;
+  readonly isNew: boolean;
 }
+
+// Реэкспортируем для удобства
+export type { WishlistProduct };

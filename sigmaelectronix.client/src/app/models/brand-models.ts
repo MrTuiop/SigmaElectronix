@@ -1,105 +1,79 @@
-// ---------- Вспомогательные / общие ----------
+import { BrandSummaryDto, ProductListDto } from './product-models';
+import { PaginatedResponse } from './shared-models';
 
-/** Пагинированный результат (подстройте под реальный ответ сервера) */
-export interface PagedResult<T> {
-  items: T[];
-  pageNumber: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
+// ============ DTO для чтения ============
 
-/** Краткая модель товара, используемая в витрине бренда */
-export interface ProductListDto {
-  id: number;
-  name: string;
-  slug: string;
-  shortDescription: string;
-  price: number;
-  discountPrice?: number;
-  finalPrice: number;
-  brand?: BrandSummaryDto;
-  categoryName?: string;
-  mainImageUrl?: string;
-  averageRating?: number;
-  reviewsCount?: number;
-  isPublished?: boolean;
-
-  // Поля для UI
-  discount?: number;
-  isNew?: boolean;
-  inWishlist?: boolean;
-  gradient?: string;
-}
-
-// ---------- Бренд-специфичные DTO ----------
+// BrandSummaryDto импортирован из product-models
 
 export interface BrandListDto {
-  id: number;
-  name: string;
-  slug: string;
-  logoUrl?: string;
-  heroImageUrl?: string;
-  shortDescription: string;
-  productsCount: number;
-  isFeatured: boolean;
-  isActive: boolean; // <--- ДОБАВЬ ЭТУ СТРОЧКУ
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly logoUrl?: string;
+  readonly heroImageUrl?: string;
+  readonly shortDescription: string;
+  readonly productsCount: number;
+  readonly isFeatured: boolean;
+  readonly isActive: boolean;
 }
 
 export interface BrandImageDto {
-  id: number;
-  url: string;
-  altText?: string;
-  caption?: string;
-  sortOrder: number;
-  imageType: string;
+  readonly id: number;
+  readonly url: string;
+  readonly altText?: string;
+  readonly caption?: string;
+  readonly sortOrder: number;
+  readonly imageType: string;
 }
 
 export interface BrandCategoryDto {
-  categoryId: number;
-  categoryName: string;
-  categorySlug: string;
-  iconUrl?: string;
-  icon?: string;
-  productsCount: number;
-}
-
-export interface BrandSummaryDto {
-  id: number;
-  name: string;
-  slug?: string;
-  logoUrl?: string;
+  readonly categoryId: number;
+  readonly categoryName: string;
+  readonly categorySlug: string;
+  readonly iconUrl?: string;
+  readonly icon?: string;
+  readonly productsCount: number;
 }
 
 export interface BrandShowcaseDto {
-  id: number;
-  name: string;
-  slug: string;
-  logoUrl?: string;
-  description: string;
-  heroImageUrl?: string;
-  heroTitle?: string;
-  heroSubtitle?: string;
-  bannerButtonText?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  images: BrandImageDto[];
-  categories: BrandCategoryDto[];
-  featuredProducts: ProductListDto[];
-  totalProductsCount: number;
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly logoUrl?: string;
+  readonly description: string;
+  readonly heroImageUrl?: string;
+  readonly heroTitle?: string;
+  readonly heroSubtitle?: string;
+  readonly bannerButtonText?: string;
+  readonly images: readonly BrandImageDto[];
+  readonly categories: readonly BrandCategoryDto[];
+  readonly featuredProducts: readonly ProductListDto[];
+  readonly totalProductsCount: number;
 }
 
+// ============ Переводы ============
+
+export interface BrandTranslationDto {
+  readonly languageCode: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly description: string;
+  readonly heroTitle?: string;
+  readonly heroSubtitle?: string;
+  readonly bannerButtonText?: string;
+}
+
+// ============ Создание / Обновление ============
+
 export interface CreateBrandDto {
-  name: string;
-  slug?: string;
-  description: string;
-  logoUrl?: string;
-  heroImageUrl?: string;
-  heroTitle?: string;
-  heroSubtitle?: string;
-  bannerButtonText?: string;
-  isFeatured: boolean;
-  isActive: boolean;
+  readonly logoUrl?: string;
+  readonly heroImageUrl?: string;
+  readonly isFeatured: boolean;
+  readonly isActive: boolean;
+  readonly translations: readonly BrandTranslationDto[];
 }
 
 export type UpdateBrandDto = CreateBrandDto;
+
+// Реэкспорт общих типов
+export type { BrandSummaryDto, PaginatedResponse };

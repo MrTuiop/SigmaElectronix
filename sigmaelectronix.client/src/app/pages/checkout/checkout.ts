@@ -21,7 +21,7 @@ import { CurrentLocationService } from '../../services/current-location-service'
 import { StoreService } from '../../services/store-service';
 import { StoreInventoryService } from '../../services/store-inventory-service';
 
-import { CreateOrderDto, PaymentMethod } from '../../models/order-model';
+import { CreateOrderDto, PaymentMethod } from '../../models/order-models';
 import { StoreDto } from '../../models/store-models';
 import { StoreInventoryDto } from '../../models/store-inventory-models';
 import { AuthModalComponent } from '../../components/auth-components/auth-modal/auth-modal';

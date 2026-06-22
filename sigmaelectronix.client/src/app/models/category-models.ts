@@ -1,44 +1,49 @@
-// src/app/models/category-models.ts
+// ============ DTO для чтения ============
 
 export interface CategoryDto {
-  id: number;
-  name: string;
-  slug: string;
-  imageUrl?: string;
-  icon?: string;
-  parentCategoryId?: number;
-  parentCategoryName?: string;
-  productsCount: number;
-  subCategoriesCount: number;
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly imageUrl?: string;
+  readonly icon?: string;
+  readonly parentCategoryId?: number;
+  readonly parentCategoryName?: string;
+  readonly productsCount: number;
+  readonly subCategoriesCount: number;
 }
 
 export interface CategoryTreeDto {
-  id: number;
-  name: string;
-  slug: string;
-  imageUrl?: string;
-  icon?: string;
-  productsCount: number;
-  subCategories: CategoryTreeDto[];
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly imageUrl?: string;
+  readonly icon?: string;
+  readonly productsCount: number;
+  readonly subCategories: readonly CategoryTreeDto[];
 }
+
+// ============ Переводы ============
+
+export interface CategoryTranslationDto {
+  readonly languageCode: string;
+  readonly name: string;
+  readonly slug: string;
+}
+
+// ============ Создание / Обновление ============
 
 export interface CreateCategoryDto {
-  name: string;
-  slug: string;
-  imageUrl?: string;
-  icon?: string;
-  parentCategoryId?: number;
+  readonly imageUrl?: string;
+  readonly icon?: string;
+  readonly parentCategoryId?: number;
+  readonly translations: readonly CategoryTranslationDto[];
 }
 
-export interface UpdateCategoryDto {
-  name: string;
-  slug: string;
-  imageUrl?: string;
-  icon?: string;
-  parentCategoryId?: number;
-}
+export type UpdateCategoryDto = CreateCategoryDto;
+
+// ============ Прочее ============
 
 export interface SlugCheckResponse {
-  slug: string;
-  isAvailable: boolean;
+  readonly slug: string;
+  readonly isAvailable: boolean;
 }

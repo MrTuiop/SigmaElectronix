@@ -37,6 +37,8 @@ import { adminGuard } from './guards/admin-guard';
 import { ManagerUsersComponent } from './components/manager-components/manager-users/manager-users';
 import { ManagerPageEditorComponent } from './components/manager-components/manager-page-editor/manager-page-editor';
 import { ManagerFilesComponent } from './components/manager-components/manager-files/manager-files';
+import { ManagerDashboardComponent } from './components/manager-components/manager-dashboard/manager-dashboard';
+import { ManagerLanguagesComponent } from './components/manager-components/manager-languages/manager-languages';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -48,7 +50,12 @@ export const routes: Routes = [
     component: ManagerPage, // Выступает как Layout для админки (со своим сайдбаром)
     canActivate: [managerGuard],
     children: [
-      { path: '', redirectTo: 'products', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        component: ManagerDashboardComponent,
+        title: 'Обзор системы'
+      },
       {
         path: 'users',
         component: ManagerUsersComponent,
@@ -82,7 +89,8 @@ export const routes: Routes = [
         path: 'page-editor',
         component: ManagerPageEditorComponent
       },
-      { path: 'files', component: ManagerFilesComponent }
+      { path: 'files', component: ManagerFilesComponent },
+      { path: 'languages', component: ManagerLanguagesComponent },
     ]
   },
 

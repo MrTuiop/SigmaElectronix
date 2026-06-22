@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SigmaElectronix.Server.Common;
 using SigmaElectronix.Server.Data;
-using SigmaElectronix.Server.DTOs.BrandDTOs; // Добавлен using для BrandDto
+using SigmaElectronix.Server.DTOs.BrandDTOs;
 using SigmaElectronix.Server.DTOs.ProductDTOs;
 using SigmaElectronix.Server.Entities.ProductModels;
 using SigmaElectronix.Server.Services.Interfaces;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
+using SigmaElectronix.Server.DTOs.CategoryDTOs; // 👈 Добавили using
 
 namespace SigmaElectronix.Server.Services
 {
@@ -13,26 +15,50 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ProductService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor; // 👈 Добавили Accessor
 
-        public ProductService(ApplicationDbContext context, ILogger<ProductService> logger)
+        public ProductService(
+            ApplicationDbContext context,
+            ILogger<ProductService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        // 🚀 Метод для динамического получения языка из заголовков Angular
+        private string GetCurrentLanguage()
+        {
+            var langHeader = _httpContextAccessor.HttpContext?.Request.Headers["Accept-Language"].ToString();
+            if (!string.IsNullOrEmpty(langHeader))
+            {
+                // Angular обычно шлет просто "ru" или "en", но если придет "ru-RU,ru;q=0.9", берем первые 2 буквы
+                var primaryLang = langHeader.Split(',')[0].Split('-')[0].Trim().ToLower();
+                if (primaryLang.Length >= 2)
+                    return primaryLang.Substring(0, 2);
+
+                return primaryLang;
+            }
+            return "ru"; // Fallback, если заголовок пустой
         }
 
         // ====== Публичные методы ======
 
         public async Task<PagedResult<ProductListDto>> GetProductsAsync(ProductFilterDto filter)
         {
-            var query = _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.Images)
-                .Where(p => !p.IsDeleted && p.IsPublished)
-                .AsNoTracking(); // Оптимизация для чтения
+            var lang = GetCurrentLanguage(); // 👈 Читаем текущий язык
 
-            query = ApplyFilters(query, filter);
-            query = ApplySorting(query, filter.SortBy);
+            var query = _context.Products
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
+                .Include(p => p.Images)
+                .Include(p => p.Translations)
+                .Where(p => !p.IsDeleted && p.IsPublished)
+                .AsNoTracking();
+
+            query = ApplyFilters(query, filter, lang); // Передаем lang
+            query = ApplySorting(query, filter.SortBy, lang); // Передаем lang
 
             var totalCount = await query.CountAsync();
 
@@ -41,10 +67,9 @@ namespace SigmaElectronix.Server.Services
                 .Take(filter.PageSize)
                 .ToListAsync();
 
-            // Маппинг выполняем в памяти после загрузки (чтобы не было проблем с переводом BrandDto в SQL)
             return new PagedResult<ProductListDto>
             {
-                Items = items.Select(MapToListDto).ToList(),
+                Items = items.Select(i => MapToListDto(i, lang)).ToList(), // Маппим под язык
                 TotalCount = totalCount,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
@@ -53,118 +78,125 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<ProductDetailDto?> GetProductByIdAsync(int id)
         {
+            var lang = GetCurrentLanguage();
+
             var product = await _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images.OrderBy(i => i.SortOrder))
+                .Include(p => p.Translations)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
-            return product == null ? null : MapToDetailDto(product);
+            return product == null ? null : MapToDetailDto(product, lang);
         }
 
         public async Task<ProductDetailDto?> GetProductBySlugAsync(string slug)
         {
-            var product = await _context.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.Images.OrderBy(i => i.SortOrder))
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Slug == slug && !p.IsDeleted && p.IsPublished);
+            var lang = GetCurrentLanguage();
 
-            return product == null ? null : MapToDetailDto(product);
+            var product = await _context.Products
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
+                .Include(p => p.Images.OrderBy(i => i.SortOrder))
+                .Include(p => p.Translations)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug && t.LanguageCode == lang) && !p.IsDeleted && p.IsPublished);
+
+            return product == null ? null : MapToDetailDto(product, lang);
         }
 
         public async Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync(int count = 8)
         {
+            var lang = GetCurrentLanguage();
+
             var products = await _context.Products
                 .Where(p => !p.IsDeleted && p.IsPublished)
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .OrderByDescending(p => p.AverageRating)
                 .ThenByDescending(p => p.ReviewsCount)
                 .Take(count)
                 .AsNoTracking()
                 .ToListAsync();
 
-            return products.Select(MapToListDto);
+            return products.Select(p => MapToListDto(p, lang));
         }
 
         public async Task<IEnumerable<ProductListDto>> GetDiscountedProductsAsync(int count = 8)
         {
+            var lang = GetCurrentLanguage();
+
             var products = await _context.Products
                 .Where(p => !p.IsDeleted && p.IsPublished && p.DiscountPrice.HasValue)
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .OrderByDescending(p => p.DiscountPrice)
                 .Take(count)
                 .AsNoTracking()
                 .ToListAsync();
 
-            return products.Select(MapToListDto);
+            return products.Select(p => MapToListDto(p, lang));
         }
 
         public async Task<IEnumerable<ProductListDto>> GetRelatedProductsAsync(int productId, int count = 4)
         {
+            var lang = GetCurrentLanguage();
             var product = await _context.Products.FindAsync(productId);
             if (product == null) return Enumerable.Empty<ProductListDto>();
 
             var related = await _context.Products
-                .Where(p => p.Id != productId
-                         && !p.IsDeleted
-                         && p.IsPublished
-                         && (p.CategoryId == product.CategoryId || p.BrandId == product.BrandId))
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Where(p => p.Id != productId && !p.IsDeleted && p.IsPublished && (p.CategoryId == product.CategoryId || p.BrandId == product.BrandId))
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .OrderByDescending(p => p.AverageRating)
                 .Take(count)
                 .AsNoTracking()
                 .ToListAsync();
 
-            return related.Select(MapToListDto);
+            return related.Select(p => MapToListDto(p, lang));
         }
 
         public async Task<IEnumerable<ProductListDto>> GetNewArrivalsAsync(int count = 8)
         {
-            // Считаем новинками только то, что добавлено за последние 30 дней
+            var lang = GetCurrentLanguage();
             var thresholdDate = DateTime.UtcNow.AddDays(-30);
 
             var products = await _context.Products
-                .Where(p => !p.IsDeleted && p.IsPublished && p.CreatedAt >= thresholdDate) // 🎯 ДОБАВЛЕН ФИЛЬТР ПО ДАТЕ
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Where(p => !p.IsDeleted && p.IsPublished && p.CreatedAt >= thresholdDate)
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
                 .AsNoTracking()
                 .ToListAsync();
 
-            return products.Select(MapToListDto);
+            return products.Select(p => MapToListDto(p, lang));
         }
 
         // ====== Административные методы (CRUD) ======
 
         public async Task<ProductDetailDto> CreateProductAsync(CreateProductDto dto)
         {
+            if (dto.Translations == null || !dto.Translations.Any())
+                throw new ArgumentException("Товар должен иметь хотя бы один перевод.");
+
             var product = new Product
             {
-                Name = dto.Name,
-                Slug = await GenerateUniqueSlugAsync(dto.Slug, dto.Name),
-                ShortDescription = dto.ShortDescription,
-                FullDescription = dto.FullDescription,
                 Price = dto.Price,
                 DiscountPrice = dto.DiscountPrice,
                 BrandId = dto.BrandId,
                 CategoryId = dto.CategoryId,
-                Specifications = dto.Specifications ?? new Dictionary<string, string>(),
-                Tags = dto.Tags ?? new List<string>(),
                 IsPublished = dto.IsPublished,
                 CreatedAt = DateTime.UtcNow,
-
-                // 👇 ДОБАВЛЕНО: Маппинг картинок при создании
                 Images = dto.Images?.Select(i => new ProductImage
                 {
                     Url = i.Url,
@@ -177,45 +209,83 @@ namespace SigmaElectronix.Server.Services
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
+            foreach (var transDto in dto.Translations)
+            {
+                // Передаем transDto.LanguageCode для проверки уникальности
+                var slug = await GenerateUniqueSlugAsync(transDto.Slug, transDto.Name, transDto.LanguageCode);
+
+                var translation = new ProductTranslation
+                {
+                    ProductId = product.Id,
+                    LanguageCode = transDto.LanguageCode,
+                    Name = transDto.Name,
+                    Slug = slug,
+                    ShortDescription = transDto.ShortDescription ?? "",
+                    FullDescription = transDto.FullDescription ?? "",
+                    Specifications = transDto.Specifications ?? new Dictionary<string, string>(),
+                    Tags = transDto.Tags ?? new List<string>()
+                };
+                _context.ProductTranslations.Add(translation);
+            }
+
+            await _context.SaveChangesAsync();
             return (await GetProductByIdAsync(product.Id))!;
         }
 
         public async Task<ProductDetailDto?> UpdateProductAsync(int id, UpdateProductDto dto)
         {
-            // 👇 ВАЖНО: Добавили .Include(p => p.Images), чтобы EF Core подтянул старые картинки для замены
             var product = await _context.Products
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null || product.IsDeleted) return null;
 
-            // Если имя или переданный slug изменились, генерируем новый slug
-            var targetSlug = string.IsNullOrWhiteSpace(dto.Slug) ? dto.Name : dto.Slug;
-            if (product.Name != dto.Name || product.Slug != targetSlug)
-            {
-                product.Slug = await GenerateUniqueSlugAsync(dto.Slug, dto.Name, id);
-            }
-
-            product.Name = dto.Name;
-            product.ShortDescription = dto.ShortDescription;
-            product.FullDescription = dto.FullDescription;
             product.Price = dto.Price;
             product.DiscountPrice = dto.DiscountPrice;
             product.BrandId = dto.BrandId;
             product.CategoryId = dto.CategoryId;
-            product.Specifications = dto.Specifications ?? new Dictionary<string, string>();
-            product.Tags = dto.Tags ?? new List<string>();
             product.IsPublished = dto.IsPublished;
 
-            // 👇 ДОБАВЛЕНО: Обновление картинок (очищаем старые и записываем новые)
-            _context.ProductImages.RemoveRange(product.Images); // Удаляем старые связи
-            product.Images = dto.Images?.Select(i => new ProductImage
+            _context.ProductImages.RemoveRange(product.Images);
+            product.Images = dto.Images?.Select(i => new ProductImage { /* маппинг */ }).ToList() ?? new List<ProductImage>();
+
+            foreach (var transDto in dto.Translations)
             {
-                Url = i.Url,
-                IsPrimary = i.IsPrimary,
-                SortOrder = i.SortOrder,
-                AltText = i.AltText
-            }).ToList() ?? new List<ProductImage>();
+                var existingTrans = product.Translations.FirstOrDefault(t => t.LanguageCode == transDto.LanguageCode);
+                var targetSlug = string.IsNullOrWhiteSpace(transDto.Slug) ? transDto.Name : transDto.Slug;
+
+                if (existingTrans != null)
+                {
+                    if (existingTrans.Name != transDto.Name || existingTrans.Slug != targetSlug)
+                        existingTrans.Slug = await GenerateUniqueSlugAsync(transDto.Slug, transDto.Name, transDto.LanguageCode, id);
+
+                    existingTrans.Name = transDto.Name;
+                    existingTrans.ShortDescription = transDto.ShortDescription ?? "";
+                    existingTrans.FullDescription = transDto.FullDescription ?? "";
+                    existingTrans.Specifications = transDto.Specifications ?? new Dictionary<string, string>();
+                    existingTrans.Tags = transDto.Tags ?? new List<string>();
+                }
+                else
+                {
+                    var newSlug = await GenerateUniqueSlugAsync(transDto.Slug, transDto.Name, transDto.LanguageCode, id);
+                    _context.ProductTranslations.Add(new ProductTranslation
+                    {
+                        ProductId = product.Id,
+                        LanguageCode = transDto.LanguageCode,
+                        Name = transDto.Name,
+                        Slug = newSlug,
+                        ShortDescription = transDto.ShortDescription ?? "",
+                        FullDescription = transDto.FullDescription ?? "",
+                        Specifications = transDto.Specifications ?? new Dictionary<string, string>(),
+                        Tags = transDto.Tags ?? new List<string>()
+                    });
+                }
+            }
+
+            var incomingLangCodes = dto.Translations.Select(t => t.LanguageCode).ToList();
+            var translationsToRemove = product.Translations.Where(t => !incomingLangCodes.Contains(t.LanguageCode)).ToList();
+            _context.ProductTranslations.RemoveRange(translationsToRemove);
 
             await _context.SaveChangesAsync();
             return await GetProductByIdAsync(id);
@@ -226,7 +296,7 @@ namespace SigmaElectronix.Server.Services
             var product = await _context.Products.FindAsync(id);
             if (product == null || product.IsDeleted) return false;
 
-            product.IsDeleted = true; // Soft delete
+            product.IsDeleted = true;
             await _context.SaveChangesAsync();
             return true;
         }
@@ -243,15 +313,18 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<PagedResult<ProductListDto>> GetAllProductsAdminAsync(ProductFilterDto filter)
         {
+            var lang = GetCurrentLanguage();
+
             var query = _context.Products
                 .Where(p => !p.IsDeleted)
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
+                .Include(p => p.Brand).ThenInclude(b => b.Translations)
+                .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
+                .Include(p => p.Translations)
                 .AsNoTracking();
 
-            query = ApplyFilters(query, filter);
-            query = ApplySorting(query, filter.SortBy);
+            query = ApplyFilters(query, filter, lang);
+            query = ApplySorting(query, filter.SortBy, lang);
 
             var totalCount = await query.CountAsync();
 
@@ -262,7 +335,7 @@ namespace SigmaElectronix.Server.Services
 
             return new PagedResult<ProductListDto>
             {
-                Items = items.Select(MapToListDto).ToList(),
+                Items = items.Select(p => MapToListDto(p, lang)).ToList(),
                 TotalCount = totalCount,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
@@ -271,11 +344,10 @@ namespace SigmaElectronix.Server.Services
 
         // ====== Вспомогательные методы ======
 
-        private IQueryable<Product> ApplyFilters(IQueryable<Product> query, ProductFilterDto filter)
+        private IQueryable<Product> ApplyFilters(IQueryable<Product> query, ProductFilterDto filter, string lang)
         {
             if (filter.CategoryId.HasValue)
             {
-                // Ищем товары в категории и всех её подкатегориях
                 var categoryIds = GetCategoryAndAllSubCategoryIds(filter.CategoryId.Value);
                 query = query.Where(p => categoryIds.Contains(p.CategoryId));
             }
@@ -292,33 +364,29 @@ namespace SigmaElectronix.Server.Services
             if (!string.IsNullOrWhiteSpace(filter.SearchQuery))
             {
                 var search = filter.SearchQuery.ToLower();
-                query = query.Where(p =>
-                    p.Name.ToLower().Contains(search) ||
-                    p.ShortDescription.ToLower().Contains(search));
+                query = query.Where(p => p.Translations.Any(t =>
+                    t.LanguageCode == lang &&
+                    (t.Name.ToLower().Contains(search) || t.ShortDescription.ToLower().Contains(search))
+                ));
             }
 
-            // 🚀 РАЗБЛОКИРОВАНО: Фильтрация по характеристикам!
-            // EF Core 8 Npgsql умеет транслировать это в мощные JSONB SQL-операторы
             if (filter.Specifications != null && filter.Specifications.Any())
             {
                 foreach (var spec in filter.Specifications)
                 {
                     var key = spec.Key;
-                    var values = spec.Value; // Это наш List<string> со значениями
+                    var values = spec.Value;
 
                     if (values == null || !values.Any())
                         continue;
 
-                    // 1. Превращаем выбранные значения в готовые JSON-строки для поиска
                     var jsons = values
-                        .Take(6) // Поддерживаем до 6 выбранных чекбоксов одной характеристики
+                        .Take(6)
                         .Select(val => System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string> { { key, val } }))
                         .ToList();
 
-                    // 2. Создаем "пустышку", которая гарантированно не совпадет ни с одним товаром
                     var dummyJson = "{\"__DUMMY_KEY__\":\"__DUMMY_VALUE__\"}";
 
-                    // 3. Заполняем слоты поиска (если значений меньше 6, лишние слоты будут пустышками)
                     var j0 = jsons.Count > 0 ? jsons[0] : dummyJson;
                     var j1 = jsons.Count > 1 ? jsons[1] : dummyJson;
                     var j2 = jsons.Count > 2 ? jsons[2] : dummyJson;
@@ -326,25 +394,23 @@ namespace SigmaElectronix.Server.Services
                     var j4 = jsons.Count > 4 ? jsons[4] : dummyJson;
                     var j5 = jsons.Count > 5 ? jsons[5] : dummyJson;
 
-                    // 4. Формируем SQL-запрос с логикой OR (ИЛИ) для текущей группы.
-                    // PostgreSQL безупречно и молниеносно обрабатывает это через JSONB оператор @>
-                    query = query.Where(p =>
-                        EF.Functions.JsonContains(p.Specifications, j0) ||
-                        EF.Functions.JsonContains(p.Specifications, j1) ||
-                        EF.Functions.JsonContains(p.Specifications, j2) ||
-                        EF.Functions.JsonContains(p.Specifications, j3) ||
-                        EF.Functions.JsonContains(p.Specifications, j4) ||
-                        EF.Functions.JsonContains(p.Specifications, j5)
-                    );
+                    query = query.Where(p => p.Translations.Any(t => t.LanguageCode == lang && (
+                        EF.Functions.JsonContains(t.Specifications, j0) ||
+                        EF.Functions.JsonContains(t.Specifications, j1) ||
+                        EF.Functions.JsonContains(t.Specifications, j2) ||
+                        EF.Functions.JsonContains(t.Specifications, j3) ||
+                        EF.Functions.JsonContains(t.Specifications, j4) ||
+                        EF.Functions.JsonContains(t.Specifications, j5)
+                    )));
                 }
             }
 
             return query;
         }
 
-        // 🚀 НОВЫЙ МЕТОД: Сбор доступных фильтров для фронтенда
         public async Task<CategoryFilterDto> GetAvailableFiltersAsync(int? categoryId)
         {
+            var lang = GetCurrentLanguage();
             var query = _context.Products.Where(p => !p.IsDeleted && p.IsPublished);
 
             if (categoryId.HasValue)
@@ -353,20 +419,25 @@ namespace SigmaElectronix.Server.Services
                 query = query.Where(p => categoryIds.Contains(p.CategoryId));
             }
 
-            // 1. Получаем реальную минимальную и максимальную цену в этой категории
             var minPrice = await query.MinAsync(p => (decimal?)(p.DiscountPrice ?? p.Price)) ?? 0;
             var maxPrice = await query.MaxAsync(p => (decimal?)(p.DiscountPrice ?? p.Price)) ?? 200000;
 
-            // 2. Получаем только те бренды, товары которых реально есть в этой категории
             var brands = await query
                 .Where(p => p.Brand != null)
-                .Select(p => p.Brand)
+                .Select(p => p.Brand!)
                 .Distinct()
-                .Select(b => new BrandSummaryDto { Id = b.Id, Name = b.Name })
+                .Select(b => new BrandSummaryDto
+                {
+                    Id = b.Id,
+                    Name = b.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "Unknown",
+                    Slug = b.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Slug).FirstOrDefault() ?? ""
+                })
                 .ToListAsync();
 
-            // 3. Вытаскиваем все спецификации (JSON) из найденных товаров и собираем уникальные значения
-            var allSpecs = await query.Select(p => p.Specifications).ToListAsync();
+            var allSpecs = await query
+                .Select(p => p.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Specifications).FirstOrDefault())
+                .ToListAsync();
+
             var specDict = new Dictionary<string, HashSet<string>>();
 
             foreach (var dict in allSpecs)
@@ -386,42 +457,45 @@ namespace SigmaElectronix.Server.Services
                 MinPrice = minPrice,
                 MaxPrice = maxPrice,
                 Brands = brands,
-                // Переводим HashSet (уникальные значения) обратно в List для JSON
                 Specifications = specDict.ToDictionary(k => k.Key, v => v.Value.OrderBy(val => val).ToList())
             };
         }
 
-        private IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy)
+        private IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy, string lang)
         {
+            System.Linq.Expressions.Expression<Func<Product, string>> nameSelector = p =>
+                p.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "";
+
+            System.Linq.Expressions.Expression<Func<Product, string>> brandNameSelector = p =>
+                p.Brand != null ? p.Brand.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "" : "";
+
+            System.Linq.Expressions.Expression<Func<Product, string>> categoryNameSelector = p =>
+                p.Category != null ? p.Category.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "" : "";
+
             return sortBy?.ToLower() switch
             {
                 "price_asc" => query.OrderBy(p => p.DiscountPrice ?? p.Price),
                 "price_desc" => query.OrderByDescending(p => p.DiscountPrice ?? p.Price),
-                "name_asc" => query.OrderBy(p => p.Name),
-                "name_desc" => query.OrderByDescending(p => p.Name),
+                "name_asc" => query.OrderBy(nameSelector),
+                "name_desc" => query.OrderByDescending(nameSelector),
                 "date_asc" => query.OrderBy(p => p.CreatedAt),
                 "date_desc" => query.OrderByDescending(p => p.CreatedAt),
-
-                // 👇 ДОБАВЛЕНЫ НОВЫЕ СОРТИРОВКИ:
-                "brand_asc" => query.OrderBy(p => p.Brand != null ? p.Brand.Name : ""),
-                "brand_desc" => query.OrderByDescending(p => p.Brand != null ? p.Brand.Name : ""),
-                "category_asc" => query.OrderBy(p => p.Category != null ? p.Category.Name : ""),
-                "category_desc" => query.OrderByDescending(p => p.Category != null ? p.Category.Name : ""),
-                "status_desc" => query.OrderByDescending(p => p.IsPublished), // Опубликованные сверху
-                "status_asc" => query.OrderBy(p => p.IsPublished),          // Скрытые сверху
-
+                "brand_asc" => query.OrderBy(brandNameSelector),
+                "brand_desc" => query.OrderByDescending(brandNameSelector),
+                "category_asc" => query.OrderBy(categoryNameSelector),
+                "category_desc" => query.OrderByDescending(categoryNameSelector),
+                "status_desc" => query.OrderByDescending(p => p.IsPublished),
+                "status_asc" => query.OrderBy(p => p.IsPublished),
                 "rating" => query.OrderByDescending(p => p.AverageRating).ThenByDescending(p => p.ReviewsCount),
                 "popular" => query.OrderByDescending(p => p.ReviewsCount),
-                _ => query.OrderByDescending(p => p.CreatedAt) // newest
+                _ => query.OrderByDescending(p => p.CreatedAt)
             };
         }
 
-        // Асинхронная проверка уникальности Slug в базе данных
-        private async Task<string> GenerateUniqueSlugAsync(string? customSlug, string name, int? excludeId = null)
+        private async Task<string> GenerateUniqueSlugAsync(string? customSlug, string name, string langCode, int? excludeId = null)
         {
             string baseSlug = string.IsNullOrWhiteSpace(customSlug) ? name : customSlug;
 
-            // Очистка строки
             baseSlug = baseSlug.ToLowerInvariant();
             baseSlug = Regex.Replace(baseSlug, @"[^a-z0-9\s-]", "");
             baseSlug = Regex.Replace(baseSlug, @"\s+", "-").Trim('-');
@@ -429,8 +503,7 @@ namespace SigmaElectronix.Server.Services
             string finalSlug = baseSlug;
             int counter = 1;
 
-            // Цикл проверяет, есть ли такой slug в БД (исключая текущий товар при Update)
-            while (await _context.Products.AnyAsync(p => p.Slug == finalSlug && p.Id != excludeId))
+            while (await _context.ProductTranslations.AnyAsync(pt => pt.Slug == finalSlug && pt.LanguageCode == langCode && pt.ProductId != excludeId))
             {
                 finalSlug = $"{baseSlug}-{counter}";
                 counter++;
@@ -439,37 +512,37 @@ namespace SigmaElectronix.Server.Services
             return finalSlug;
         }
 
-        // Исправленный метод (возвращает именно ProductDetailDto и мапит объект Brand)
-        private ProductDetailDto MapToDetailDto(Product p)
+        private ProductDetailDto MapToDetailDto(Product p, string lang)
         {
+            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Translations?.FirstOrDefault();
+            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Category?.Translations?.FirstOrDefault();
+            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Brand?.Translations?.FirstOrDefault();
+
             return new ProductDetailDto
             {
                 Id = p.Id,
-                Name = p.Name,
-                Slug = p.Slug,
-                ShortDescription = p.ShortDescription,
-                FullDescription = p.FullDescription,
+                Name = pt?.Name ?? "Unknown",
+                Slug = pt?.Slug ?? "",
+                ShortDescription = pt?.ShortDescription ?? "",
+                FullDescription = pt?.FullDescription ?? "",
                 Price = p.Price,
                 DiscountPrice = p.DiscountPrice,
                 CategoryId = p.CategoryId,
-                CategoryName = p.Category?.Name ?? string.Empty,
+                CategoryName = ct?.Name ?? string.Empty,
 
-                // Создаем объект BrandDto
                 Brand = p.Brand != null ? new BrandSummaryDto
                 {
                     Id = p.Brand.Id,
-                    Name = p.Brand.Name,
-                    Slug = p.Brand.Slug,
-                    // Если у BrandDto есть LogoUrl, добавьте его сюда
+                    Name = bt?.Name ?? "Unknown",
+                    Slug = bt?.Slug ?? ""
                 } : null!,
 
                 IsPublished = p.IsPublished,
-                Specifications = p.Specifications ?? new Dictionary<string, string>(),
-                Tags = p.Tags ?? new List<string>(),
+                Specifications = pt?.Specifications ?? new Dictionary<string, string>(),
+                Tags = pt?.Tags ?? new List<string>(),
                 AverageRating = p.AverageRating,
                 ReviewsCount = p.ReviewsCount,
 
-                // Обязательно вызываем .ToList() для List<ProductImageDto>
                 Images = p.Images.Select(i => new ProductImageDto
                 {
                     Id = i.Id,
@@ -483,37 +556,33 @@ namespace SigmaElectronix.Server.Services
             };
         }
 
-
-        // Исправленный метод для списков
-        // Исправленный метод для списков
-        private ProductListDto MapToListDto(Product p)
+        private ProductListDto MapToListDto(Product p, string lang)
         {
-            // 🎯 Считаем товар новинкой, если он добавлен менее 90 дней назад
-            // (Ты можешь поменять 90 на любое количество дней, подходящее для твоего магазина)
             var thresholdDate = DateTime.UtcNow.AddDays(-30);
+            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Translations?.FirstOrDefault();
+            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Category?.Translations?.FirstOrDefault();
+            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Brand?.Translations?.FirstOrDefault();
 
             return new ProductListDto
             {
                 Id = p.Id,
-                Name = p.Name,
-                Slug = p.Slug,
-                ShortDescription = p.ShortDescription,
+                Name = pt?.Name ?? "Unknown",
+                Slug = pt?.Slug ?? "",
+                ShortDescription = pt?.ShortDescription ?? "",
                 Price = p.Price,
                 DiscountPrice = p.DiscountPrice,
-                CategoryName = p.Category?.Name ?? string.Empty,
+                CategoryName = ct?.Name ?? string.Empty,
 
                 Brand = p.Brand != null ? new BrandSummaryDto
                 {
                     Id = p.Brand.Id,
-                    Name = p.Brand.Name,
-                    Slug = p.Brand.Slug
+                    Name = bt?.Name ?? "Unknown",
+                    Slug = bt?.Slug ?? ""
                 } : null!,
 
                 AverageRating = p.AverageRating,
                 ReviewsCount = p.ReviewsCount,
                 IsPublished = p.IsPublished,
-
-                // 🎯 Устанавливаем флаг "Новинка" на основе даты создания
                 IsNew = p.CreatedAt >= thresholdDate,
                 CreatedAt = p.CreatedAt,
 
@@ -524,36 +593,28 @@ namespace SigmaElectronix.Server.Services
 
         private List<int> GetCategoryAndAllSubCategoryIds(int categoryId)
         {
-            // Сразу добавляем родительскую категорию в список
             var result = new List<int> { categoryId };
 
-            // Загружаем ВСЕ категории из БД один раз (только нужные поля для скорости)
-            // Это намного быстрее, чем делать отдельный SQL-запрос для каждого уровня вложенности
             var allCategories = _context.Categories
                 .AsNoTracking()
                 .Select(c => new { c.Id, c.ParentCategoryId })
                 .ToList();
 
-            // Создаем локальную рекурсивную функцию
             void FindChildren(int parentId)
             {
-                // Находим всех детей текущей категории
                 var children = allCategories
                     .Where(c => c.ParentCategoryId == parentId)
                     .Select(c => c.Id)
                     .ToList();
 
-                // Добавляем их в общий список и ищем детей для каждого ребенка
                 foreach (var childId in children)
                 {
                     result.Add(childId);
-                    FindChildren(childId); // Рекурсия!
+                    FindChildren(childId);
                 }
             }
 
-            // Запускаем поиск, начиная с выбранной категории
             FindChildren(categoryId);
-
             return result;
         }
 
@@ -562,9 +623,7 @@ namespace SigmaElectronix.Server.Services
             var product = await _context.Products.FindAsync(id);
             if (product == null || product.IsDeleted) return false;
 
-            // Просто инвертируем текущий статус
             product.IsPublished = !product.IsPublished;
-
             await _context.SaveChangesAsync();
             return true;
         }

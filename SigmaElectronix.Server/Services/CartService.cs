@@ -10,6 +10,7 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<CartService> _logger;
+        private const string DefaultLanguage = "ru"; // 🎯 Дефолтный язык
 
         public CartService(ApplicationDbContext context, ILogger<CartService> logger)
         {
@@ -20,7 +21,6 @@ namespace SigmaElectronix.Server.Services
         public async Task<CartDto> GetCartAsync(string? userId, string? sessionId)
         {
             var cart = await GetOrCreateCartAsync(userId, sessionId);
-
             return await MapCartToDtoAsync(cart);
         }
 
@@ -28,14 +28,13 @@ namespace SigmaElectronix.Server.Services
         {
             var cart = await GetOrCreateCartAsync(userId, sessionId);
 
-            // Проверяем, есть ли товар уже в корзине
             var existingItem = cart.Items
                 .FirstOrDefault(i => i.ProductId == request.ProductId);
 
             if (existingItem != null)
             {
                 existingItem.Quantity += request.Quantity;
-                existingItem.UnitPrice = request.Price; // Обновляем цену на актуальную
+                existingItem.UnitPrice = request.Price;
             }
             else
             {
@@ -119,13 +118,11 @@ namespace SigmaElectronix.Server.Services
 
             if (userCart == null)
             {
-                // Просто привязываем гостевую корзину к пользователю
                 guestCart.UserId = userId;
                 guestCart.SessionId = null;
             }
             else
             {
-                // Объединяем товары
                 foreach (var guestItem in guestCart.Items)
                 {
                     var existingItem = userCart.Items
@@ -140,7 +137,6 @@ namespace SigmaElectronix.Server.Services
                         userCart.Items.Add(guestItem);
                     }
                 }
-                // Удаляем гостевую корзину
                 _context.Carts.Remove(guestCart);
             }
 
@@ -148,18 +144,16 @@ namespace SigmaElectronix.Server.Services
             _logger.LogInformation("Guest cart merged for user {UserId}", userId);
         }
 
-        // 🔹 Приватные вспомогательные методы
         private async Task<Cart> GetOrCreateCartAsync(string? userId, string? sessionId)
         {
             var cart = await _context.Carts
-                .Include(c => c.Items) // ⚠️ ВАЖНОЕ ИСПРАВЛЕНИЕ: Загружаем товары вместе с корзиной
+                .Include(c => c.Items)
                 .FirstOrDefaultAsync(c =>
                     (userId != null && c.UserId == userId) ||
                     (sessionId != null && c.SessionId == sessionId && c.UserId == null));
 
             if (cart != null) return cart;
 
-            // Если корзины нет - создаем новую
             cart = new Cart
             {
                 UserId = userId,
@@ -183,17 +177,16 @@ namespace SigmaElectronix.Server.Services
 
         private async Task<CartDto> MapCartToDtoAsync(Cart cart)
         {
-            // 🎯 Получаем все ID товаров из корзины
             var productIds = cart.Items.Select(i => i.ProductId).ToList();
 
-            // 🎯 Загружаем ВСЕ товары с картинками ОДНИМ запросом
+            // 🚀 Подтягиваем товары ВМЕСТЕ с их переводами
             var products = await _context.Products
                 .AsNoTracking()
                 .Where(p => productIds.Contains(p.Id))
                 .Include(p => p.Images)
+                .Include(p => p.Translations) // 🚀 ДОБАВЛЕНО: Загружаем переводы
                 .ToDictionaryAsync(p => p.Id);
 
-            // 🎯 Маппим в DTO
             var itemDtos = cart.Items.Select(item =>
             {
                 products.TryGetValue(item.ProductId, out var product);
@@ -205,11 +198,17 @@ namespace SigmaElectronix.Server.Services
                         .OrderBy(i => i.SortOrder)
                         .FirstOrDefault()?.Url;
 
+                // 🚀 Извлекаем название товара из переводов
+                var productName = product?.Translations
+                    .FirstOrDefault(t => t.LanguageCode == DefaultLanguage)?.Name
+                    ?? product?.Translations?.FirstOrDefault()?.Name
+                    ?? "Unknown";
+
                 return new CartItemDto
                 {
                     Id = item.Id,
                     ProductId = item.ProductId,
-                    ProductName = product?.Name ?? "Unknown",
+                    ProductName = productName, // 🚀 Используем извлеченное имя
                     ProductImage = mainImage,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice

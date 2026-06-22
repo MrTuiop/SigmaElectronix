@@ -1,114 +1,112 @@
-// BrandSummaryDto (минимально)
+import { PaginatedResponse } from './shared-models';
+
+// ============ Базовые / общие DTO ============
+
 export interface BrandSummaryDto {
-  id: number;
-  name: string;
-  slug?: string;
-  logoUrl?: string;
-}
-
-// Фильтр списка товаров
-export interface ProductFilterDto {
-  categoryId?: number;
-  brandIds?: number[];
-  minPrice?: number;
-  maxPrice?: number;
-  searchQuery?: string;
-  specifications?: Record<string, string[]>;
-  sortBy?: string; // 'newest' | 'price_asc' | 'price_desc' | 'rating' | 'popular'
-  pageNumber?: number;
-  pageSize?: number;
-}
-
-// Товар в списке
-export interface ProductListDto {
-  id: number;
-  name: string;
-  slug: string;
-  shortDescription: string;
-  price: number;
-  discountPrice?: number;
-  finalPrice: number; // вычисляется на бэке, можно оставить
-  brand: BrandSummaryDto;
-  categoryName: string;
-  mainImageUrl: string;
-  averageRating: number;
-  reviewsCount: number;
-  isPublished: boolean;
-  isNew: boolean;
-  createdAt: string;
-}
-
-// Детальная карточка товара
-export interface ProductDetailDto {
-  id: number;
-  name: string;
-  slug: string;
-  shortDescription: string;
-  fullDescription: string;
-  price: number;
-  discountPrice?: number;
-  finalPrice: number;
-  discountPercent?: number;
-  brand: BrandSummaryDto;
-  categoryId: number;
-  categoryName: string;
-  specifications: Record<string, string>;
-  tags: string[];
-  averageRating: number;
-  reviewsCount: number;
-  images: ProductImageDto[];
-  createdAt: string; // DateTime в ISO-формате
+  readonly id: number;
+  readonly name: string;
+  readonly slug?: string;
+  readonly logoUrl?: string;
 }
 
 export interface ProductImageDto {
-  id: number;
-  url: string;
-  altText?: string;
-  sortOrder: number;
-  isPrimary: boolean;
+  readonly id: number;
+  readonly url: string;
+  readonly altText?: string;
+  readonly sortOrder: number;
+  readonly isPrimary: boolean;
 }
 
-// DTO для создания / редактирования
-export interface CreateProductDto {
-  name: string;
-  slug: string;
-  shortDescription: string;
-  fullDescription: string;
-  price: number;
-  discountPrice?: number;
-  brandId: number;
-  categoryId: number;
-  specifications: Record<string, string>;
-  tags: string[];
-  isPublished: boolean;
-  images: ProductImageDto[];
+export type ProductImageCreateDto = Omit<ProductImageDto, 'id'>;
+
+// ============ Переводы ============
+
+export interface ProductTranslationDto {
+  readonly languageCode: string; // 'ru' | 'en' | 'uz'
+  readonly name: string;
+  readonly slug: string;
+  readonly shortDescription: string;
+  readonly fullDescription: string;
+  readonly specifications: Readonly<Record<string, string>>;
+  readonly tags: readonly string[];
 }
 
-export interface UpdateProductDto {
-  name: string;
-  slug: string;
-  shortDescription: string;
-  fullDescription: string;
-  price: number;
-  discountPrice?: number;
-  brandId: number;
-  categoryId: number;
-  specifications: Record<string, string>;
-  isPublished: boolean;
-  images: ProductImageDto[];
+// ============ Чтение ============
+
+export interface ProductListDto {
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly shortDescription: string;
+  readonly price: number;
+  readonly discountPrice: number | null;
+  readonly finalPrice: number;
+  readonly brand: BrandSummaryDto;
+  readonly categoryName: string;
+  readonly mainImageUrl: string;
+  readonly averageRating: number;
+  readonly reviewsCount: number;
+  readonly isPublished: boolean;
+  readonly isNew: boolean;
+  readonly createdAt: string;
 }
 
-// Обёртка пагинированного ответа (предполагаемая структура с бэка)
-export interface PaginatedResponse<T> {
-  items: T[];
-  totalCount: number;
-  pageNumber: number;
-  pageSize: number;
+export interface ProductDetailDto {
+  readonly id: number;
+  readonly name: string;
+  readonly slug: string;
+  readonly shortDescription: string;
+  readonly fullDescription: string;
+  readonly price: number;
+  readonly discountPrice: number | null;
+  readonly finalPrice: number;
+  readonly discountPercent: number | null;
+  readonly brand: BrandSummaryDto;
+  readonly categoryId: number;
+  readonly categoryName: string;
+  readonly isPublished: boolean;
+  readonly specifications: Readonly<Record<string, string>>;
+  readonly tags: readonly string[];
+  readonly averageRating: number;
+  readonly reviewsCount: number;
+  readonly images: readonly ProductImageDto[];
+  readonly createdAt: string;
+}
+
+// ============ Фильтры ============
+
+export interface ProductFilterDto {
+  readonly categoryId?: number;
+  readonly brandIds?: readonly number[];
+  readonly minPrice?: number;
+  readonly maxPrice?: number;
+  readonly searchQuery?: string;
+  readonly specifications?: Readonly<Record<string, readonly string[]>>;
+  readonly sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | 'rating' | 'popular' | 'date_desc' | 'date_asc' | 'brand_asc' | 'brand_desc' | 'category_asc' | 'category_desc' | 'status_asc' | 'status_desc';
+  readonly pageNumber?: number;
+  readonly pageSize?: number;
 }
 
 export interface CategoryFilterDto {
-  minPrice: number;
-  maxPrice: number;
-  brands: { id: number; name: string }[];
-  specifications: Record<string, string[]>;
+  readonly minPrice: number;
+  readonly maxPrice: number;
+  readonly brands: readonly BrandSummaryDto[];
+  readonly specifications: Readonly<Record<string, readonly string[]>>;
 }
+
+// ============ Создание / Обновление ============
+
+export interface CreateProductDto {
+  readonly price: number;
+  readonly discountPrice?: number | null;
+  readonly brandId: number;
+  readonly categoryId: number;
+  readonly isPublished: boolean;
+  readonly images: readonly ProductImageCreateDto[];
+  readonly translations: readonly ProductTranslationDto[];
+}
+
+export type UpdateProductDto = CreateProductDto;
+
+// Реэкспорт PaginatedResponse для удобства
+export type { PaginatedResponse };

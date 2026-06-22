@@ -1,33 +1,31 @@
-// src/app/models/location-models.ts
-
 // --- Модели Регионов ---
 export interface RegionDto {
-  id: number;
-  name: string;
-  code?: string;
-  citiesCount: number;
+  readonly id: number;
+  readonly name: string;
+  readonly code?: string;
+  readonly citiesCount: number;
 }
 
 export interface CreateUpdateRegionDto {
-  name: string;
-  code?: string;
+  readonly name: string;
+  readonly code?: string;
 }
 
 // --- Модели Городов ---
 export interface CityDto {
-  id: number;
-  name: string;
-  regionId: number;
-  regionName: string;
-  latitude: number;
-  longitude: number;
-  timeZone?: string;
+  readonly id: number;
+  readonly name: string;
+  readonly regionId: number;
+  readonly regionName: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly timeZone?: string;
 }
 
 export interface CreateUpdateCityDto {
-  name: string;
-  regionId: number;
-  latitude: number;
-  longitude: number;
-  timeZone?: string;
+  readonly name: string;
+  readonly regionId: number;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly timeZone?: string;
 }

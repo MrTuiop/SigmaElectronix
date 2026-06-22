@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { CreateOrderDto, OrderDto } from '../models/order-model';
+import { CreateOrderDto, OrderDto } from '../models/order-models';
 
 
 @Injectable({ providedIn: 'root' })

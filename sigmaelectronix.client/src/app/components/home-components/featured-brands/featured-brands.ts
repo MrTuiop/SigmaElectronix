@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core'; // <-- Добавили ChangeDetectorRef
+import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BrandListDto } from '../../../models/brand-models';
@@ -29,7 +29,7 @@ export class FeaturedBrandsComponent implements OnInit {
 
   constructor(
     private brandService: BrandService,
-    private cdr: ChangeDetectorRef // <-- Подключили инструмент принудительной проверки
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -40,17 +40,17 @@ export class FeaturedBrandsComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.brandService.getFeaturedBrands(this.count).subscribe({
-      next: (data) => {
+    this.brandService.loadFeaturedBrands(this.count).subscribe({
+      next: (data: BrandListDto[]) => {
         this.brands = data;
         this.loading = false;
-        this.cdr.detectChanges(); // <-- ИСПРАВЛЕНИЕ: Говорим Angular безопасно обновить экран
+        this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Ошибка загрузки брендов', err);
         this.error = 'Не удалось загрузить бренды';
         this.loading = false;
-        this.cdr.detectChanges(); // <-- ИСПРАВЛЕНИЕ ЗДЕСЬ ТОЖЕ
+        this.cdr.detectChanges();
       }
     });
   }

@@ -1,0 +1,220 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+        <svg lucideGlobe size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Языки системы</h2>
+        <p class="subtitle">Управление локализацией и доступными переводами</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить язык
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      <svg lucideArrowLeft size="18" strokeWidth="1.5"></svg>
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по коду или названию..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Всего языков: <strong>{{ filteredLanguages().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем языки..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Флаг</th>
+          <th (click)="toggleSort('code')" class="sortable-th">
+            <div class="th-content">
+              Код (ISO)
+              @if (currentSort() === 'code_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'code_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th (click)="toggleSort('name')" class="sortable-th">
+            <div class="th-content">
+              Название
+              @if (currentSort() === 'name_asc') { <svg lucideChevronUp size="14"></svg> }
+              @if (currentSort() === 'name_desc') { <svg lucideChevronDown size="14"></svg> }
+            </div>
+          </th>
+          <th>Оригинальное (Native)</th>
+          <th>По умолчанию</th>
+          <th>Статус</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (lang of filteredLanguages(); track lang.code) {
+        <tr [class.unpublished]="!lang.isActive">
+          <td>
+            <div class="logo-preview" style="border-radius: 6px; width: 44px; height: 32px; padding: 2px;">
+              @if (lang.iconUrl) {
+              <img [src]="lang.iconUrl" [alt]="lang.code">
+              } @else {
+              <span class="no-logo">{{ lang.code.toUpperCase() }}</span>
+              }
+            </div>
+          </td>
+          <td><code class="slug-badge">{{ lang.code }}</code></td>
+          <td class="font-semibold text-dark">{{ lang.name }}</td>
+          <td><span style="color: #64748b;">{{ lang.nativeName }}</span></td>
+
+          <td>
+            @if (lang.isDefault) {
+            <span class="badge badge-purple"><svg lucideStar size="12" style="margin-right:4px; fill:currentColor;"></svg> Основной</span>
+            } @else {
+            <button type="button" class="btn-text-sm" (click)="setDefault(lang)">Сделать основным</button>
+            }
+          </td>
+
+          <td>
+            @if (lang.isActive) {
+            <span class="badge badge-success">Включен</span>
+            } @else {
+            <span class="badge badge-gray">Выключен</span>
+            }
+          </td>
+
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn toggle" (click)="toggleActive(lang)" [title]="lang.isActive ? 'Отключить' : 'Включить'" [disabled]="lang.isDefault">
+                @if (lang.isActive) { <svg lucideEye size="16" strokeWidth="1.5"></svg> }
+                @else { <svg lucideEyeOff size="16" strokeWidth="1.5"></svg> }
+              </button>
+
+              <button class="action-btn edit" title="Редактировать" (click)="editLanguage(lang)">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="7" class="empty-row">Ни одного языка не найдено.</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="languageForm" (ngSubmit)="saveLanguage()" class="animate-fade">
+    <div class="form-step-card">
+      <h3><svg lucideLanguages size="18" strokeWidth="1.5" style="margin-right:8px;"></svg> {{ isEditing() ? 'Редактирование языка' : 'Добавление нового языка' }}</h3>
+      <p class="step-desc">Код языка будет использоваться в URL (например <code>/ru/products</code>).</p>
+
+      <div class="form-grid">
+        <div class="form-group-field full-width">
+          <label>Код языка (ISO 639-1) *</label>
+          <input type="text" formControlName="code" placeholder="Например: ru, en, uz" class="mono-input"
+                 [class.input-error]="languageForm.get('code')?.invalid && languageForm.get('code')?.touched">
+          @if (languageForm.get('code')?.touched && languageForm.get('code')?.invalid) {
+          <span class="error-msg">Обязательное поле (только латиница и дефис)</span>
+          }
+          @if (isEditing()) {
+          <p class="input-hint">Первичный ключ. Код языка нельзя изменить после создания.</p>
+          }
+        </div>
+
+        <div class="form-group-field">
+          <label>Название (В админке) *</label>
+          <input type="text" formControlName="name" placeholder="Например: Русский"
+                 [class.input-error]="languageForm.get('name')?.invalid && languageForm.get('name')?.touched">
+          @if (languageForm.get('name')?.touched && languageForm.get('name')?.invalid) {
+          <span class="error-msg">Название обязательно</span>
+          }
+        </div>
+
+        <div class="form-group-field">
+          <label>Оригинальное название (Native) *</label>
+          <input type="text" formControlName="nativeName" placeholder="Например: Русский, English, O'zbek"
+                 [class.input-error]="languageForm.get('nativeName')?.invalid && languageForm.get('nativeName')?.touched">
+          @if (languageForm.get('nativeName')?.touched && languageForm.get('nativeName')?.invalid) {
+          <span class="error-msg">Обязательное поле</span>
+          }
+        </div>
+
+        <div class="form-group-field">
+          <label>Иконка / Флаг (Опционально)</label>
+          <div class="image-upload-wrapper" style="height: 120px !important;"
+               [class.dragover]="isDragoverIcon()"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+
+            @if (isUploadingIcon()) {
+            <div class="upload-placeholder">
+              <app-spinner message=""></app-spinner>
+              <div class="progress-bar-container" style="max-width: 100px;">
+                <div class="progress-bar-fill" [style.width.%]="iconUploadProgress()"></div>
+              </div>
+            </div>
+            } @else if (languageForm.get('iconUrl')?.value) {
+            <div class="image-preview-box">
+              <img [src]="languageForm.get('iconUrl')?.value" alt="Флаг" style="max-height: 80px; width: auto; object-fit: contain;">
+              <button type="button" class="btn-remove-img" (click)="removeImage()" title="Удалить">
+                <svg lucideX size="14" strokeWidth="2"></svg>
+              </button>
+            </div>
+            } @else {
+            <label class="upload-placeholder cursor-pointer">
+              <input type="file" accept="image/*" class="hidden-input" (change)="onImageSelected($event)">
+              <svg lucideUploadCloud size="28" strokeWidth="1.5"></svg>
+              <span class="upload-text" style="font-size: 12px !important;"><strong>Загрузить флаг</strong></span>
+            </label>
+            }
+          </div>
+        </div>
+
+        <div class="form-group-field" style="justify-content: center; padding-left: 20px;">
+          <div class="checkbox-row">
+            <label class="toggle-switch">
+              <input type="checkbox" formControlName="isDefault">
+              <span class="slider"></span>
+              <span class="toggle-label">Сделать языком по умолчанию</span>
+            </label>
+
+            <label class="toggle-switch mt-3">
+              <input type="checkbox" formControlName="isActive">
+              <span class="slider"></span>
+              <span class="toggle-label" [class.text-danger]="!languageForm.get('isActive')?.value">
+                {{ languageForm.get('isActive')?.value ? 'Язык доступен клиентам' : 'Язык скрыт от клиентов' }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+      <button type="submit" class="btn btn-success" [disabled]="languageForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg>
+        {{ isEditing() ? 'Сохранить изменения' : 'Создать язык' }}
+      </button>
+    </div>
+
+  </form>
+  }
+</div>

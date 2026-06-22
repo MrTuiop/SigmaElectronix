@@ -1,28 +1,27 @@
-// cart-models.ts
 export interface CartDto {
-  id: number;
-  userId?: string;
-  items: CartItemDto[];
-  total: number;
-  updatedAt: string;
+  readonly id: number;
+  readonly userId?: string;
+  readonly items: readonly CartItemDto[];
+  readonly total: number;
+  readonly updatedAt: string;
 }
 
 export interface CartItemDto {
-  id: number;
-  productId: number;
-  productName: string;
-  productImage?: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  readonly id: number;
+  readonly productId: number;
+  readonly productName: string;
+  readonly productImage?: string;
+  readonly quantity: number;
+  readonly unitPrice: number;
+  readonly totalPrice: number;
 }
 
 export interface AddToCartRequest {
-  productId: number;
-  quantity: number;
-  price: number;
+  readonly productId: number;
+  readonly quantity: number;
+  readonly price: number;
 }
 
 export interface UpdateCartItemRequest {
-  quantity: number;
+  readonly quantity: number;
 }

@@ -1,28 +1,27 @@
-// Запрос на регистрацию (адаптирован под ваши требования)
+import { ApiError } from './shared-models';
+
 export interface RegisterRequest {
-  userName: string;           // обязателен, 3–50 символов
-  phoneNumber: string;        // обязателен
-  password: string;           // обязателен, минимум 6 символов
-  email?: string | null;      // необязателен, но если указан – должен быть валидный email
+  readonly userName: string;
+  readonly phoneNumber: string;
+  readonly password: string;
+  readonly email?: string | null;
 }
 
-// Запрос на логин
 export interface LoginRequest {
-  usernameOrEmail: string;
-  password: string;
+  readonly usernameOrEmail: string;
+  readonly password: string;
 }
 
-// Ответ при успешном логине
 export interface LoginResponse {
-  accessToken: string;
+  readonly accessToken: string;
+  readonly refreshToken?: string;
+  readonly expiresIn?: number;
 }
 
-// Ответ при успешной регистрации
 export interface RegisterResponse {
-  message: string;
+  readonly message: string;
+  readonly userId?: string;
 }
 
-// Ошибка с сервера (ожидаемая структура)
-export interface ApiError {
-  Errors?: string[];
-}
+// Реэкспорт ApiError для удобства
+export type { ApiError };

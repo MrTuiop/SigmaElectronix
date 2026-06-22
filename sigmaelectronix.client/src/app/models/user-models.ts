@@ -1,40 +1,46 @@
 // То, что мы получаем с сервера
 export interface UserDto {
-  id: string;
-  userName: string; // <-- ДОБАВИЛИ
-  email: string;
-  phoneNumber: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  bonusBalance: number;
-  isActive: boolean;
-  createdAt: string;
-  roles: string[];
-  avatarUrl?: string;
+  readonly id: string;
+  readonly userName: string;
+  readonly email: string;
+  readonly phoneNumber: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly fullName: string;
+  readonly bonusBalance: number;
+  readonly isActive: boolean;
+  readonly createdAt: string;
+  readonly roles: readonly string[];
+  readonly avatarUrl?: string;
 }
 
 export interface CreateUserDto {
-  userName: string; // <-- ДОБАВИЛИ
-  email: string;
-  phoneNumber: string;
-  password?: string;
-  firstName: string;
-  lastName: string;
-  role: string;
+  readonly userName: string;
+  readonly email: string;
+  readonly phoneNumber: string;
+  readonly password?: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly role: string;
 }
 
+// Обычное обновление пользователем (без бонусов и isActive)
 export interface UpdateUserDto {
-  userName: string; // <-- ДОБАВИЛИ
-  email: string;
-  phoneNumber: string;
-  firstName: string;
-  lastName: string;
-  bonusBalance: number;
-  isActive: boolean;
+  readonly userName: string;
+  readonly email: string;
+  readonly phoneNumber: string;
+  readonly firstName: string;
+  readonly lastName: string;
+}
+
+// Админское обновление (включает бонусы, статус, роли)
+export interface AdminUpdateUserDto extends UpdateUserDto {
+  readonly bonusBalance: number;
+  readonly isActive: boolean;
+  readonly roles: readonly string[];
 }
 
 // Для смены пароля (Админ)
 export interface ChangeUserPasswordDto {
-  newPassword: string;
+  readonly newPassword: string;
 }

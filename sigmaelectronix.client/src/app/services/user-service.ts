@@ -5,7 +5,8 @@ import {
   UserDto,
   CreateUserDto,
   UpdateUserDto,
-  ChangeUserPasswordDto
+  ChangeUserPasswordDto,
+  AdminUpdateUserDto
 } from '../models/user-models';
 
 @Injectable({ providedIn: 'root' })
@@ -43,7 +44,7 @@ export class UserService {
   /**
    * Обновить данные пользователя (Admin, Manager)
    */
-  updateUser(id: string, dto: UpdateUserDto): Observable<UserDto> {
+  updateUser(id: string, dto: AdminUpdateUserDto): Observable<UserDto> {
     return this.http.put<UserDto>(`${this.baseUrl}/${id}`, dto).pipe(
       catchError(this.handleError)
     );

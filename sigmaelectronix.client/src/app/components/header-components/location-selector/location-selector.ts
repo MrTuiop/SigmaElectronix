@@ -100,16 +100,19 @@ export class LocationSelectorComponent implements OnInit {
   ngOnInit(): void { }
 
   private fallbackToDetection(): void {
-    if (this.allCities().length === 0) {
+    // 🛑 Читаем список городов через untracked, чтобы effect не перезапускался при их загрузке!
+    const cities = untracked(this.allCities);
+
+    if (cities.length === 0) {
       this.cityService.getAll().subscribe({
-        next: (cities) => {
-          this.allCities.set(cities);
-          this.detectCityFromIp(cities);
+        next: (loadedCities) => {
+          this.allCities.set(loadedCities);
+          this.detectCityFromIp(loadedCities); // Переходим к определению по IP
         },
-        error: () => this.applyDefaultCity()
+        error: () => this.applyDefaultCity() // Если бэкенд недоступен
       });
     } else {
-      this.detectCityFromIp(this.allCities());
+      this.detectCityFromIp(cities);
     }
   }
 

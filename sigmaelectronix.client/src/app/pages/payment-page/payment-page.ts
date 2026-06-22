@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order-service';
-import { OrderDto } from '../../models/order-model';
+import { OrderDto } from '../../models/order-models';
 import { LucideCheckCircle, LucideShieldCheck } from '@lucide/angular';
 import { ToastService } from '../../services/toast'; // <-- Убедись, что путь до сервиса правильный
 

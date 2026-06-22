@@ -2,7 +2,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../../services/user-service';
-import { UserDto, CreateUserDto, UpdateUserDto } from '../../../models/user-models';
+import { UserDto, CreateUserDto, AdminUpdateUserDto } from '../../../models/user-models';
 import { ToastService } from '../../../services/toast';
 import {
   LucideShield, LucideUserPlus, LucideTrash2, LucideEdit2,
@@ -25,7 +25,7 @@ import { ConfirmModalComponent } from '../../shared-components/confirm-modal/con
     LucideUser, LucideCheck, LucideChevronDown, LucideArrowLeft,
     LucideX,
     SpinnerComponent,
-    ConfirmModalComponent // <-- Добавили твою модалку в импорты
+    ConfirmModalComponent
   ],
   templateUrl: './manager-users.html',
   styleUrl: './manager-users.css'
@@ -35,7 +35,6 @@ export class ManagerUsersComponent implements OnInit {
   private fb = inject(FormBuilder);
   private toastService = inject(ToastService);
 
-  // --- Состояния ---
   users = signal<UserDto[]>([]);
   loading = signal(false);
   searchQuery = signal('');
@@ -46,16 +45,13 @@ export class ManagerUsersComponent implements OnInit {
 
   userForm!: FormGroup;
 
-  // --- Состояния для модального окна смены пароля ---
   showPasswordModal = signal(false);
   passwordToChange = signal('');
   userForPasswordChange = signal<UserDto | null>(null);
 
-  // --- НОВОЕ: Состояния для окна подтверждения удаления ---
   showConfirmModal = signal(false);
   userToDelete = signal<UserDto | null>(null);
 
-  // --- Умная фильтрация ---
   filteredUsers = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     if (!query) return this.users();
@@ -116,7 +112,6 @@ export class ManagerUsersComponent implements OnInit {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
-  // --- Управление формой ---
   openCreateMode(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
@@ -168,14 +163,16 @@ export class ManagerUsersComponent implements OnInit {
     const formValue = this.userForm.value;
 
     if (this.isEditing() && this.editingId()) {
-      const updateDto: UpdateUserDto = {
+      // ✅ Используем AdminUpdateUserDto вместо UpdateUserDto
+      const updateDto: AdminUpdateUserDto = {
         userName: formValue.userName,
         firstName: formValue.firstName,
         lastName: formValue.lastName,
         email: formValue.email,
         phoneNumber: formValue.phoneNumber,
         bonusBalance: formValue.bonusBalance,
-        isActive: formValue.isActive
+        isActive: formValue.isActive,
+        roles: [formValue.role]
       };
 
       this.userService.updateUser(this.editingId()!, updateDto).subscribe({
@@ -214,7 +211,7 @@ export class ManagerUsersComponent implements OnInit {
     }
   }
 
-  // --- Быстрые действия ---
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД (иммутабельный подход)
   toggleStatus(user: UserDto): void {
     if (user.roles?.includes('Admin')) {
       this.toastService.error('Нельзя изменить статус администратора!');
@@ -225,21 +222,28 @@ export class ManagerUsersComponent implements OnInit {
     if (confirm(`Вы уверены, что хотите ${action} пользователя ${user.fullName || user.userName}?`)) {
 
       const originalStatus = user.isActive;
-      user.isActive = !user.isActive; // Оптимистичный UI
+      const newStatus = !originalStatus;
+
+      // Optimistic UI: создаём НОВЫЙ массив
+      this.users.update(items =>
+        items.map(u => u.id === user.id ? { ...u, isActive: newStatus } : u)
+      );
 
       this.userService.toggleStatus(user.id).subscribe({
         next: () => {
-          this.toastService.info(`Статус пользователя изменён на "${user.isActive ? 'Активен' : 'Заблокирован'}"`);
+          this.toastService.info(`Статус пользователя изменён на "${newStatus ? 'Активен' : 'Заблокирован'}"`);
         },
         error: () => {
-          user.isActive = originalStatus; // Откат
+          // Rollback: создаём новый массив с исходным статусом
+          this.users.update(items =>
+            items.map(u => u.id === user.id ? { ...u, isActive: originalStatus } : u)
+          );
           this.toastService.error('Не удалось изменить статус пользователя.');
         }
       });
     }
   }
 
-  // 1. Изменили метод: теперь он не использует confirm(), а вызывает модалку
   deleteUser(user: UserDto): void {
     if (user.roles?.includes('Admin')) {
       this.toastService.error('Нельзя удалить аккаунт администратора!');
@@ -250,7 +254,6 @@ export class ManagerUsersComponent implements OnInit {
     this.showConfirmModal.set(true);
   }
 
-  // 2. Метод, который сработает при нажатии "Удалить" внутри модального окна
   confirmDelete(): void {
     const user = this.userToDelete();
     if (!user) return;
@@ -272,13 +275,11 @@ export class ManagerUsersComponent implements OnInit {
     });
   }
 
-  // 3. Метод, который сработает при отмене
   cancelDelete(): void {
     this.showConfirmModal.set(false);
     this.userToDelete.set(null);
   }
 
-  // --- Модальное окно смены пароля ---
   openPasswordModal(user: UserDto): void {
     this.userForPasswordChange.set(user);
     this.passwordToChange.set('');

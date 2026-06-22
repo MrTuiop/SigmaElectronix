@@ -123,10 +123,11 @@ namespace SigmaElectronix.Server.Services
                 .Where(p => productIds.Contains(p.Id))
                 .Include(p => p.Images)
                 .Include(p => p.Brand)
+                    .ThenInclude(b => b.Translations) // 🚀 Подтягиваем переводы бренда
+                .Include(p => p.Translations) // 🚀 Подтягиваем переводы товара
                 .ToDictionaryAsync(p => p.Id);
 
             // 🎯 Считаем новинки (например, добавленные за последние 30 дней)
-            // Замени CreatedAt на нужное поле из твоей модели Product
             var thresholdDate = DateTime.UtcNow.AddDays(-30);
 
             var itemDtos = wishlist.Items.Select(item =>
@@ -140,15 +141,24 @@ namespace SigmaElectronix.Server.Services
                         .OrderBy(i => i.SortOrder)
                         .FirstOrDefault()?.Url;
 
+                // 🚀 Извлекаем название товара из переводов (предпочитаем русский, иначе первый доступный)
+                var productName = product?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                               ?? product?.Translations.FirstOrDefault()?.Name
+                               ?? "Unknown";
+
+                // 🚀 Извлекаем название бренда из переводов
+                var brandName = product?.Brand?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                             ?? product?.Brand?.Translations.FirstOrDefault()?.Name;
+
                 return new WishlistItemDto
                 {
                     Id = item.Id,
                     ProductId = item.ProductId,
-                    ProductName = product?.Name ?? "Unknown",
+                    ProductName = productName,
                     ProductImage = mainImage,
                     Price = product?.Price ?? 0,
 
-                    BrandName = product?.Brand?.Name,
+                    BrandName = brandName,
                     AverageRating = product?.AverageRating ?? 0,
                     ReviewsCount = product?.ReviewsCount ?? 0,
                     DiscountPrice = product?.DiscountPrice,

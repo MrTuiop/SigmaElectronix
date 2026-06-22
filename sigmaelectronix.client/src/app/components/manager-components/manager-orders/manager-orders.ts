@@ -2,7 +2,6 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../services/order-service';
-import { OrderDto, OrderItemDto } from '../../../models/order-model';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 import { ConfirmModalComponent } from '../../shared-components/confirm-modal/confirm-modal';
 import { ToastService } from '../../../services/toast';
@@ -11,6 +10,7 @@ import {
   LucideSearch, LucideUser, LucideMapPin, LucideCreditCard, LucideTruck, LucideCalendarClock,
   LucideBanknote
 } from '@lucide/angular';
+import { OrderDto } from '../../../models/order-models';
 
 @Component({
   selector: 'app-manager-orders',

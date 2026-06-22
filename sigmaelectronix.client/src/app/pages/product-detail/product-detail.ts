@@ -18,8 +18,7 @@ import { ToastService } from '../../services/toast';
 import { ReviewService } from '../../services/review-service';
 import { AuthService } from '../../services/auth-service';
 
-import { ProductDetailDto } from '../../models/product-models';
-import { ProductListDto } from '../../models/brand-models';
+import { ProductDetailDto, ProductListDto } from '../../models/product-models';
 import { ReviewDto } from '../../models/review-models';
 import { AuthModalComponent } from '../../components/auth-components/auth-modal/auth-modal';
 import { ConfirmModalComponent } from '../../components/shared-components/confirm-modal/confirm-modal';

@@ -47,6 +47,28 @@
         @if (!isSidebarCollapsed()) { <span>Бренды</span> }
       </a>
 
+      <div class="nav-divider">Локализация и Переводы</div>
+
+      <a routerLink="/manager/languages" routerLinkActive="active" class="nav-item">
+        <svg lucideGlobe size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Языки системы</span> }
+      </a>
+
+      <a routerLink="/manager/translations/products" routerLinkActive="active" class="nav-item">
+        <svg lucideLanguages size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Переводы товаров</span> }
+      </a>
+
+      <a routerLink="/manager/translations/categories" routerLinkActive="active" class="nav-item">
+        <svg lucideFolderTree size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Переводы категорий</span> }
+      </a>
+
+      <a routerLink="/manager/translations/brands" routerLinkActive="active" class="nav-item">
+        <svg lucideAward size="20" strokeWidth="1.5"></svg>
+        @if (!isSidebarCollapsed()) { <span>Переводы брендов</span> }
+      </a>
+
       <div class="nav-divider">Склад и Магазины</div>
 
       <a routerLink="/manager/stores" routerLinkActive="active" class="nav-item">

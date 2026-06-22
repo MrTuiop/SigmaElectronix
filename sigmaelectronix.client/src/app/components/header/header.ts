@@ -16,6 +16,7 @@ import { WishlistService } from '../../services/wishlist-service';
 import { CartService } from '../../services/cart-service';
 import { SearchBarComponent } from '../header-components/search-bar/search-bar';
 import { LocationSelectorComponent } from '../header-components/location-selector/location-selector';
+import { LanguageSelectorComponent } from '../header-components/language-selector/language-selector';
 
 @Component({
   selector: 'app-header',
@@ -27,7 +28,7 @@ import { LocationSelectorComponent } from '../header-components/location-selecto
     LucideMapPin, LucideGlobe, LucideSun, LucideMoon, LucideSearch,
     LucideHeart, LucideShoppingCart, LucideUser,
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
-    AuthModalComponent, SearchBarComponent, LocationSelectorComponent, LucideLayoutDashboard
+    AuthModalComponent, SearchBarComponent, LocationSelectorComponent, LucideLayoutDashboard, LanguageSelectorComponent
   ],
   templateUrl: './header.html',
   styleUrl: './header.css',
