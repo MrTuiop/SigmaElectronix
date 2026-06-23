@@ -1,11 +1,16 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { LanguageDto, CreateUpdateLanguageDto } from '../models/language-models';
+import { ToastService } from './toast';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private http = inject(HttpClient);
+  private toastService = inject(ToastService); // 👈 2. Инжектируем сервис уведомлений
+  private translate = inject(TranslateService);
+
   private baseUrl = '/api/languages';
 
   // ==========================================
@@ -15,6 +20,14 @@ export class LanguageService {
   // Читаем сохраненный язык из кэша браузера. Если его нет — ставим 'ru' по умолчанию.
   readonly currentLanguage = signal<string>(localStorage.getItem('app_language') || 'ru');
 
+  private languageChangedSubject = new Subject<string>();
+  readonly languageChanged$ = this.languageChangedSubject.asObservable();
+
+  constructor() {
+    // 2. Сразу применяем язык из Сигнала при загрузке сайта
+    this.translate.use(this.currentLanguage());
+  }
+
   /**
    * Метод смены языка пользователем (вызывается из шапки сайта)
    */
@@ -23,10 +36,21 @@ export class LanguageService {
 
     localStorage.setItem('app_language', code);
     this.currentLanguage.set(code);
+    this.languageChangedSubject.next(code);
 
-    // Перезагружаем страницу, чтобы бэкенд отдал все товары/меню на новом языке
-    // (Это самый надежный способ сбросить старый кэш товаров)
-    window.location.reload();
+    // 🚀 3. Определяем красивое название языка для вывода
+    const languageNames: Record<string, string> = {
+      'ru': 'Русский',
+      'en': 'English',
+      'uz': 'Oʻzbekcha'
+    };
+    // Берем название из словаря. Если вдруг придет неизвестный код, просто делаем его большими буквами (напр. "FR")
+    const displayName = languageNames[code] || code.toUpperCase();
+
+    this.translate.use(code);
+
+    // 🚀 4. Выводим уведомление об успешной смене языка
+    this.toastService.success(`Язык интерфейса изменён на «${displayName}»`);
   }
 
   // ==========================================

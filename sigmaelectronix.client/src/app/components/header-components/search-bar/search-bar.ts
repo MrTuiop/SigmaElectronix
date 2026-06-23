@@ -1,11 +1,12 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router'; // <-- 1. ДОБАВИЛ Router
+import { RouterModule, Router } from '@angular/router';
 import { LucideSearch } from '@lucide/angular';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { SearchService } from '../../../services/search-service';
 import { SearchSuggestDto } from '../../../models/search-models';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем
 
 @Component({
   selector: 'app-search-bar',
@@ -14,24 +15,43 @@ import { SearchSuggestDto } from '../../../models/search-models';
   templateUrl: './search-bar.html',
   styleUrls: ['./search-bar.css'],
 })
-export class SearchBarComponent implements OnInit{
+export class SearchBarComponent implements OnInit {
   private searchService = inject(SearchService);
-  private router = inject(Router); // <-- 2. ИНЖЕКТИРУЕМ РОУТЕР
+  private router = inject(Router);
+  private languageService = inject(LanguageService); // 👈 Инжектим
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
   searchQuery = signal('');
-  defaultPlaceholder = 'Искать ноутбук, смартфон, наушники...';
-  currentPlaceholder = signal(this.defaultPlaceholder);
 
-  // Сигналы для умного поиска
+  // 👇 Словарь переводов для placeholder и fallback тегов
+  private readonly translations: Record<string, { placeholder: string; fallbackTags: string[] }> = {
+    ru: {
+      placeholder: 'Искать ноутбук, смартфон, наушники...',
+      fallbackTags: ['Смартфоны', 'Ноутбуки', 'Наушники', 'Игры', 'Аксессуары']
+    },
+    en: {
+      placeholder: 'Search laptop, smartphone, headphones...',
+      fallbackTags: ['Smartphones', 'Laptops', 'Headphones', 'Gaming', 'Accessories']
+    },
+    uz: {
+      placeholder: 'Noutbuk, smartfon, quloqchin qidirish...',
+      fallbackTags: ['Smartfonlar', 'Noutbuklar', 'Quloqchinlar', 'O\'yinlar', 'Aksessuarlar']
+    }
+  };
+
+  defaultPlaceholder = signal(this.getTranslation().placeholder);
+  currentPlaceholder = signal(this.getTranslation().placeholder);
+
   suggestions = signal<SearchSuggestDto | null>(null);
   isDropdownOpen = signal(false);
   isLoading = signal(false);
-
   quickTags = signal<string[]>([]);
 
   hoverTimeout: any;
 
   constructor() {
+    // Реактивный поиск с debounce
     toObservable(this.searchQuery).pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -59,34 +79,91 @@ export class SearchBarComponent implements OnInit{
         this.isLoading.set(false);
       }
     });
+
+    // 👇 Магия effect: реагирует на смену языка
+    this.languageEffect = effect(() => {
+      const currentLang = this.languageService.currentLanguage();
+      if (this.previousLanguage() !== currentLang) {
+        this.previousLanguage.set(currentLang);
+        this.onLanguageChanged();
+      }
+    });
   }
 
+  private languageEffect!: ReturnType<typeof effect>;
+
   ngOnInit(): void {
+    this.loadPopularTags();
+  }
+
+  // 👇 Отдельный метод для загрузки тегов (используется в ngOnInit и при смене языка)
+  private loadPopularTags(): void {
     this.searchService.getPopularTags(7).subscribe({
       next: (tags) => {
         if (tags && tags.length > 0) {
           this.quickTags.set(tags);
         } else {
-          // Если бэкенд почему-то ничего не вернул, ставим запасные (Fallback)
-          this.quickTags.set(['Смартфоны', 'Ноутбуки', 'Наушники', 'Игры', 'Аксессуары']);
+          this.quickTags.set(this.getTranslation().fallbackTags);
         }
       },
       error: (err) => {
         console.error('Ошибка при загрузке популярных тегов:', err);
-        // Запасной вариант при ошибке сервера
-        this.quickTags.set(['Смартфоны', 'Ноутбуки', 'Наушники', 'Игры', 'Аксессуары']);
+        this.quickTags.set(this.getTranslation().fallbackTags);
       }
     });
   }
 
+  // 👇 Вызывается при смене языка
+  private onLanguageChanged(): void {
+    // 1. Обновляем placeholder
+    const translation = this.getTranslation();
+    this.defaultPlaceholder.set(translation.placeholder);
+
+    // Если placeholder не был изменён hover-эффектом — обновляем currentPlaceholder
+    if (!this.currentPlaceholder().includes('Нажмите, чтобы искать') &&
+      !this.currentPlaceholder().includes('Click to search') &&
+      !this.currentPlaceholder().includes('Bosing')) {
+      this.currentPlaceholder.set(translation.placeholder);
+    }
+
+    // 2. Перезагружаем популярные теги (придут с новым переводом)
+    this.loadPopularTags();
+
+    // 3. Если пользователь уже ввёл запрос — перезапускаем поиск, 
+    //    чтобы dropdown обновился на новом языке
+    const currentQuery = this.searchQuery();
+    if (currentQuery && currentQuery.length >= 2) {
+      this.isLoading.set(true);
+      this.searchService.getSuggestions(currentQuery).subscribe({
+        next: (data) => {
+          this.suggestions.set(data);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  // 👇 Хелпер для получения перевода по текущему языку
+  private getTranslation() {
+    const lang = this.languageService.currentLanguage();
+    return this.translations[lang] || this.translations['ru'];
+  }
+
   onTagHover(tag: string) {
     clearTimeout(this.hoverTimeout);
-    this.currentPlaceholder.set(`Нажмите, чтобы искать: "${tag}"`);
+    const lang = this.languageService.currentLanguage();
+    const prefix = lang === 'en' ? 'Click to search:'
+      : lang === 'uz' ? 'Qidirish uchun bosing:'
+        : 'Нажмите, чтобы искать:';
+    this.currentPlaceholder.set(`${prefix} "${tag}"`);
   }
 
   onTagLeave() {
     this.hoverTimeout = setTimeout(() => {
-      this.currentPlaceholder.set(this.defaultPlaceholder);
+      this.currentPlaceholder.set(this.defaultPlaceholder());
     }, 50);
   }
 
@@ -103,42 +180,31 @@ export class SearchBarComponent implements OnInit{
     this.isDropdownOpen.set(false);
   }
 
-  // 🚀 3. ОБНОВЛЕННЫЙ МЕТОД ПОИСКА ПО ENTER / КЛИКУ
   triggerSearch() {
     const query = this.searchQuery().trim();
     if (!query) return;
 
     this.closeDropdown();
 
-    // Берем текущие подсказки (то, что бэкенд уже успел найти)
     const sugs = this.suggestions();
 
     if (sugs) {
-      // ПРИОРИТЕТ 1: Если нашли подходящую категорию (ввели "телефоны")
       if (sugs.categories.length > 0) {
         this.router.navigate(['/catalog', sugs.categories[0].slug]);
         return;
       }
 
-      // ПРИОРИТЕТ 2: Если нашли подходящий бренд (ввели "Apple")
       if (sugs.brands.length > 0) {
         this.router.navigate(['/brands', sugs.brands[0].slug]);
         return;
       }
 
-      // ПРИОРИТЕТ 3: Если нашли конкретный товар (ввели "iPhone 15 Pro")
       if (sugs.products.length > 0) {
-        // Убедись, что тут правильный маршрут (/product или /products)
         this.router.navigate(['/products', sugs.products[0].slug]);
         return;
       }
     }
 
-    // 💡 ПАДЕНИЕ (ФОЛЛБЭК):
-    // Если пользователь напечатал абракадабру очень быстро и сразу нажал Enter,
-    // или ничего не нашлось — мы кидаем его на общую страницу результатов поиска.
-    // Если у тебя еще нет такой страницы, пока можешь оставить просто console.log
-    // this.router.navigate(['/search'], { queryParams: { q: query } });
     console.log('Ничего конкретного не найдено, открываем страницу всех результатов для:', query);
   }
 }

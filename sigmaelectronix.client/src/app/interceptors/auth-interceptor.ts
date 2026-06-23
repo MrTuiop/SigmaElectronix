@@ -10,8 +10,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.token();
 
+  const isInternalRequest = req.url.startsWith('/');
+
   let authReq = req;
-  if (token) {
+
+  // Добавляем токен ТОЛЬКО к внутренним запросам
+  if (token && isInternalRequest) {
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });
@@ -19,8 +23,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        authService.logout(); // очистит токен и редиректнет
+      if (error.status === 401 && isInternalRequest) {
+        authService.logout();
       }
       return throwError(() => error);
     })

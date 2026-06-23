@@ -41,9 +41,16 @@
         </div>
 
         <button class="add-to-cart-btn"
-                (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(item.productId)">
+                [class.in-cart]="cartService.isInCart(item.productId)"
+                (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(item)">
+
+          @if (cartService.isInCart(item.productId)) {
+          <svg lucideCheck size="16" strokeWidth="2.5"></svg>
+          В корзине
+          } @else {
           <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
           В корзину
+          }
         </button>
       </div>
     </a>

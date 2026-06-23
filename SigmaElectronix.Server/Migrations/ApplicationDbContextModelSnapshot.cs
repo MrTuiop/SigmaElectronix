@@ -1045,7 +1045,7 @@ namespace SigmaElectronix.Server.Migrations
                     b.ToTable("StoreInventories");
                 });
 
-            modelBuilder.Entity("SigmaElectronix.Server.Entities.Translation.Language", b =>
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.TranslationModels.Language", b =>
                 {
                     b.Property<string>("Code")
                         .HasMaxLength(10)
@@ -1073,6 +1073,36 @@ namespace SigmaElectronix.Server.Migrations
                     b.HasKey("Code");
 
                     b.ToTable("Languages");
+                });
+
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.TranslationModels.UiTranslation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key", "LanguageCode")
+                        .IsUnique();
+
+                    b.ToTable("UiTranslations");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.UserModels.Address", b =>
@@ -1471,7 +1501,7 @@ namespace SigmaElectronix.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SigmaElectronix.Server.Entities.Translation.Language", "Language")
+                    b.HasOne("SigmaElectronix.Server.Entities.TranslationModels.Language", "Language")
                         .WithMany()
                         .HasForeignKey("LanguageCode")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1602,7 +1632,7 @@ namespace SigmaElectronix.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SigmaElectronix.Server.Entities.Translation.Language", "Language")
+                    b.HasOne("SigmaElectronix.Server.Entities.TranslationModels.Language", "Language")
                         .WithMany()
                         .HasForeignKey("LanguageCode")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1645,7 +1675,7 @@ namespace SigmaElectronix.Server.Migrations
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.ProductTranslation", b =>
                 {
-                    b.HasOne("SigmaElectronix.Server.Entities.Translation.Language", "Language")
+                    b.HasOne("SigmaElectronix.Server.Entities.TranslationModels.Language", "Language")
                         .WithMany()
                         .HasForeignKey("LanguageCode")
                         .OnDelete(DeleteBehavior.Restrict)

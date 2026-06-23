@@ -152,6 +152,19 @@
   @if (viewMode() === 'create') {
   <div class="wizard-container">
 
+    <div class="lang-notice-banner animate-fade">
+      <div class="lang-notice-icon">
+        <svg lucideGlobe size="20" strokeWidth="1.5"></svg>
+      </div>
+      <div class="lang-notice-content">
+        <h4>Базовый язык создания: Русский 🇷🇺</h4>
+        <p>
+          В этом разделе все основные данные, характеристики и медиафайлы заполняются на основном языке по умолчанию.
+          Для перевода на другие языки (например, Английский или Немецкий), <strong>сохраните бренд</strong> и воспользуйтесь разделом <strong>Локализация и переводы</strong>.
+        </p>
+      </div>
+    </div>
+
     <div class="wizard-stepper">
       <div class="step" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
         <span class="step-num">1</span>

@@ -6,7 +6,7 @@ using SigmaElectronix.Server.Entities.CartModels;
 using SigmaElectronix.Server.Entities.OrderModels;
 using SigmaElectronix.Server.Entities.ProductModels;
 using SigmaElectronix.Server.Entities.StoreModels;
-using SigmaElectronix.Server.Entities.Translation;
+using SigmaElectronix.Server.Entities.TranslationModels;
 using SigmaElectronix.Server.Entities.UserModels;
 using SigmaElectronix.Server.Entities.WishlistModels;
 using System.Text.Json;
@@ -75,6 +75,7 @@ namespace SigmaElectronix.Server.Data
         public DbSet<BrandTranslation> BrandTranslations { get; set; } // 🆕 Добавлено
 
         public DbSet<ProductTranslation> ProductTranslations { get; set; } // 🆕 Добавлено
+        public DbSet<UiTranslation> UiTranslations { get; set; }
 
         #endregion
 
@@ -600,6 +601,17 @@ namespace SigmaElectronix.Server.Data
                 entity.HasKey(l => l.Code); // 🎯 КРИТИЧЕСКИ ВАЖНО: Code - это первичный ключ!
                 entity.Property(l => l.Code).HasMaxLength(10); // Ограничиваем длину (ru, en-US)
                 entity.Property(l => l.Name).IsRequired().HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<UiTranslation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Key).IsRequired().HasMaxLength(150);
+                entity.Property(e => e.LanguageCode).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.Value).IsRequired();
+
+                // 🔒 Уникальный индекс: один ключ = один перевод для конкретного языка
+                entity.HasIndex(e => new { e.Key, e.LanguageCode }).IsUnique();
             });
 
             #endregion

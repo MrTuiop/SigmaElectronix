@@ -1,9 +1,9 @@
 import { Component, OnInit, signal, inject, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpEventType } from '@angular/common/http'; // 👈 Добавлено для прогресс-бара
+import { HttpEventType } from '@angular/common/http';
 import { CategoryService } from '../../../services/category-service';
-import { FileService } from '../../../services/file-service'; // 👈 Подключен сервис файлов
+import { FileService } from '../../../services/file-service';
 import { CategoryDto, CreateCategoryDto, UpdateCategoryDto, CategoryTreeDto } from '../../../models/category-models';
 import {
   LucideFolderTree, LucidePlus, LucideTrash2, LucideEdit2,
@@ -11,7 +11,8 @@ import {
   LucideImage, LucideFolder, LucideCheck,
   LucideSmartphone, LucideLaptop, LucideHeadphones,
   LucideWatch, LucideTv, LucideGamepad2,
-  LucideMonitor, LucideCamera
+  LucideMonitor, LucideCamera,
+  LucideGlobe // 👈 Подключили иконку глобуса
 } from '@lucide/angular';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 
@@ -24,6 +25,7 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner';
     LucideFolderTree, LucidePlus, LucideTrash2, LucideEdit2,
     LucideChevronRight, LucideChevronDown, LucideSave, LucideX,
     LucideImage, LucideFolder, LucideCheck,
+    LucideGlobe, // 👈 Добавили в imports
     SpinnerComponent
   ],
   templateUrl: './manager-categories.html',
@@ -31,7 +33,7 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 })
 export class ManagerCategoriesComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryService);
-  private fileService = inject(FileService); // 👈 Инжектируем
+  private fileService = inject(FileService);
   private fb = inject(FormBuilder);
 
   categoryTree = this.categoryService.categoryTree;
@@ -49,12 +51,12 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
   isParentDropdownOpen = signal(false);
   selectedParentDisplay = signal('');
 
-  // 🚀 СОСТОЯНИЯ ЗАГРУЗКИ И DRAG&DROP
+  // СОСТОЯНИЯ ЗАГРУЗКИ И DRAG&DROP
   isUploadingImage = signal(false);
   isDragoverImage = signal(false);
   imageUploadProgress = signal(0);
 
-  // 🚀 СБОРЩИК МУСОРА
+  // СБОРЩИК МУСОРА
   private tempUploadedFiles: string[] = [];      // Временные файлы
   private filesToDeleteOnSave: string[] = [];    // Оригиналы, которые нужно снести при сохранении
   private originalImageUrl: string = '';         // Запомненный оригинал
@@ -97,12 +99,10 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     this.initForm();
   }
 
-  // Очистка при уходе со страницы
   ngOnDestroy(): void {
     this.cleanupTempFiles();
   }
 
-  // 🚀 ОЧИСТКА МУСОРА
   private cleanupTempFiles(): void {
     this.tempUploadedFiles.forEach(url => {
       this.fileService.deleteImage(url).subscribe();
@@ -113,8 +113,8 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     this.loading.set(true);
-    this.categoryService.loadTree().subscribe();
-    this.categoryService.loadAll().subscribe({
+    this.categoryService.loadTreeForAdmin().subscribe();
+    this.categoryService.loadAllForAdmin().subscribe({
       next: () => {
         const rootIds = this.categoryTree().map(c => c.id);
         this.expandedNodes.set(new Set(rootIds));
@@ -141,7 +141,6 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- МЕТОДЫ DRAG AND DROP И ЗАГРУЗКИ ---
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -218,7 +217,6 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     this.categoryForm.patchValue({ imageUrl: '' });
   }
 
-  // --- Навигация и работа с формой ---
   openCreateMode(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
@@ -235,32 +233,49 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     this.isEditing.set(true);
     this.editingId.set(category.id);
 
-    const fullCategory = this.allCategories().find(c => c.id === category.id);
+    this.loading.set(true);
 
-    this.originalImageUrl = fullCategory?.imageUrl || category.imageUrl || '';
-    this.tempUploadedFiles = [];
-    this.filesToDeleteOnSave = [];
+    this.categoryService.getByIdForAdmin(category.id).subscribe({
+      next: (fullCategory) => {
+        if (!fullCategory) {
+          alert('Категория не найдена');
+          this.loading.set(false);
+          this.isEditing.set(false);
+          return;
+        }
 
-    this.categoryForm.patchValue({
-      name: fullCategory?.name || category.name,
-      slug: fullCategory?.slug || category.slug,
-      imageUrl: this.originalImageUrl,
-      icon: fullCategory?.icon || (category as any).icon || 'folder',
-      parentCategoryId: fullCategory?.parentCategoryId || null
+        this.originalImageUrl = fullCategory.imageUrl || '';
+        this.tempUploadedFiles = [];
+        this.filesToDeleteOnSave = [];
+
+        this.categoryForm.patchValue({
+          name: fullCategory.name,
+          slug: fullCategory.slug,
+          imageUrl: this.originalImageUrl,
+          icon: fullCategory.icon || 'folder',
+          parentCategoryId: fullCategory.parentCategoryId || null
+        });
+
+        if (fullCategory.parentCategoryId) {
+          const parent = this.filteredParents().find(p => p.id === fullCategory.parentCategoryId);
+          this.selectedParentDisplay.set(parent ? parent.displayPath : '');
+        } else {
+          this.selectedParentDisplay.set('Без родителя (Корневая)');
+        }
+
+        this.viewMode.set('form');
+        this.loading.set(false);
+      },
+      error: () => {
+        alert('Не удалось загрузить данные категории');
+        this.loading.set(false);
+        this.isEditing.set(false);
+      }
     });
-
-    if (fullCategory?.parentCategoryId) {
-      const parent = this.filteredParents().find(p => p.id === fullCategory.parentCategoryId);
-      this.selectedParentDisplay.set(parent ? parent.displayPath : '');
-    } else {
-      this.selectedParentDisplay.set('Без родителя (Корневая)');
-    }
-
-    this.viewMode.set('form');
   }
 
   closeForm(): void {
-    this.cleanupTempFiles(); // Очищаем незавершенную работу
+    this.cleanupTempFiles();
     this.viewMode.set('list');
   }
 
@@ -268,10 +283,23 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     if (this.categoryForm.invalid) return;
 
     this.loading.set(true);
+    const formValue = this.categoryForm.value;
+
+    const payload = {
+      imageUrl: formValue.imageUrl || null,
+      icon: formValue.icon || 'folder',
+      parentCategoryId: formValue.parentCategoryId || null,
+      translations: [
+        {
+          languageCode: 'ru',
+          name: formValue.name,
+          slug: formValue.slug
+        }
+      ]
+    };
 
     if (this.isEditing() && this.editingId()) {
-      const dto: UpdateCategoryDto = this.categoryForm.value;
-      this.categoryService.update(this.editingId()!, dto).subscribe({
+      this.categoryService.update(this.editingId()!, payload as UpdateCategoryDto).subscribe({
         next: () => this.onSaveSuccess(),
         error: (err) => {
           alert(err.error?.message || 'Ошибка обновления');
@@ -279,8 +307,7 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      const dto: CreateCategoryDto = this.categoryForm.value;
-      this.categoryService.create(dto).subscribe({
+      this.categoryService.create(payload as CreateCategoryDto).subscribe({
         next: () => this.onSaveSuccess(),
         error: (err) => {
           alert(err.error?.message || 'Ошибка создания');
@@ -291,10 +318,8 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
   }
 
   private onSaveSuccess(): void {
-    // Пользователь нажал "Сохранить" -> Удаляем старые оригиналы
     this.filesToDeleteOnSave.forEach(url => this.fileService.deleteImage(url).subscribe());
 
-    // Сохраняем новые файлы
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
 
@@ -302,7 +327,6 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     this.closeForm();
   }
 
-  // --- Вспомогательные методы (Slug, Иконки и тд) ---
   slugify(text: string): string {
     const ru = {
       'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e', 'ж': 'zh',

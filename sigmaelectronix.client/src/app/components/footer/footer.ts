@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-
+import { RouterModule } from '@angular/router';
 import {
   LucideExternalLink,
   LucideSend,
@@ -16,6 +16,7 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule, // <-- Обязательно для routerLink
     LucideExternalLink,
     LucideSend,
     LucideVideo,
@@ -27,4 +28,4 @@ import {
   templateUrl: './footer.html',
   styleUrl: './footer.css',
 })
-export class FooterComponent {}
+export class FooterComponent { }

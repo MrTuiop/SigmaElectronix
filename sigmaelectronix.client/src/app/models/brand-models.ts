@@ -15,6 +15,7 @@ export interface BrandListDto {
   readonly productsCount: number;
   readonly isFeatured: boolean;
   readonly isActive: boolean;
+  readonly translationsCount: number;
 }
 
 export interface BrandImageDto {
@@ -49,6 +50,9 @@ export interface BrandShowcaseDto {
   readonly categories: readonly BrandCategoryDto[];
   readonly featuredProducts: readonly ProductListDto[];
   readonly totalProductsCount: number;
+  readonly isFeatured: boolean;
+  readonly isActive: boolean;
+  readonly translations: readonly BrandTranslationDto[];
 }
 
 // ============ Переводы ============

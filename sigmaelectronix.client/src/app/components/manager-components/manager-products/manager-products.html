@@ -171,6 +171,19 @@
   @if (viewMode() === 'form') {
   <div class="wizard-container">
 
+    <div class="lang-notice-banner animate-fade">
+      <div class="lang-notice-icon">
+        <svg lucideGlobe size="20" strokeWidth="1.5"></svg>
+      </div>
+      <div class="lang-notice-content">
+        <h4>Базовый язык создания: Русский 🇷🇺</h4>
+        <p>
+          В этом разделе все данные товара (название, описание, характеристики) заполняются на основном языке по умолчанию.
+          Для перевода карточки на другие языки (например, Английский или Немецкий), <strong>сохраните товар</strong> и воспользуйтесь разделом <strong>Локализация и переводы</strong>.
+        </p>
+      </div>
+    </div>
+
     <div class="wizard-stepper">
       <div class="step"
            [class.active]="currentStep() >= 1"

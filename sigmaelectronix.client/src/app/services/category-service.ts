@@ -94,4 +94,32 @@ export class CategoryService {
     console.error('CategoryService error:', error);
     return throwError(() => error);
   }
+
+  // ============ Админские методы — всегда на русском ============
+
+  loadAllForAdmin(): Observable<CategoryDto[]> {
+    return this.http.get<CategoryDto[]>(this.baseUrl, {
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(
+      tap(categories => this.allCategories.set(categories)),
+      catchError(this.handleError)
+    );
+  }
+
+  loadTreeForAdmin(): Observable<CategoryTreeDto[]> {
+    return this.http.get<CategoryTreeDto[]>(`${this.baseUrl}/tree`, {
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(
+      tap(tree => this.categoryTree.set(tree)),
+      catchError(this.handleError)
+    );
+  }
+
+  getByIdForAdmin(id: number): Observable<CategoryDto> {
+    return this.http.get<CategoryDto>(`${this.baseUrl}/${id}`, {
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(
+      catchError(this.handleError)
+    );
+  }
 }

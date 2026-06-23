@@ -71,6 +71,7 @@ export interface ProductDetailDto {
   readonly reviewsCount: number;
   readonly images: readonly ProductImageDto[];
   readonly createdAt: string;
+  readonly translations?: readonly ProductTranslationDto[];
 }
 
 // ============ Фильтры ============

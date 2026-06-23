@@ -11,5 +11,7 @@
         public string? ParentCategoryName { get; set; }
         public int ProductsCount { get; set; }
         public int SubCategoriesCount { get; set; }
+        public int TranslationsCount { get; set; }
+        public List<CategoryTranslationDto> Translations { get; set; } = new();
     }
 }

@@ -25,5 +25,7 @@ namespace SigmaElectronix.Server.DTOs.ProductDTOs
         public int ReviewsCount { get; set; }
         public List<ProductImageDto> Images { get; set; } = new();
         public DateTime CreatedAt { get; set; }
+
+        public List<ProductTranslationDto> Translations { get; set; } = new();
     }
 }

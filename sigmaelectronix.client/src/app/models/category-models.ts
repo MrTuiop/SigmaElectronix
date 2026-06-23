@@ -10,6 +10,8 @@ export interface CategoryDto {
   readonly parentCategoryName?: string;
   readonly productsCount: number;
   readonly subCategoriesCount: number;
+  readonly translationsCount: number;
+  readonly translations: readonly CategoryTranslationDto[];
 }
 
 export interface CategoryTreeDto {

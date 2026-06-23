@@ -1,0 +1,195 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideLanguages size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Переводы интерфейса</h2>
+        <p class="subtitle">Управление текстами статических элементов (ngx-translate)</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+    <button class="btn btn-primary" (click)="openCreateMode()">
+      <svg lucidePlus size="18" strokeWidth="1.5"></svg>
+      Добавить текст
+    </button>
+    } @else {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="lang-selector-panel" style="margin-bottom: 20px;">
+    <label>Фильтр по языку:</label>
+    <div class="lang-buttons">
+      <button class="lang-btn" [class.active]="selectedLangFilter() === 'ALL'" (click)="setLangFilter('ALL')">
+        <svg lucideGlobe size="16"></svg> Все языки
+      </button>
+      @for (lang of languages(); track lang.code) {
+      <button class="lang-btn"
+              [class.active]="selectedLangFilter() === lang.code"
+              (click)="setLangFilter(lang.code)">
+        @if (lang.iconUrl) {
+        <img [src]="lang.iconUrl" class="lang-flag" alt="flag">
+        } @else {
+        <svg lucideGlobe size="16"></svg>
+        }
+        {{ lang.nativeName }}
+      </button>
+      }
+    </div>
+  </div>
+
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск по ключу или тексту..." (input)="onSearchChange($event)">
+    </div>
+  </div>
+
+  <div class="stats-info" style="margin-bottom: 16px;">
+    Найдено переводов: <strong>{{ filteredTranslations().length }}</strong>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем словарь..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Язык</th>
+          <th>Системный ключ</th>
+          <th>Текст (Значение)</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of filteredTranslations(); track item.id) {
+        <tr>
+          <td>
+            <span class="badge badge-purple">{{ item.languageCode | uppercase }}</span>
+          </td>
+          <td>
+            <code class="slug-badge">{{ item.key | uppercase }}</code>
+          </td>
+          <td>
+            <span class="value-text">{{ item.value }}</span>
+          </td>
+          <td class="text-right">
+            <div class="actions-cell">
+              <button class="action-btn edit" (click)="editTranslation(item)" title="Редактировать">
+                <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
+              </button>
+              <button class="action-btn delete" (click)="deleteTranslation(item.id, item.key, item.languageCode)" title="Удалить">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="4" class="empty-row">Переводы не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form') {
+  <form [formGroup]="translationForm" (ngSubmit)="saveTranslation()" class="animate-fade">
+    <div class="form-step-card">
+      <h3>{{ isEditing() ? 'Редактирование перевода' : 'Новый перевод' }}</h3>
+
+      <div class="form-grid">
+
+        <div class="form-group full-width">
+          <label>Язык перевода *</label>
+          <div class="lang-buttons">
+            @for (lang of languages(); track lang.code) {
+            <button type="button" class="lang-btn"
+                    [class.active]="translationForm.get('languageCode')?.value === lang.code"
+                    (click)="selectFormLanguage(lang.code)">
+              @if (lang.iconUrl) {
+              <img [src]="lang.iconUrl" class="lang-flag" alt="flag">
+              } @else {
+              <svg lucideGlobe size="16"></svg>
+              }
+              {{ lang.nativeName }}
+            </button>
+            }
+          </div>
+          @if (translationForm.get('languageCode')?.invalid && translationForm.get('languageCode')?.touched) {
+          <span class="error-msg">Пожалуйста, выберите язык</span>
+          }
+        </div>
+
+        <div class="form-group full-width relative">
+          <label>Ключ перевода (Например: HEADER.CATALOG) *</label>
+
+          <div class="custom-search-select">
+            <input type="text"
+                   formControlName="key"
+                   (input)="onKeyInput($event)"
+                   (focus)="openKeySearch()"
+                   (blur)="closeKeySearch()"
+                   placeholder="Выберите существующий ключ или введите новый..."
+                   class="search-input mono-input"
+                   style="text-transform: uppercase;"
+                   [class.input-error]="translationForm.get('key')?.invalid && translationForm.get('key')?.touched"
+                   autocomplete="off">
+            <svg lucideChevronDown size="16" class="select-icon" (click)="openKeySearch()"></svg>
+          </div>
+
+          @if (translationForm.get('key')?.invalid && translationForm.get('key')?.touched) {
+          <span class="error-msg">Используйте только латиницу, цифры, точки и дефисы</span>
+          }
+
+          @if (isKeyDropdownOpen()) {
+          <div class="dropdown-options animate-fade">
+            @for (k of filteredKeys(); track k) {
+            <div class="option-item mono-text" (mousedown)="selectKey(k)">
+              {{ k }}
+            </div>
+            } @empty {
+            <div class="empty-option">Совпадений нет. Будет сохранен как новый ключ.</div>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="form-group full-width">
+          <label>Текст перевода *</label>
+          <textarea formControlName="value" rows="4" placeholder="Введите текст, который увидит пользователь..."
+                    [class.input-error]="translationForm.get('value')?.invalid && translationForm.get('value')?.touched"></textarea>
+          @if (translationForm.get('value')?.invalid && translationForm.get('value')?.touched) {
+          <span class="error-msg">Значение не может быть пустым</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+      <button type="submit" class="btn btn-success" [disabled]="translationForm.invalid || loading()">
+        <svg lucideCheck size="16" strokeWidth="1.5"></svg> Сохранить перевод
+      </button>
+    </div>
+  </form>
+  }
+</div>
+
+@if (showConfirmModal()) {
+<app-confirm-modal title="Удаление перевода"
+                   [message]="'Вы уверены, что хотите удалить перевод для ключа &quot;' + (translationToDelete()?.key | uppercase) + '&quot; (' + (translationToDelete()?.lang | uppercase) + ')?'"
+                   confirmText="Удалить"
+                   cancelText="Отмена"
+                   [isDestructive]="true"
+                   (confirm)="confirmDelete()"
+                   (cancel)="cancelDelete()">
+</app-confirm-modal>
+}

@@ -9,10 +9,24 @@ namespace SigmaElectronix.Server.Services
     public class WishlistService : IWishlistService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public WishlistService(ApplicationDbContext context)
+        public WishlistService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private string GetCurrentLanguage()
+        {
+            var langHeader = _httpContextAccessor.HttpContext?.Request.Headers["Accept-Language"].ToString();
+            if (!string.IsNullOrEmpty(langHeader))
+            {
+                var primaryLang = langHeader.Split(',')[0].Split('-')[0].Trim().ToLower();
+                if (primaryLang.Length >= 2) return primaryLang.Substring(0, 2);
+                return primaryLang;
+            }
+            return "ru";
         }
 
         public async Task<WishlistDto> GetWishlistAsync(string? userId, string? sessionId)
@@ -116,6 +130,8 @@ namespace SigmaElectronix.Server.Services
 
         private async Task<WishlistDto> MapToDtoAsync(Wishlist wishlist)
         {
+            var lang = GetCurrentLanguage(); // 🚀 1. Получаем текущий язык из запроса
+
             var productIds = wishlist.Items.Select(i => i.ProductId).ToList();
 
             var products = await _context.Products
@@ -123,11 +139,10 @@ namespace SigmaElectronix.Server.Services
                 .Where(p => productIds.Contains(p.Id))
                 .Include(p => p.Images)
                 .Include(p => p.Brand)
-                    .ThenInclude(b => b.Translations) // 🚀 Подтягиваем переводы бренда
-                .Include(p => p.Translations) // 🚀 Подтягиваем переводы товара
+                    .ThenInclude(b => b.Translations)
+                .Include(p => p.Translations)
                 .ToDictionaryAsync(p => p.Id);
 
-            // 🎯 Считаем новинки (например, добавленные за последние 30 дней)
             var thresholdDate = DateTime.UtcNow.AddDays(-30);
 
             var itemDtos = wishlist.Items.Select(item =>
@@ -141,13 +156,13 @@ namespace SigmaElectronix.Server.Services
                         .OrderBy(i => i.SortOrder)
                         .FirstOrDefault()?.Url;
 
-                // 🚀 Извлекаем название товара из переводов (предпочитаем русский, иначе первый доступный)
-                var productName = product?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                // 🚀 2. Подставляем lang вместо "ru" для названия товара
+                var productName = product?.Translations.FirstOrDefault(t => t.LanguageCode == lang)?.Name
                                ?? product?.Translations.FirstOrDefault()?.Name
                                ?? "Unknown";
 
-                // 🚀 Извлекаем название бренда из переводов
-                var brandName = product?.Brand?.Translations.FirstOrDefault(t => t.LanguageCode == "ru")?.Name
+                // 🚀 3. Подставляем lang вместо "ru" для названия бренда
+                var brandName = product?.Brand?.Translations.FirstOrDefault(t => t.LanguageCode == lang)?.Name
                              ?? product?.Brand?.Translations.FirstOrDefault()?.Name;
 
                 return new WishlistItemDto

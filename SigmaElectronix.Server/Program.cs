@@ -35,6 +35,7 @@ builder.Services.AddScoped<IStoreInventoryService, StoreInventoryService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ILanguageService, LanguageService>();
+builder.Services.AddScoped<IUiTranslationService, UiTranslationService>();
 
 builder.Services.AddHttpContextAccessor();
 

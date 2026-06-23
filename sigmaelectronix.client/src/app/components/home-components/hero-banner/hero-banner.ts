@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import {
@@ -6,6 +6,7 @@ import {
   LucideHeadphones, LucideChevronLeft, LucideChevronRight
 } from '@lucide/angular';
 import { ProductService } from '../../../services/product-service';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
 import { ProductListDto } from '../../../models/product-models';
 
 interface HeroSlide {
@@ -18,7 +19,7 @@ interface HeroSlide {
   btnSecondaryText: string;
   btnSecondaryLink: string;
   iconName: 'smartphone' | 'laptop' | 'headphones';
-  product?: ProductListDto; // Сюда подтянем реальный товар с сервера
+  product?: ProductListDto;
   bgGradient: string;
 }
 
@@ -40,6 +41,9 @@ interface HeroSlide {
 })
 export class HeroBannerComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
+  private languageService = inject(LanguageService); // 👈 Инжектим сервис
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage()); // 👈 Отслеживаем прошлый язык
 
   currentSlide = signal(0);
   private autoSlideInterval: any;
@@ -84,10 +88,26 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
     }
   ]);
 
+  // 👇 Магия effect: срабатывает только когда меняется currentLanguage
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      this.loadFeaturedProducts(); // Перезагружаем только товары из БД
+    }
+  });
+
   ngOnInit() {
     this.startAutoSlide();
+    this.loadFeaturedProducts(); // Вынесли в отдельный метод для переиспользования
+  }
 
-    // Подтягиваем 3 популярных/рекомендуемых товара с сервера для красоты
+  ngOnDestroy() {
+    this.stopAutoSlide();
+  }
+
+  // 👇 Отдельный метод для загрузки товаров (используется и в ngOnInit и в effect)
+  private loadFeaturedProducts(): void {
     this.productService.loadFeatured(3).subscribe(products => {
       if (products && products.length > 0) {
         this.slides.update(s => {
@@ -101,15 +121,11 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    this.stopAutoSlide();
-  }
-
   startAutoSlide() {
     this.stopAutoSlide();
     this.autoSlideInterval = setInterval(() => {
       this.nextSlide();
-    }, 6000); // Смена слайда каждые 6 секунд
+    }, 6000);
   }
 
   stopAutoSlide() {
@@ -128,14 +144,14 @@ export class HeroBannerComponent implements OnInit, OnDestroy {
 
   goToSlide(index: number) {
     this.currentSlide.set(index);
-    this.startAutoSlide(); // Перезапускаем таймер
+    this.startAutoSlide();
   }
 
   onMouseEnter() {
-    this.stopAutoSlide(); // Приостанавливаем при наведении мышью
+    this.stopAutoSlide();
   }
 
   onMouseLeave() {
-    this.startAutoSlide(); // Возобновляем
+    this.startAutoSlide();
   }
 }

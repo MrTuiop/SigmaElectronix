@@ -29,5 +29,10 @@ namespace SigmaElectronix.Server.DTOs.BrandDTOs
 
         // Общая статистика
         public int TotalProductsCount { get; set; }
+
+        public bool IsFeatured { get; set; }
+        public bool IsActive { get; set; }
+
+        public List<BrandTranslationDto> Translations { get; set; } = new();
     }
 }

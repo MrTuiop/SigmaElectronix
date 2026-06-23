@@ -10,12 +10,25 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<CartService> _logger;
-        private const string DefaultLanguage = "ru"; // 🎯 Дефолтный язык
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CartService(ApplicationDbContext context, ILogger<CartService> logger)
+        public CartService(ApplicationDbContext context, ILogger<CartService> logger, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private string GetCurrentLanguage()
+        {
+            var langHeader = _httpContextAccessor.HttpContext?.Request.Headers["Accept-Language"].ToString();
+            if (!string.IsNullOrEmpty(langHeader))
+            {
+                var primaryLang = langHeader.Split(',')[0].Split('-')[0].Trim().ToLower();
+                if (primaryLang.Length >= 2) return primaryLang.Substring(0, 2);
+                return primaryLang;
+            }
+            return "ru";
         }
 
         public async Task<CartDto> GetCartAsync(string? userId, string? sessionId)
@@ -177,14 +190,15 @@ namespace SigmaElectronix.Server.Services
 
         private async Task<CartDto> MapCartToDtoAsync(Cart cart)
         {
+            var lang = GetCurrentLanguage(); // 🚀 1. Получаем текущий язык из запроса
+
             var productIds = cart.Items.Select(i => i.ProductId).ToList();
 
-            // 🚀 Подтягиваем товары ВМЕСТЕ с их переводами
             var products = await _context.Products
                 .AsNoTracking()
                 .Where(p => productIds.Contains(p.Id))
                 .Include(p => p.Images)
-                .Include(p => p.Translations) // 🚀 ДОБАВЛЕНО: Загружаем переводы
+                .Include(p => p.Translations)
                 .ToDictionaryAsync(p => p.Id);
 
             var itemDtos = cart.Items.Select(item =>
@@ -198,9 +212,9 @@ namespace SigmaElectronix.Server.Services
                         .OrderBy(i => i.SortOrder)
                         .FirstOrDefault()?.Url;
 
-                // 🚀 Извлекаем название товара из переводов
+                // 🚀 2. Подставляем переменную lang вместо DefaultLanguage
                 var productName = product?.Translations
-                    .FirstOrDefault(t => t.LanguageCode == DefaultLanguage)?.Name
+                    .FirstOrDefault(t => t.LanguageCode == lang)?.Name
                     ?? product?.Translations?.FirstOrDefault()?.Name
                     ?? "Unknown";
 
@@ -208,7 +222,7 @@ namespace SigmaElectronix.Server.Services
                 {
                     Id = item.Id,
                     ProductId = item.ProductId,
-                    ProductName = productName, // 🚀 Используем извлеченное имя
+                    ProductName = productName,
                     ProductImage = mainImage,
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice

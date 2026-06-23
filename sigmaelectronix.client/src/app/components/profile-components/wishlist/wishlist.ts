@@ -1,12 +1,14 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, effect, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import {
   LucideHeart, LucideX, LucideSmartphone, LucideHeadphones,
-  LucideStar, LucideShoppingCart, LucidePackage
+  LucideStar, LucideShoppingCart, LucidePackage, LucideCheck
 } from '@lucide/angular';
-// 🎯 Подключаем наш новый сервис!
 import { WishlistService } from '../../../services/wishlist-service';
+import { CartService } from '../../../services/cart-service';
+import { ToastService } from '../../../services/toast';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем
 
 @Component({
   selector: 'app-wishlist',
@@ -14,17 +16,22 @@ import { WishlistService } from '../../../services/wishlist-service';
   imports: [
     CommonModule, CurrencyPipe, RouterModule,
     LucideHeart, LucideX, LucideSmartphone, LucideHeadphones,
-    LucideStar, LucideShoppingCart, LucidePackage
+    LucideStar, LucideShoppingCart, LucidePackage, LucideCheck
   ],
   templateUrl: './wishlist.html',
   styleUrl: './wishlist.css',
 })
 export class WishlistComponent {
   wishlistService = inject(WishlistService);
+  cartService = inject(CartService);
+  private router = inject(Router);
+  private toastService = inject(ToastService);
+  private languageService = inject(LanguageService); // 👈 Инжектим
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
   private gradientCache = new Map<number, string>();
 
-  // 🎯 Динамически читаем товары из сервиса и добавляем им градиенты для UI
   items = computed(() => {
     const wishlistItems = this.wishlistService.wishlist()?.items || [];
     return wishlistItems.map(item => ({
@@ -33,24 +40,45 @@ export class WishlistComponent {
     }));
   });
 
+  // 👇 Перезагружаем вишлист при смене языка
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      // Перезагружаем вишлист с сервера — товары придут с новыми переводами
+      this.wishlistService.loadWishlist().subscribe({
+        error: () => console.error('Ошибка перезагрузки вишлиста при смене языка')
+      });
+    }
+  });
+
   removeFromWishlist(productId: number) {
-    // Так как метод называется toggle (переключатель), 
-    // клик по уже существующему товару просто удалит его из БД
     this.wishlistService.toggleItem(productId).subscribe();
   }
 
-  addToCart(productId: number) {
-    console.log(`Товар ${productId} добавлен в корзину`);
-    // Позже здесь будет вызов CartService
+  addToCart(item: any) {
+    if (this.cartService.isInCart(item.productId)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+
+    this.cartService.addItem({
+      productId: item.productId,
+      quantity: 1,
+      price: item.price
+    }).subscribe({
+      next: () => this.toastService.success('Товар добавлен в корзину'),
+      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    });
   }
 
   private getGradient(productId: number): string {
     if (!this.gradientCache.has(productId)) {
       const gradients = [
-        'linear-gradient(135deg, #f43f5e 0%, #9f1239 100%)', // Красный
-        'linear-gradient(135deg, #8b5cf6 0%, #4c1d95 100%)', // Фиолетовый
-        'linear-gradient(135deg, #10b981 0%, #064e3b 100%)', // Изумрудный
-        'linear-gradient(135deg, #f59e0b 0%, #78350f 100%)', // Оранжевый
+        'linear-gradient(135deg, #f43f5e 0%, #9f1239 100%)',
+        'linear-gradient(135deg, #8b5cf6 0%, #4c1d95 100%)',
+        'linear-gradient(135deg, #10b981 0%, #064e3b 100%)',
+        'linear-gradient(135deg, #f59e0b 0%, #78350f 100%)',
       ];
       this.gradientCache.set(productId, gradients[Math.floor(Math.random() * gradients.length)]);
     }

@@ -1,6 +1,6 @@
-import { Component, signal, computed, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { CommonModule, KeyValuePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2,
@@ -29,6 +29,7 @@ import { StoreService } from '../../services/store-service';
 import { StoreInventoryDto } from '../../models/store-inventory-models';
 import { StoreDto } from '../../models/store-models';
 import { CurrentLocationService } from '../../services/current-location-service';
+import { LanguageService } from '../../services/language-service';
 
 @Component({
   selector: 'app-product-detail',
@@ -58,11 +59,15 @@ export class ProductDetailPage implements OnInit {
   private reviewService = inject(ReviewService);
   private categoryService = inject(CategoryService);
   private router = inject(Router);
+  private location = inject(Location);
+  private languageService = inject(LanguageService);
 
   private currentLocationService = inject(CurrentLocationService);
 
   private storeInventoryService = inject(StoreInventoryService);
   private storeService = inject(StoreService);
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
   breadcrumbs = signal<{ label: string; slug?: string }[]>([]);
   product = signal<ProductDetailDto | null>(null);
@@ -201,6 +206,26 @@ export class ProductDetailPage implements OnInit {
         this.loadProduct(slug);
       }
     });
+
+    // Подписываемся на смену языка
+    this.languageService.languageChanged$.subscribe(() => {
+      const prod = this.product();
+      if (!prod) return;
+
+      this.productService.getProductBySlug(prod.slug).subscribe({
+        next: (localized) => {
+          this.product.set(localized);
+          this.buildBreadcrumbs(localized);
+
+          // Обновляем URL если slug изменился
+          if (localized.slug !== prod.slug) {
+            const newUrl = this.router.createUrlTree(['/product', localized.slug]).toString();
+            this.location.replaceState(newUrl);
+          }
+        },
+        error: (err) => console.error('Ошибка загрузки перевода:', err)
+      });
+    });
   }
 
   private loadProduct(slug: string): void {
@@ -216,6 +241,7 @@ export class ProductDetailPage implements OnInit {
         this.buildBreadcrumbs(data);
         this.loadReviews(data.id);
         this.loadInventory(data.id);
+
         this.productService.getRelatedProducts(data.id, 4).subscribe({
           next: (related) => this.relatedProducts.set(related)
         });
@@ -415,10 +441,6 @@ export class ProductDetailPage implements OnInit {
     }).subscribe({
       next: () => {
         this.toastService.success('Товар добавлен в корзину');
-
-        // 💡 ОПЦИОНАЛЬНО: Если вы хотите, чтобы юзера перекидывало в корзину 
-        // СРАЗУ ЖЕ после первого нажатия (автоматически), раскомментируйте строку ниже:
-        // this.router.navigate(['/cart']);
       },
       error: () => this.toastService.error('Ошибка при добавлении в корзину')
     });
@@ -529,12 +551,11 @@ export class ProductDetailPage implements OnInit {
     return date;
   }
 
-  // Проверка ручного ввода количества товара
   onQuantityChange(value: number): void {
     if (value > 10) {
-      this.quantity.set(10); // Если ввели больше 10, сбрасываем до 10
+      this.quantity.set(10);
     } else if (value < 1 || !value) {
-      this.quantity.set(1);  // Если ввели меньше 1 или удалили цифру, ставим 1
+      this.quantity.set(1);
     } else {
       this.quantity.set(value);
     }

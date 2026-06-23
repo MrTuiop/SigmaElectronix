@@ -10,19 +10,19 @@
 
     <div class="brands-grid">
 
-      <ng-container *ngIf="loading">
+      <ng-container *ngIf="loading()">
         <div *ngFor="let s of skeletonArray" class="brand-card skeleton-card">
           <div class="brand-icon-wrapper skeleton-icon"></div>
           <div class="skeleton-text"></div>
         </div>
       </ng-container>
 
-      <div *ngIf="error" class="error-message">
-        {{ error }}
+      <div *ngIf="error()" class="error-message">
+        {{ error() }}
       </div>
 
-      <ng-container *ngIf="!loading && !error">
-        <a *ngFor="let brand of brands"
+      <ng-container *ngIf="!loading() && !error()">
+        <a *ngFor="let brand of brands()"
            [routerLink]="['/brands', brand.slug]"
            class="brand-card">
 

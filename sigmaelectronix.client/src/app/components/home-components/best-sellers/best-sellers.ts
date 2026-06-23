@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectorRef, effect } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck } from '@lucide/angular';
@@ -8,6 +8,7 @@ import { WishlistService } from '../../../services/wishlist-service';
 import { CartService } from '../../../services/cart-service';
 import { ToastService } from '../../../services/toast';
 import { ProductCardComponent } from '../../product-components/product-card/product-card';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -33,6 +34,9 @@ export class BestSellersComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
   private wishlistService = inject(WishlistService);
+  private languageService = inject(LanguageService); // 👈 Инжектим сервис
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage()); // 👈 Сигнал для отслеживания прошлого языка
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -48,6 +52,17 @@ export class BestSellersComponent implements OnInit {
       discount: this.calcDiscount(p),
       gradient: this.getGradient(p.id)
     }));
+  });
+
+  // 👇 Магия effect: срабатывает только когда меняется currentLanguage
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      this.productService.loadFeatured(4).subscribe({
+        error: () => console.error('Ошибка перезагрузки хитов продаж при смене языка')
+      });
+    }
   });
 
   ngOnInit(): void {

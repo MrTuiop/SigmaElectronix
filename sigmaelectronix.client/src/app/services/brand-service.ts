@@ -98,4 +98,31 @@ export class BrandService {
     console.error('BrandService error:', error);
     return throwError(() => error);
   }
+
+  // ============ Административные методы — всегда на русском ============
+
+  getBrandsForAdmin(
+    pageNumber = 1,
+    pageSize = 20,
+    searchQuery?: string,
+    sortBy?: string
+  ): Observable<PaginatedResponse<BrandListDto>> {
+    let params = new HttpParams()
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
+
+    if (searchQuery) params = params.set('searchQuery', searchQuery);
+    if (sortBy) params = params.set('sortBy', sortBy);
+
+    return this.http.get<PaginatedResponse<BrandListDto>>(this.baseUrl, {
+      params,
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(catchError(this.handleError));
+  }
+
+  getBrandBySlugForAdmin(slug: string): Observable<BrandShowcaseDto> {
+    return this.http.get<BrandShowcaseDto>(`${this.baseUrl}/slug/${encodeURIComponent(slug)}`, {
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(catchError(this.handleError));
+  }
 }

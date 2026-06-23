@@ -47,6 +47,20 @@
 
   @if (viewMode() === 'form') {
   <div class="form-container animate-fade">
+
+    <div class="lang-notice-banner animate-fade">
+      <div class="lang-notice-icon">
+        <svg lucideGlobe size="20" strokeWidth="1.5"></svg>
+      </div>
+      <div class="lang-notice-content">
+        <h4>Базовый язык создания: Русский 🇷🇺</h4>
+        <p>
+          В этом разделе все данные категории (название) заполняются на основном языке по умолчанию.
+          Для перевода категории на другие языки (например, Английский или Немецкий), <strong>сохраните категорию</strong> и воспользуйтесь разделом <strong>Локализация и переводы</strong>.
+        </p>
+      </div>
+    </div>
+
     <div class="form-banner">
       <h3>{{ isEditing() ? 'Редактирование категории' : 'Новая категория' }}</h3>
       <p>Заполните данные. Категория автоматически появится в главном MegaMenu.</p>
@@ -158,7 +172,7 @@
 
       <div class="form-row">
         <div class="form-group full-width">
-          <label>Изображение категории (Обложка)</label>
+          <label>Изображение категории (URL баннера)</label>
 
           <div class="image-upload-wrapper"
                [class.dragover]="isDragoverImage()"

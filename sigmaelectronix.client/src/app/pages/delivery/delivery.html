@@ -1,0 +1,81 @@
+<div class="delivery-page">
+  <div class="page-header-wrapper">
+    <div class="container">
+      <div class="page-header">
+        <h1>Доставка и оплата</h1>
+        <p>Мы заботимся о вашем комфорте на каждом этапе. Выбирайте удобный способ получения и оплаты заказа.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container page-content">
+
+    <section class="info-section">
+      <div class="section-title-block">
+        <h2>Способы доставки</h2>
+        <span class="secure-badge">
+          <svg lucideTruck size="18" strokeWidth="2"></svg>
+          Доставляем по всей России
+        </span>
+      </div>
+
+      <div class="cards-grid">
+        @for (method of deliveryMethods; track method.title) {
+        <div class="info-card delivery-card">
+          <div class="card-header">
+            <div class="icon-wrapper">
+              @if (method.icon === 'store') { <svg lucideStore size="28" strokeWidth="1.5"></svg> }
+              @if (method.icon === 'map-pin') { <svg lucideMapPin size="28" strokeWidth="1.5"></svg> }
+              @if (method.icon === 'truck') { <svg lucideTruck size="28" strokeWidth="1.5"></svg> }
+            </div>
+            <div class="card-meta">
+              <span class="price-badge" [class.free]="method.price === 'Бесплатно'">{{ method.price }}</span>
+              <span class="time-text">{{ method.time }}</span>
+            </div>
+          </div>
+
+          <h3>{{ method.title }}</h3>
+          <p class="card-desc">{{ method.description }}</p>
+
+          <ul class="features-list">
+            @for (feature of method.features; track feature) {
+            <li>
+              <svg lucideCheckCircle2 size="16" strokeWidth="2"></svg>
+              <span>{{ feature }}</span>
+            </li>
+            }
+          </ul>
+        </div>
+        }
+      </div>
+    </section>
+
+    <section class="info-section">
+      <div class="section-title-block">
+        <h2>Способы оплаты</h2>
+        <span class="secure-badge safe-pay">
+          <svg lucideShieldCheck size="18" strokeWidth="2"></svg>
+          Безопасные платежи
+        </span>
+      </div>
+
+      <div class="cards-grid payment-grid">
+        @for (method of paymentMethods; track method.title) {
+        <div class="info-card payment-card">
+          <div class="icon-wrapper payment-icon">
+            @if (method.icon === 'credit-card') { <svg lucideCreditCard size="28" strokeWidth="1.5"></svg> }
+            @if (method.icon === 'banknote') { <svg lucideBanknote size="28" strokeWidth="1.5"></svg> }
+            @if (method.icon === 'clock') { <svg lucideClock size="28" strokeWidth="1.5"></svg> }
+            @if (method.icon === 'landmark') { <svg lucideLandmark size="28" strokeWidth="1.5"></svg> }
+          </div>
+          <div class="payment-content">
+            <h3>{{ method.title }}</h3>
+            <p>{{ method.description }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    </section>
+
+  </div>
+</div>

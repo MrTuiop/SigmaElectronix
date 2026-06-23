@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectorRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import {
@@ -8,6 +8,7 @@ import {
 } from '@lucide/angular';
 import { CategoryDto } from '../../../models/category-models';
 import { CategoryService } from '../../../services/category-service';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
 
 @Component({
   selector: 'app-categories',
@@ -16,7 +17,6 @@ import { CategoryService } from '../../../services/category-service';
     CommonModule,
     RouterModule,
     LucideArrowRight,
-    // Можем убрать иконки из imports, так как мы рендерим их динамически через ngComponentOutlet
   ],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
@@ -24,6 +24,9 @@ import { CategoryService } from '../../../services/category-service';
 export class CategoriesComponent implements OnInit {
   private categoryService = inject(CategoryService);
   private cdr = inject(ChangeDetectorRef);
+  private languageService = inject(LanguageService); // 👈 Инжектим сервис
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage()); // 👈 Отслеживаем прошлый язык
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -47,6 +50,24 @@ export class CategoriesComponent implements OnInit {
   categories = computed<CategoryDto[]>(() => {
     const all = this.categoryService.allCategories();
     return all.filter(c => c.parentCategoryId == null);
+  });
+
+  // 👇 Магия effect: срабатывает только когда меняется currentLanguage
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+
+      // Перезагружаем категории и дерево при смене языка
+      this.categoryService.loadAll().subscribe({
+        error: () => console.error('Ошибка перезагрузки категорий при смене языка')
+      });
+
+      // Обновляем дерево тоже, так как оно нужно для хлебных крошек на других страницах
+      this.categoryService.loadTree().subscribe({
+        error: () => console.error('Ошибка перезагрузки дерева категорий при смене языка')
+      });
+    }
   });
 
   ngOnInit(): void {

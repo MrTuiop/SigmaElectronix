@@ -1,54 +1,49 @@
 <footer class="site-footer">
-  <!-- Основная часть с колонками -->
   <div class="footer-top">
     <div class="container footer-grid">
 
-      <!-- Колонка 1: Бренд и описание -->
       <div class="footer-col brand-col">
-        <a href="/" class="footer-logo">
+        <a routerLink="/" class="footer-logo">
           <span class="logo-text">Sigma<span>Electronix</span></span>
         </a>
         <p class="brand-desc">
           Современная электроника по честным ценам. Доставка по всей России, гарантия до 3 лет.
         </p>
         <div class="social-links">
-          <a href="#" class="social-link" aria-label="VK">
+          <a href="https://vk.com/aaleksanderr" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="VK">
             <svg lucideExternalLink size="18"></svg>
           </a>
-          <a href="#" class="social-link" aria-label="Telegram">
+
+          <a href="https://t.me/Jinkers_oleg" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Telegram">
             <svg lucideSend size="18"></svg>
           </a>
-          <a href="#" class="social-link" aria-label="YouTube">
+
+          <a href="https://rutube.ru/video/dc15584e4703b6ad9b181b6f0141cff9/?r=plwd" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="YouTube">
             <svg lucideVideo size="18"></svg>
           </a>
         </div>
       </div>
 
-      <!-- Колонка 2: Каталог -->
       <div class="footer-col">
         <h4 class="col-title">Каталог</h4>
         <ul class="footer-links">
-          <li><a href="#">Смартфоны</a></li>
-          <li><a href="#">Ноутбуки</a></li>
-          <li><a href="#">Наушники</a></li>
-          <li><a href="#">Умные часы</a></li>
-          <li><a href="#">Телевизоры</a></li>
+          <li><a routerLink="/catalog">Каталог товаров</a></li>
+          <li><a routerLink="/brands">Наши бренды</a></li>
+          <li><a routerLink="/catalog/new-arrivals">Новинки</a></li>
+          <li><a routerLink="/catalog/best-sellers">Хиты продаж</a></li>
         </ul>
       </div>
 
-      <!-- Колонка 3: Помощь -->
       <div class="footer-col">
-        <h4 class="col-title">Помощь</h4>
+        <h4 class="col-title">Покупателям</h4>
         <ul class="footer-links">
-          <li><a href="#">Доставка и оплата</a></li>
-          <li><a href="#">Гарантия и возврат</a></li>
-          <li><a href="#">Акции и бонусы</a></li>
-          <li><a href="#">Вопросы и ответы</a></li>
-          <li><a href="#">Контакты</a></li>
+          <li><a routerLink="/about">О компании</a></li>
+          <li><a routerLink="/stores">Наши магазины</a></li>
+          <li><a routerLink="/delivery">Доставка и оплата</a></li>
+          <li><a routerLink="/warranty">Гарантия и возврат</a></li>
         </ul>
       </div>
 
-      <!-- Колонка 4: Контакты -->
       <div class="footer-col contact-col">
         <h4 class="col-title">Контакты</h4>
         <ul class="footer-contacts">
@@ -74,7 +69,6 @@
     </div>
   </div>
 
-  <!-- Нижняя строка -->
   <div class="footer-bottom">
     <div class="container footer-bottom-inner">
       <span class="copyright">

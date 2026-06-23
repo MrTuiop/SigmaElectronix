@@ -1,4 +1,4 @@
-﻿using SigmaElectronix.Server.Entities.Translation;
+﻿using SigmaElectronix.Server.Entities.TranslationModels;
 
 namespace SigmaElectronix.Server.Entities.BrandModels
 {

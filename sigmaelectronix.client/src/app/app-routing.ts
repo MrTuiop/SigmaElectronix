@@ -39,6 +39,13 @@ import { ManagerPageEditorComponent } from './components/manager-components/mana
 import { ManagerFilesComponent } from './components/manager-components/manager-files/manager-files';
 import { ManagerDashboardComponent } from './components/manager-components/manager-dashboard/manager-dashboard';
 import { ManagerLanguagesComponent } from './components/manager-components/manager-languages/manager-languages';
+import { ManagerTranslationsProductsComponent } from './components/manager-components/manager-translations-products/manager-translations-products';
+import { ManagerTranslationsCategoriesComponent } from './components/manager-components/manager-translations-categories/manager-translations-categories';
+import { ManagerTranslationsBrandsComponent } from './components/manager-components/manager-translations-brands/manager-translations-brands';
+import { DeliveryPage } from './pages/delivery/delivery';
+import { WarrantyPage } from './pages/warranty/warranty';
+import { AboutPage } from './pages/about/about';
+import { ManagerUiTranslationsComponent } from './components/manager-components/manager-ui-translations/manager-ui-translations';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -91,6 +98,10 @@ export const routes: Routes = [
       },
       { path: 'files', component: ManagerFilesComponent },
       { path: 'languages', component: ManagerLanguagesComponent },
+      { path: 'translations/products', component: ManagerTranslationsProductsComponent },
+      { path: 'translations/categories', component: ManagerTranslationsCategoriesComponent },
+      { path: 'translations/brands', component: ManagerTranslationsBrandsComponent, title: 'Переводы брендов' },
+      { path: 'translations/ui', component: ManagerUiTranslationsComponent },
     ]
   },
 
@@ -136,6 +147,13 @@ export const routes: Routes = [
         title: 'Наши магазины | SigmaElectronix'
       },
       { path: 'payment/:id', component: PaymentPageComponent },
+      { path: 'delivery', component: DeliveryPage, title: 'Доставка и оплата' },
+      {
+        path: 'warranty',
+        component: WarrantyPage,
+        title: 'Гарантия и возврат | SigmaElectronix'
+      },
+      { path: 'about', component: AboutPage, title: 'О компании' },
     ]
   },
 

@@ -84,7 +84,24 @@ export class ProductService {
 
   getAdminProducts(filter: ProductFilterDto): Observable<PaginatedResponse<ProductListDto>> {
     return this.http.get<PaginatedResponse<ProductListDto>>(`${this.baseUrl}/admin`, {
-      params: this.buildFilterParams(filter)
+      params: this.buildFilterParams(filter),
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(catchError(this.handleError));
+  }
+
+  getProductByIdForAdmin(id: number): Observable<ProductDetailDto> {
+    return this.http.get<ProductDetailDto>(`${this.baseUrl}/${id}`, {
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
+    }).pipe(catchError(this.handleError));
+  }
+
+  getFiltersForAdmin(categoryId?: number): Observable<CategoryFilterDto> {
+    const params = categoryId
+      ? new HttpParams().set('categoryId', categoryId.toString())
+      : undefined;
+    return this.http.get<CategoryFilterDto>(`${this.baseUrl}/filters`, {
+      params,
+      headers: { 'Accept-Language': 'ru' } // 👈 Жёстко русский
     }).pipe(catchError(this.handleError));
   }
 

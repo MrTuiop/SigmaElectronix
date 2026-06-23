@@ -3,9 +3,19 @@ import { inject } from '@angular/core';
 import { LanguageService } from '../services/language-service';
 
 export const languageInterceptor: HttpInterceptorFn = (req, next) => {
-  const languageService = inject(LanguageService);
+  const isInternalRequest = req.url.startsWith('/');
 
-  // Берем текущий язык из нашего сервиса
+  // Если это внешний API — пропускаем запрос без изменений
+  if (!isInternalRequest) {
+    return next(req);
+  }
+
+  if (req.url.includes('/api/uitranslations/')) {
+    return next(req);
+  }
+
+  // Инжектим сервис ТОЛЬКО для остальных запросов (разрываем цикл зависимости)
+  const languageService = inject(LanguageService);
   const currentLang = languageService.currentLanguage();
 
   // Клонируем запрос и добавляем стандартный заголовок Accept-Language

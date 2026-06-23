@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SigmaElectronix.Server.Entities.Translation
+namespace SigmaElectronix.Server.Entities.TranslationModels
 {
     public class Language
     {

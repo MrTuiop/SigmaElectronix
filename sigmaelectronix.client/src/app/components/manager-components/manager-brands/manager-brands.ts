@@ -2,13 +2,14 @@ import { Component, OnInit, signal, computed, inject, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BrandService } from '../../../services/brand-service';
-import { BrandListDto } from '../../../models/brand-models';
-import { HttpEventType } from '@angular/common/http'; // 👈 Добавили для прогресса
+import { BrandListDto, CreateBrandDto } from '../../../models/brand-models';
+import { HttpEventType } from '@angular/common/http';
 import {
   LucideAward, LucidePlus, LucideTrash2, LucideEdit2,
   LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
   LucideCheck, LucideChevronLeft, LucideChevronRight, LucideSparkles,
-  LucideStar, LucideChevronDown, LucideChevronUp, LucideSearch, LucideX
+  LucideStar, LucideChevronDown, LucideChevronUp, LucideSearch, LucideX,
+  LucideGlobe, LucideUploadCloud, LucideImage // 👈 Добавили недостающие иконки
 } from '@lucide/angular';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 import { FileService } from '../../../services/file-service';
@@ -21,12 +22,13 @@ import { FileService } from '../../../services/file-service';
     LucideAward, LucidePlus, LucideTrash2, LucideEdit2,
     LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
     LucideCheck, LucideChevronLeft, LucideChevronRight, LucideSparkles, LucideStar, LucideChevronUp, LucideChevronDown, LucideSearch, LucideX,
+    LucideGlobe, LucideUploadCloud, LucideImage, // 👈 Добавили в imports
     SpinnerComponent
   ],
   templateUrl: './manager-brands.html',
   styleUrl: './manager-brands.css'
 })
-export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 Подключили OnDestroy
+export class ManagerBrandsComponent implements OnInit, OnDestroy {
   private brandService = inject(BrandService);
   private fb = inject(FormBuilder);
   private fileService = inject(FileService);
@@ -55,21 +57,20 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
   isUploadingHero = signal(false);
   isDragoverLogo = signal(false);
   isDragoverHero = signal(false);
-  logoUploadProgress = signal(0); // 👈 Прогресс загрузки лого (0-100)
-  heroUploadProgress = signal(0); // 👈 Прогресс загрузки баннера (0-100)
+  logoUploadProgress = signal(0);
+  heroUploadProgress = signal(0);
 
   // 🚀 Списки для "СБОРЩИКА МУСОРА"
-  private tempUploadedFiles: string[] = [];     // Временные файлы (те, что юзер загрузил только что)
-  private filesToDeleteOnSave: string[] = [];   // Оригиналы (с бэка), от которых юзер отказался
-  private originalLogoUrl: string = '';         // Запомненный оригинал логотипа
-  private originalHeroUrl: string = '';         // Запомненный оригинал баннера
+  private tempUploadedFiles: string[] = [];
+  private filesToDeleteOnSave: string[] = [];
+  private originalLogoUrl: string = '';
+  private originalHeroUrl: string = '';
 
   ngOnInit(): void {
     this.loadBrands();
     this.initForm();
   }
 
-  // Если менеджер просто закрыл вкладку или перешел на другую страницу (маршрут)
   ngOnDestroy(): void {
     this.cleanupTempFiles();
   }
@@ -77,10 +78,10 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
   // 🚀 ОЧИСТКА МУСОРА (Вызывается при отмене)
   private cleanupTempFiles(): void {
     this.tempUploadedFiles.forEach(url => {
-      this.fileService.deleteImage(url).subscribe(); // Удаляем всё, что загрузили временно
+      this.fileService.deleteImage(url).subscribe();
     });
     this.tempUploadedFiles = [];
-    this.filesToDeleteOnSave = []; // Сбрасываем очередь, оригиналы спасены!
+    this.filesToDeleteOnSave = [];
   }
 
   // --- МЕТОДЫ DRAG AND DROP ---
@@ -115,7 +116,6 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
 
   // 🚀 ОБНОВЛЕННАЯ ЛОГИКА ЗАГРУЗКИ (С Прогресс-баром и Сборщиком мусора)
   private handleFileUpload(file: File, field: 'logoUrl' | 'heroImageUrl'): void {
-    // Включаем спиннер и сбрасываем проценты в 0
     if (field === 'logoUrl') {
       this.isUploadingLogo.set(true);
       this.logoUploadProgress.set(0);
@@ -126,32 +126,27 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
 
     this.fileService.uploadImageWithProgress(file, 'brands').subscribe({
       next: (event: any) => {
-        // Отлавливаем проценты
         if (event.type === HttpEventType.UploadProgress && event.total) {
           const percentDone = Math.round(100 * event.loaded / event.total);
           if (field === 'logoUrl') this.logoUploadProgress.set(percentDone);
           else this.heroUploadProgress.set(percentDone);
         }
-        // Загрузка завершена! Бэкенд прислал URL
         else if (event.type === HttpEventType.Response) {
           const res = event.body;
           if (res?.url) {
             const prevUrl = this.brandForm.get(field)?.value;
 
-            // Логика мусора: если мы заменяем картинку
             if (prevUrl) {
               if (this.tempUploadedFiles.includes(prevUrl)) {
-                // Если мы заменяем временную картинку другой временной - старую сразу удаляем
                 this.fileService.deleteImage(prevUrl).subscribe();
                 this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== prevUrl);
               } else if (prevUrl === this.originalLogoUrl || prevUrl === this.originalHeroUrl) {
-                // Если мы заменяем оригинальную картинку - ставим её в очередь на удаление
                 this.filesToDeleteOnSave.push(prevUrl);
               }
             }
 
             this.brandForm.patchValue({ [field]: res.url });
-            this.tempUploadedFiles.push(res.url); // Запоминаем новую картинку в "корзине"
+            this.tempUploadedFiles.push(res.url);
 
             if (field === 'logoUrl') this.isUploadingLogo.set(false);
             else this.isUploadingHero.set(false);
@@ -172,11 +167,9 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
     if (!currentUrl) return;
 
     if (this.tempUploadedFiles.includes(currentUrl)) {
-      // Это временная - сносим сразу
       this.fileService.deleteImage(currentUrl).subscribe();
       this.tempUploadedFiles = this.tempUploadedFiles.filter(u => u !== currentUrl);
     } else if (currentUrl === this.originalLogoUrl || currentUrl === this.originalHeroUrl) {
-      // Это оригинал с сервера - только ставим в очередь!
       this.filesToDeleteOnSave.push(currentUrl);
     }
 
@@ -212,7 +205,6 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
     this.currentStep.set(1);
     this.viewMode.set('create');
 
-    // Очищаем списки мусора при открытии создания
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
     this.originalLogoUrl = '';
@@ -220,19 +212,18 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
   }
 
   closeCreateMode(): void {
-    this.cleanupTempFiles(); // 👈 Вычищаем всё, что успели загрузить
+    this.cleanupTempFiles();
     this.viewMode.set('list');
   }
 
   editBrand(brand: BrandListDto): void {
     this.loading.set(true);
 
-    this.brandService.getBrandBySlug(brand.slug).subscribe({
+    this.brandService.getBrandBySlugForAdmin(brand.slug).subscribe({
       next: (fullBrand) => {
         this.isEditing.set(true);
         this.editingId.set(fullBrand.id);
 
-        // 👈 Запоминаем оригинальные картинки
         this.originalLogoUrl = fullBrand.logoUrl || '';
         this.originalHeroUrl = fullBrand.heroImageUrl || '';
         this.tempUploadedFiles = [];
@@ -247,8 +238,8 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
           heroTitle: fullBrand.heroTitle || '',
           heroSubtitle: fullBrand.heroSubtitle || '',
           bannerButtonText: fullBrand.bannerButtonText || '',
-          isFeatured: brand.isFeatured,
-          isActive: brand.isActive
+          isFeatured: fullBrand.isFeatured,
+          isActive: fullBrand.isActive
         });
 
         this.currentStep.set(1);
@@ -262,7 +253,7 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
     });
   }
 
-  // 🚀 ОБНОВЛЕННАЯ ЛОГИКА СОХРАНЕНИЯ (Срабатывает Окончательное Удаление)
+  // 🚀 ОБНОВЛЕННАЯ ЛОГИКА СОХРАНЕНИЯ 
   saveBrand(): void {
     if (this.brandForm.invalid) {
       alert('Проверьте правильность заполнения всех обязательных полей.');
@@ -270,15 +261,33 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
     }
 
     this.loading.set(true);
-    const dto = this.brandForm.value;
+    const formValue = this.brandForm.value;
+
+    const payload: CreateBrandDto = {
+      logoUrl: formValue.logoUrl || null,
+      heroImageUrl: formValue.heroImageUrl || null,
+      isFeatured: formValue.isFeatured,
+      isActive: formValue.isActive,
+      translations: [
+        {
+          languageCode: 'ru', // 👈 Жёстко русский
+          name: formValue.name,
+          slug: formValue.slug,
+          description: formValue.description,
+          heroTitle: formValue.heroTitle || null,
+          heroSubtitle: formValue.heroSubtitle || null,
+          bannerButtonText: formValue.bannerButtonText || null
+        }
+      ]
+    };
 
     if (this.isEditing() && this.editingId()) {
-      this.brandService.updateBrand(this.editingId()!, dto).subscribe({
+      this.brandService.updateBrand(this.editingId()!, payload).subscribe({
         next: () => this.onSaveSuccess(),
         error: () => { alert('Ошибка при обновлении'); this.loading.set(false); }
       });
     } else {
-      this.brandService.createBrand(dto).subscribe({
+      this.brandService.createBrand(payload).subscribe({
         next: () => this.onSaveSuccess(),
         error: () => { alert('Ошибка при сохранении'); this.loading.set(false); }
       });
@@ -286,10 +295,8 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
   }
 
   private onSaveSuccess(): void {
-    // Пользователь нажал "Сохранить" -> Удаляем старые оригиналы с сервера (если мы их заменяли/удаляли)
     this.filesToDeleteOnSave.forEach(url => this.fileService.deleteImage(url).subscribe());
 
-    // Временные файлы становятся постоянными (спасаем от сборщика мусора)
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
 
@@ -297,13 +304,11 @@ export class ManagerBrandsComponent implements OnInit, OnDestroy { // 👈 По�
     this.viewMode.set('list');
   }
 
-  /* ... МЕТОДЫ loadBrands, onSearchChange, toggleSort, toggleActive, toggleFeatured, deleteBrand, slugify - ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ИЗ ТВОЕГО КОДА ... */
-
   loadBrands(): void {
     if (this.pageNumber() === 1) this.loading.set(true);
     else this.isLoadingMore.set(true);
 
-    this.brandService.getBrands(
+    this.brandService.getBrandsForAdmin(
       this.pageNumber(),
       this.pageSize(),
       this.searchQuery(),

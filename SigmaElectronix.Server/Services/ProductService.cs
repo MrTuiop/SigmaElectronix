@@ -95,13 +95,24 @@ namespace SigmaElectronix.Server.Services
         {
             var lang = GetCurrentLanguage();
 
-            var product = await _context.Products
+            var query = _context.Products
                 .Include(p => p.Brand).ThenInclude(b => b.Translations)
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images.OrderBy(i => i.SortOrder))
                 .Include(p => p.Translations)
-                .AsNoTracking()
+                .AsNoTracking();
+
+            // 1. Сначала ищем товар со slug-ом именно для текущего языка
+            var product = await query
                 .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug && t.LanguageCode == lang) && !p.IsDeleted && p.IsPublished);
+
+            // 2. 🚀 Fallback: если не нашли (URL не обновился при смене языка), 
+            // ищем по slug-у на ЛЮБОМ языке
+            if (product == null)
+            {
+                product = await query
+                    .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug) && !p.IsDeleted && p.IsPublished);
+            }
 
             return product == null ? null : MapToDetailDto(product, lang);
         }
@@ -248,7 +259,13 @@ namespace SigmaElectronix.Server.Services
             product.IsPublished = dto.IsPublished;
 
             _context.ProductImages.RemoveRange(product.Images);
-            product.Images = dto.Images?.Select(i => new ProductImage { /* маппинг */ }).ToList() ?? new List<ProductImage>();
+            product.Images = dto.Images?.Select(i => new ProductImage
+            {
+                Url = i.Url,
+                IsPrimary = i.IsPrimary,
+                SortOrder = i.SortOrder,
+                AltText = i.AltText
+            }).ToList() ?? new List<ProductImage>();
 
             foreach (var transDto in dto.Translations)
             {
@@ -282,10 +299,6 @@ namespace SigmaElectronix.Server.Services
                     });
                 }
             }
-
-            var incomingLangCodes = dto.Translations.Select(t => t.LanguageCode).ToList();
-            var translationsToRemove = product.Translations.Where(t => !incomingLangCodes.Contains(t.LanguageCode)).ToList();
-            _context.ProductTranslations.RemoveRange(translationsToRemove);
 
             await _context.SaveChangesAsync();
             return await GetProductByIdAsync(id);
@@ -552,7 +565,18 @@ namespace SigmaElectronix.Server.Services
                     IsPrimary = i.IsPrimary
                 }).ToList(),
 
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+
+                Translations = p.Translations?.Select(t => new ProductTranslationDto
+                {
+                    LanguageCode = t.LanguageCode,
+                    Name = t.Name,
+                    Slug = t.Slug,
+                    ShortDescription = t.ShortDescription,
+                    FullDescription = t.FullDescription,
+                    Specifications = t.Specifications ?? new Dictionary<string, string>(),
+                    Tags = t.Tags?.ToList() ?? new List<string>()
+                }).ToList() ?? new List<ProductTranslationDto>(),
             };
         }
 
@@ -587,7 +611,9 @@ namespace SigmaElectronix.Server.Services
                 CreatedAt = p.CreatedAt,
 
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
-                              ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty
+                              ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty,
+
+                TranslationsCount = Math.Max(0, (p.Translations?.Count() ?? 0) - 1)
             };
         }
 

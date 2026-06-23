@@ -12,7 +12,8 @@ import {
   LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
   LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX,
   LucideChevronDown, LucideSearch, LucideChevronUp,
-  LucideImagePlus, LucideStar
+  LucideImagePlus, LucideStar,
+  LucideGlobe
 } from '@lucide/angular';
 import { ProductService } from '../../../services/product-service';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
@@ -39,7 +40,7 @@ interface ProductImageUI {
     LucideEye, LucideEyeOff, LucideArrowRight, LucideArrowLeft,
     LucideCheck, LucideChevronLeft, LucideChevronRight, LucideListPlus, LucideX,
     LucideChevronDown, LucideSearch, LucideChevronUp, LucideImagePlus, LucideStar,
-    SpinnerComponent
+    SpinnerComponent, LucideGlobe
   ],
   templateUrl: './manager-products.html',
   styleUrl: './manager-products.css'
@@ -269,7 +270,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     this.productForm.get('categoryId')?.valueChanges.subscribe(categoryId => {
       if (categoryId && !this.isEditing()) {
         this.loading.set(true);
-        this.productService.getFilters(categoryId).subscribe({
+        this.productService.getFiltersForAdmin(categoryId).subscribe({ // 👈 Было getFilters
           next: (filters) => {
             this.availableSpecs.set(filters.specifications || {});
             this.specsArray.clear();
@@ -392,7 +393,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     const formValue = this.productForm.value;
 
     const specsRecord: Record<string, string> = {};
-    formValue.specifications.forEach((spec: { key: string, value: string }) => {
+    formValue.specifications?.forEach((spec: { key: string, value: string }) => {
       if (spec.key && spec.value) specsRecord[spec.key.trim()] = spec.value.trim();
     });
 
@@ -401,30 +402,52 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
       parsedTags = formValue.tagsText.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
     }
 
-    const { tagsText, ...cleanFormValue } = formValue;
-
     const formattedImages = this.productImages().map((img, idx) => ({
       url: img.url,
       isPrimary: img.isMain,
-      sortOrder: idx
+      sortOrder: idx,
+      altText: ''
     }));
 
-    const payload = {
-      ...cleanFormValue,
-      specifications: specsRecord,
-      tags: parsedTags,
-      images: formattedImages
+    // 🇷🇺 Админка всегда создаёт товар на русском
+    // Переводы на другие языки добавляются в отдельном интерфейсе
+    const payload: CreateProductDto = {
+      price: formValue.price,
+      discountPrice: formValue.discountPrice || null,
+      brandId: formValue.brandId,
+      categoryId: formValue.categoryId,
+      isPublished: formValue.isPublished,
+      images: formattedImages,
+      translations: [
+        {
+          languageCode: 'ru', // 👈 Жёстко задаём русский
+          name: formValue.name,
+          slug: formValue.slug,
+          shortDescription: formValue.shortDescription,
+          fullDescription: formValue.fullDescription || '',
+          specifications: specsRecord,
+          tags: parsedTags
+        }
+      ]
     };
 
     if (this.isEditing() && this.editingId()) {
       this.productService.updateProduct(this.editingId()!, payload).subscribe({
         next: () => this.onSaveSuccess(),
-        error: () => this.loading.set(false)
+        error: (err) => {
+          console.error('Update error:', err);
+          alert('Ошибка при обновлении товара');
+          this.loading.set(false);
+        }
       });
     } else {
       this.productService.createProduct(payload).subscribe({
         next: () => this.onSaveSuccess(),
-        error: () => this.loading.set(false)
+        error: (err) => {
+          console.error('Create error:', err);
+          alert('Ошибка при создании товара');
+          this.loading.set(false);
+        }
       });
     }
   }
@@ -453,7 +476,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
     this.isEditing.set(true);
     this.editingId.set(productListItem.id);
 
-    this.productService.getProductById(productListItem.id).subscribe({
+    this.productService.getProductByIdForAdmin(productListItem.id).subscribe({ // 👈 Было getProductById
       next: (fullProduct) => {
         const tagsString = fullProduct.tags ? fullProduct.tags.join(', ') : '';
         this.productForm.patchValue({
@@ -463,7 +486,7 @@ export class ManagerProductsComponent implements OnInit, OnDestroy {
           brandId: fullProduct.brand?.id || null,
           price: fullProduct.price,
           discountPrice: fullProduct.discountPrice,
-          isPublished: productListItem.isPublished,
+          isPublished: fullProduct.isPublished, // 👈 Лучше из fullProduct, а не productListItem
           shortDescription: fullProduct.shortDescription,
           fullDescription: fullProduct.fullDescription,
           tagsText: tagsString

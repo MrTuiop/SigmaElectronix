@@ -889,3 +889,60 @@ tr.unpublished {
     border-color: #3b82f6;
     color: #3b82f6;
   }
+
+/* =============================================
+   БАННЕР ИНФОРМАЦИИ О ЯЗЫКЕ
+   ============================================= */
+.lang-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
+}
+
+.lang-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: #0ea5e9;
+  color: white;
+  border-radius: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);
+}
+
+.lang-notice-content {
+  flex: 1;
+}
+
+  .lang-notice-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    color: #0c4a6e;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lang-notice-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #0369a1;
+    line-height: 1.5;
+  }
+
+  .lang-notice-content strong {
+    color: #0284c7;
+    font-weight: 600;
+    background: rgba(2, 132, 199, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }

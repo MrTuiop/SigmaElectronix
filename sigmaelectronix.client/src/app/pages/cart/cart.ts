@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, effect, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   LucideTrash2,
@@ -14,6 +14,7 @@ import {
   LucidePackage,
 } from '@lucide/angular';
 import { CartService } from '../../services/cart-service';
+import { LanguageService } from '../../services/language-service'; // 👈 Импортируем
 
 @Component({
   selector: 'app-cart',
@@ -37,15 +38,26 @@ import { CartService } from '../../services/cart-service';
 })
 export class CartPage implements OnInit {
   private cartService = inject(CartService);
+  private languageService = inject(LanguageService); // 👈 Инжектим
 
-  // Прямой доступ к сигналу корзины
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
+
   readonly cart = this.cartService.cart;
-
-  // Сумма заказа берётся прямо из серверного DTO
   readonly cartTotal = computed(() => this.cart()?.total ?? 0);
 
+  // 👇 Перезагружаем корзину при смене языка
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      // Перезагружаем корзину — товары обновятся с новыми переводами
+      this.cartService.loadCart().subscribe({
+        error: () => console.error('Ошибка перезагрузки корзины при смене языка')
+      });
+    }
+  });
+
   ngOnInit(): void {
-    // Загружаем актуальную корзину при входе на страницу
     this.cartService.loadCart().subscribe();
   }
 
@@ -63,7 +75,6 @@ export class CartPage implements OnInit {
     if (item.quantity > 1) {
       this.cartService.updateItemQuantity(itemId, item.quantity - 1).subscribe();
     } else {
-      // Если количество 1 — удаляем товар
       this.removeItem(itemId);
     }
   }

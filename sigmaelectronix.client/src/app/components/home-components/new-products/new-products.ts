@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectorRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LucideArrowRight } from '@lucide/angular';
@@ -6,7 +6,7 @@ import { ProductListDto } from '../../../models/product-models';
 import { ProductService } from '../../../services/product-service';
 import { WishlistService } from '../../../services/wishlist-service';
 import { ProductCardComponent, UiProduct } from '../../product-components/product-card/product-card';
-// Подключаем нашу новую умную карточку и интерфейс! (Проверь путь, если он отличается)
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
 
 @Component({
   selector: 'app-new-products',
@@ -15,7 +15,7 @@ import { ProductCardComponent, UiProduct } from '../../product-components/produc
     CommonModule,
     RouterModule,
     LucideArrowRight,
-    ProductCardComponent // <-- Добавили карточку в imports
+    ProductCardComponent
   ],
   templateUrl: './new-products.html',
   styleUrl: './new-products.css',
@@ -24,6 +24,9 @@ export class NewProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
   private wishlistService = inject(WishlistService);
+  private languageService = inject(LanguageService); // 👈 Инжектим сервис
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage()); // 👈 Сигнал для отслеживания прошлого языка
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -31,16 +34,26 @@ export class NewProductsComponent implements OnInit {
 
   private gradientCache = new Map<number, string>();
 
-  // Формируем список продуктов для карточек
   products = computed<UiProduct[]>(() =>
     this.productService.newArrivals().slice(0, 4).map(p => ({
       ...p,
       inWishlist: this.wishlistService.isInWishlist(p.id),
-      isNew: true, // Для новинок всегда принудительно ставим true
+      isNew: true,
       discount: this.calcDiscount(p),
       gradient: this.getGradient(p.id)
     }))
   );
+
+  // 👇 Магия effect: срабатывает только когда меняется currentLanguage
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      this.productService.loadNewArrivals(4).subscribe({
+        error: () => console.error('Ошибка перезагрузки новинок при смене языка')
+      });
+    }
+  });
 
   ngOnInit(): void {
     if (this.productService.newArrivals().length > 0) {

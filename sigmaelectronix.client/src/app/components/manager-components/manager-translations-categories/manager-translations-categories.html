@@ -1,0 +1,179 @@
+<div class="manager-card">
+  <div class="card-header">
+    <div class="title-block">
+      <div class="icon-wrap">
+        <svg lucideLanguages size="24" strokeWidth="1.5"></svg>
+      </div>
+      <div>
+        <h2>Локализация категорий</h2>
+        <p class="subtitle">Перевод названий и ссылок (slug) разделов меню</p>
+      </div>
+    </div>
+
+    @if (viewMode() === 'form') {
+    <button class="btn btn-secondary" (click)="closeForm()">
+      <svg lucideChevronLeft size="18" strokeWidth="1.5"></svg>
+      Назад к списку
+    </button>
+    }
+  </div>
+
+  @if (viewMode() === 'list') {
+  <div class="list-toolbar">
+    <div class="search-box">
+      <svg lucideSearch size="18" class="search-icon"></svg>
+      <input type="text" placeholder="Поиск категорий для перевода..." (input)="onSearchChange($event)">
+    </div>
+    <div class="stats-info">
+      Найдено: <strong>{{ filteredCategories().length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-container scrollable-table">
+    @if (loading()) {
+    <app-spinner message="Загружаем категории..."></app-spinner>
+    }
+
+    <table class="manager-table">
+      <thead>
+        <tr>
+          <th>Категория</th>
+          <th>Родительская категория</th>
+          <th class="text-center">Переводы</th>
+          <th class="text-right">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (category of filteredCategories(); track category.id) {
+        <tr>
+          <td>
+            <div class="product-cell-content">
+              <div class="img-preview">
+                <svg lucideFolderTree size="20" color="#9ca3af" strokeWidth="1.5"></svg>
+              </div>
+              <div class="product-meta">
+                <span class="p-name">{{ category.name }}</span>
+                <span class="p-slug">/{{ category.slug }}</span>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="cat-tag">{{ category.parentCategoryName || 'Корневая категория' }}</span>
+          </td>
+
+          <td class="text-center">
+            <span class="translation-badge"
+                  [class.fully-translated]="category.translationsCount === targetLanguages().length"
+                  [class.partially-translated]="category.translationsCount! > 0 && category.translationsCount! < targetLanguages().length"
+                  [class.no-translations]="!category.translationsCount">
+              {{ category.translationsCount || 0 }} / {{ targetLanguages().length }}
+            </span>
+          </td>
+
+          <td class="text-right">
+            <button class="btn btn-primary btn-sm" (click)="openTranslateMode(category)">
+              <svg lucideLanguages size="16" strokeWidth="1.5"></svg>
+              Перевести
+            </button>
+          </td>
+        </tr>
+        } @empty {
+        <tr><td colspan="4" class="empty-row">Категории не найдены.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  @if (viewMode() === 'form' && baseCategory()) {
+  <div class="translation-container animate-fade">
+
+    <div class="lang-selector-panel">
+      <label>Выберите язык для перевода:</label>
+      <div class="lang-buttons">
+        @for (lang of targetLanguages(); track lang.code) {
+        <button class="lang-btn"
+                [class.active]="selectedLang() === lang.code"
+                (click)="selectLanguage(lang.code)">
+          @if (lang.iconUrl) {
+          <img [src]="lang.iconUrl" class="lang-flag" alt="flag">
+          } @else {
+          <svg lucideGlobe size="16"></svg>
+          }
+          {{ lang.nativeName }}
+        </button>
+        }
+        @if (targetLanguages().length === 0) {
+        <span class="empty-hint">Нет активных языков для перевода, кроме базового. Добавьте языки в настройках.</span>
+        }
+      </div>
+    </div>
+
+    @if (selectedLang()) {
+    <form [formGroup]="translationForm" (ngSubmit)="saveTranslation()" class="translation-form">
+      <div class="split-layout">
+
+        <div class="base-lang-col">
+          <div class="col-header">
+            <div class="lang-icon-wrap">🇷🇺</div>
+            <h3>Русский (Оригинал)</h3>
+          </div>
+
+          <div class="field-group readonly">
+            <label>Название категории</label>
+            <div class="fake-input">{{ baseCategory()?.name }}</div>
+          </div>
+
+          <div class="field-group readonly">
+            <label>Системный путь (Slug)</label>
+            <div class="fake-input mono-input">{{ baseCategory()?.slug }}</div>
+          </div>
+
+          <div class="field-group readonly">
+            <label>Тип категории</label>
+            <div class="fake-input">{{ baseCategory()?.parentCategoryName || 'Корневая категория' }}</div>
+          </div>
+        </div>
+
+        <div class="target-lang-col">
+          <div class="col-header target">
+            @if (selectedLangObj()?.iconUrl) {
+            <img [src]="selectedLangObj()?.iconUrl" class="lang-flag" alt="">
+            } @else {
+            <div class="lang-icon-wrap target-icon"><svg lucideGlobe size="18"></svg></div>
+            }
+            <h3>{{ selectedLangObj()?.nativeName }} (Перевод)</h3>
+          </div>
+
+          <div class="field-group">
+            <label>Название категории *</label>
+            <input type="text" formControlName="name" placeholder="Введите перевод названия..."
+                   [class.input-error]="translationForm.get('name')?.invalid && translationForm.get('name')?.touched">
+            @if (translationForm.get('name')?.invalid && translationForm.get('name')?.touched) {
+            <span class="error-msg">Обязательное поле</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Системный путь (Slug) *</label>
+            <input type="text" formControlName="slug" class="mono-input" placeholder="Автоматическая генерация..."
+                   [class.input-error]="translationForm.get('slug')?.invalid && translationForm.get('slug')?.touched">
+            <span class="input-hint">Уникальный URL для этого языка. Обычно формируется из названия.</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeForm()">Отмена</button>
+        <button type="submit" class="btn btn-success" [disabled]="translationForm.invalid || loading()">
+          <svg lucideSave size="16" strokeWidth="1.5"></svg>
+          Сохранить перевод
+        </button>
+      </div>
+    </form>
+    }
+  </div>
+  }
+</div>

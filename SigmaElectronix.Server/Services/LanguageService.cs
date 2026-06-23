@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SigmaElectronix.Server.Data;
 using SigmaElectronix.Server.DTOs.TranslationDTOs;
-using SigmaElectronix.Server.Entities.Translation;
+using SigmaElectronix.Server.Entities.TranslationModels;
 using SigmaElectronix.Server.Services.Interfaces;
 
 namespace SigmaElectronix.Server.Services

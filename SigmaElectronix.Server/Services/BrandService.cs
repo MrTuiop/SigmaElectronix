@@ -85,11 +85,11 @@ namespace SigmaElectronix.Server.Services
                 .Take(pageSize)
                 .Select(b => new {
                     Brand = b,
-                    // 🚀 Пытаемся взять нужный язык, затем дефолтный, затем любой первый попавшийся
                     Translation = b.Translations.FirstOrDefault(t => t.LanguageCode == currentLang) ??
                                   b.Translations.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
                                   b.Translations.FirstOrDefault(),
-                    ProductsCount = b.Products.Count(p => !p.IsDeleted && p.IsPublished)
+                    ProductsCount = b.Products.Count(p => !p.IsDeleted && p.IsPublished),
+                    TranslationsCount = b.Translations.Count  // 👈 НОВОЕ
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -106,7 +106,9 @@ namespace SigmaElectronix.Server.Services
                     : x.Translation?.Description ?? "",
                 ProductsCount = x.ProductsCount,
                 IsFeatured = x.Brand.IsFeatured,
-                IsActive = x.Brand.IsActive
+                IsActive = x.Brand.IsActive,
+                // 👇 НОВОЕ: минус базовый язык (ru)
+                TranslationsCount = Math.Max(0, x.TranslationsCount - 1)
             }).ToList();
 
             return new PagedResult<BrandListDto>
@@ -219,7 +221,20 @@ namespace SigmaElectronix.Server.Services
                 }).OrderBy(i => i.SortOrder).ToList(),
                 Categories = categories,
                 FeaturedProducts = featuredProducts,
-                TotalProductsCount = activeProducts.Count
+                TotalProductsCount = activeProducts.Count,
+                IsFeatured = brand.IsFeatured,
+                IsActive = brand.IsActive,
+                // 👇 НОВОЕ: возвращаем ВСЕ переводы
+                Translations = brand.Translations.Select(t => new BrandTranslationDto
+                {
+                    LanguageCode = t.LanguageCode,
+                    Name = t.Name,
+                    Slug = t.Slug,
+                    Description = t.Description ?? "",
+                    HeroTitle = t.HeroTitle,
+                    HeroSubtitle = t.HeroSubtitle,
+                    BannerButtonText = t.BannerButtonText
+                }).ToList()
             };
         }
 
@@ -289,25 +304,21 @@ namespace SigmaElectronix.Server.Services
 
             if (brand == null) return null;
 
-            // 1. Обновляем общие поля бренда
             brand.LogoUrl = dto.LogoUrl;
             brand.HeroImageUrl = dto.HeroImageUrl;
             brand.IsFeatured = dto.IsFeatured;
             brand.IsActive = dto.IsActive;
 
-            // 2. Обрабатываем переводы
             foreach (var transDto in dto.Translations)
             {
                 var targetSlug = string.IsNullOrWhiteSpace(transDto.Slug)
                     ? GenerateSlug(transDto.Name)
                     : GenerateSlug(transDto.Slug);
 
-                // Ищем существующий перевод для этого языка
                 var existingTranslation = brand.Translations.FirstOrDefault(t => t.LanguageCode == transDto.LanguageCode);
 
                 if (existingTranslation != null)
                 {
-                    // 🔄 Обновляем существующий
                     if (existingTranslation.Slug != targetSlug)
                     {
                         if (await _context.BrandTranslations.AnyAsync(bt => bt.BrandId != id && bt.Slug == targetSlug && bt.LanguageCode == transDto.LanguageCode))
@@ -325,7 +336,6 @@ namespace SigmaElectronix.Server.Services
                 }
                 else
                 {
-                    // ➕ Создаем новый перевод (если админ добавил новый язык)
                     if (await _context.BrandTranslations.AnyAsync(bt => bt.Slug == targetSlug && bt.LanguageCode == transDto.LanguageCode))
                     {
                         targetSlug = $"{targetSlug}-{Guid.NewGuid().ToString().Substring(0, 5)}";
@@ -344,11 +354,6 @@ namespace SigmaElectronix.Server.Services
                     });
                 }
             }
-
-            // 🗑 Опционально: Удаляем переводы, которые админ убрал из формы на фронте
-            var dtoLangs = dto.Translations.Select(t => t.LanguageCode).ToList();
-            var toRemove = brand.Translations.Where(t => !dtoLangs.Contains(t.LanguageCode)).ToList();
-            _context.BrandTranslations.RemoveRange(toRemove);
 
             await _context.SaveChangesAsync();
 
