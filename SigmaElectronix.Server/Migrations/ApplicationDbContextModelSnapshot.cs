@@ -1099,6 +1099,8 @@ namespace SigmaElectronix.Server.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LanguageCode");
+
                     b.HasIndex("Key", "LanguageCode")
                         .IsUnique();
 
@@ -1747,7 +1749,7 @@ namespace SigmaElectronix.Server.Migrations
             modelBuilder.Entity("SigmaElectronix.Server.Entities.StoreModels.StoreInventory", b =>
                 {
                     b.HasOne("SigmaElectronix.Server.Entities.ProductModels.Product", "Product")
-                        .WithMany()
+                        .WithMany("Inventories")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1761,6 +1763,17 @@ namespace SigmaElectronix.Server.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("SigmaElectronix.Server.Entities.TranslationModels.UiTranslation", b =>
+                {
+                    b.HasOne("SigmaElectronix.Server.Entities.TranslationModels.Language", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Language");
                 });
 
             modelBuilder.Entity("SigmaElectronix.Server.Entities.UserModels.Address", b =>
@@ -1916,6 +1929,8 @@ namespace SigmaElectronix.Server.Migrations
             modelBuilder.Entity("SigmaElectronix.Server.Entities.ProductModels.Product", b =>
                 {
                     b.Navigation("Images");
+
+                    b.Navigation("Inventories");
 
                     b.Navigation("Reviews");
 
