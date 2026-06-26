@@ -119,10 +119,23 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Иницаилизация ролей
+// Иницаилизация ролей и бд
 using (var scope = app.Services.CreateScope())
 {
-    await RoleInitializer.InitializeAsync(scope.ServiceProvider);
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        await context.Database.MigrateAsync();
+
+        await RoleInitializer.InitializeAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Произошла ошибка при применении миграций к БД.");
+    }
 }
 
 app.UseMiddleware<SessionIdMiddleware>();
