@@ -1,37 +1,38 @@
 <div class="checkout-page">
   <div class="container">
-    <h1 class="checkout-title">Оформление заказа</h1>
+    <h1 class="checkout-title" [translate]="'CHECKOUT.TITLE'">Оформление заказа</h1>
 
     <div class="checkout-layout">
       <div class="checkout-main">
         <div class="checkout-step" id="step-contact">
           <div class="step-header">
             <span class="step-number">1</span>
-            <h2>Контактные данные</h2>
+            <h2 [translate]="'CHECKOUT.STEP1.TITLE'">Контактные данные</h2>
           </div>
 
           @if (authService.isAuthenticated()) {
           <div class="logged-in-info">
-            <p>Вы вошли как <strong>{{ profileService.user()?.firstName }}</strong></p>
-            <p>Данные подставлены из вашего профиля.</p>
+            <p><span [translate]="'CHECKOUT.STEP1.LOGGED_IN_1'">Вы вошли как</span> <strong>{{ profileService.user()?.firstName }}</strong></p>
+            <p [translate]="'CHECKOUT.STEP1.LOGGED_IN_2'">Данные подставлены из вашего профиля.</p>
           </div>
           } @else {
           <div class="not-logged-in">
-            <p>У вас уже есть аккаунт? <span class="link" (click)="showAuthModal.set(true)" style="cursor: pointer;">Войти</span></p>
+            <p><span [translate]="'CHECKOUT.STEP1.NOT_LOGGED_IN'">У вас уже есть аккаунт?</span> <span class="link" (click)="showAuthModal.set(true)" style="cursor: pointer;" [translate]="'CHECKOUT.STEP1.LOGIN_LINK'">Войти</span></p>
           </div>
           }
 
           <div class="form-grid">
             <div class="form-group">
-              <label><svg lucideUser size="16" strokeWidth="2"></svg> Имя</label> <input type="text" [(ngModel)]="contact().name" placeholder="Иван Иванов" />
+              <label><svg lucideUser size="16" strokeWidth="2"></svg> <span [translate]="'CHECKOUT.STEP1.NAME'">Имя</span></label>
+              <input type="text" [(ngModel)]="contact().name" [placeholder]="'CHECKOUT.STEP1.NAME_PH' | translate" />
             </div>
             <div class="form-group">
               <label><svg lucideMail size="16" strokeWidth="2"></svg> Email</label>
               <input type="email" [(ngModel)]="contact().email" placeholder="example@mail.ru" />
             </div>
             <div class="form-group">
-              <label><svg lucidePhone size="16" strokeWidth="2"></svg> Телефон <span style="color: #ef4444;">*</span></label>
-              <input type="tel" [(ngModel)]="contact().phone" placeholder="+7 (___) ___-__-__" />
+              <label><svg lucidePhone size="16" strokeWidth="2"></svg> <span [translate]="'CHECKOUT.STEP1.PHONE'">Телефон</span> <span style="color: #ef4444;">*</span></label>
+              <input type="tel" [(ngModel)]="contact().phone" [placeholder]="'CHECKOUT.STEP1.PHONE_PH' | translate" />
             </div>
           </div>
         </div>
@@ -39,63 +40,60 @@
         <div class="checkout-step" id="step-delivery">
           <div class="step-header">
             <span class="step-number">2</span>
-            <h2>Способ доставки</h2>
+            <h2 [translate]="'CHECKOUT.STEP2.TITLE'">Способ доставки</h2>
           </div>
           <div class="delivery-options">
             <label class="option-card" [class.active]="deliveryMethod() === 'courier'">
               <input type="radio" name="delivery" value="courier" [(ngModel)]="deliveryMethod" hidden />
               <svg lucideTruck size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Курьером</strong>
-                <span>{{ subtotal() >= FREE_DELIVERY_THRESHOLD ? 'Бесплатно' : '300 ₽' }}</span>
+                <strong [translate]="'CHECKOUT.STEP2.COURIER'">Курьером</strong>
+                <span>{{ subtotal() >= FREE_DELIVERY_THRESHOLD ? ('CHECKOUT.STEP2.FREE' | translate) : '300 ₽' }}</span>
               </div>
             </label>
             <label class="option-card" [class.active]="deliveryMethod() === 'pickup'">
               <input type="radio" name="delivery" value="pickup" [(ngModel)]="deliveryMethod" hidden />
               <svg lucideStore size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Самовывоз</strong>
-                <span>Бесплатно</span>
+                <strong [translate]="'CHECKOUT.STEP2.PICKUP'">Самовывоз</strong>
+                <span [translate]="'CHECKOUT.STEP2.FREE'">Бесплатно</span>
               </div>
             </label>
             <label class="option-card" [class.active]="deliveryMethod() === 'delivery_service'">
               <input type="radio" name="delivery" value="delivery_service" [(ngModel)]="deliveryMethod" hidden />
               <svg lucidePackage size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Службы доставки</strong>
-                <span>от 400 ₽</span>
+                <strong [translate]="'CHECKOUT.STEP2.DELIVERY_SERVICE'">Службы доставки</strong>
+                <span [translate]="'CHECKOUT.STEP2.FROM_400'">от 400 ₽</span>
               </div>
             </label>
           </div>
 
           @if (deliveryMethod() === 'courier') {
-
           @if (authService.isAuthenticated() && profileService.addresses().length > 0) {
           <div class="saved-addresses-grid animate-fade-in">
-            <h4>Выберите адрес доставки</h4>
+            <h4 [translate]="'CHECKOUT.STEP2.SELECT_ADDRESS'">Выберите адрес доставки</h4>
             <div class="address-cards">
               @for (addr of profileService.addresses(); track addr.id) {
               <label class="address-card-select" [class.active]="!isCustomAddress() && selectedSavedAddressId() === addr.id">
-                <input type="radio" name="saved_addr" [value]="addr.id"
-                       (change)="isCustomAddress.set(false); selectedSavedAddressId.set(addr.id)" hidden>
+                <input type="radio" name="saved_addr" [value]="addr.id" (change)="isCustomAddress.set(false); selectedSavedAddressId.set(addr.id)" hidden>
                 <div class="address-card-header">
                   <strong>
                     <svg lucideMapPin size="16" strokeWidth="2.5" style="margin-right: 4px; vertical-align: -3px;"></svg>
-                    {{ addr.title || 'Мой адрес' }}
+                    {{ addr.title || ('CHECKOUT.STEP2.MY_ADDRESS' | translate) }}
                   </strong>
-                  @if (addr.isDefault) { <span class="badge success" style="font-size: 10px; padding: 2px 6px;">По умолчанию</span> }
+                  @if (addr.isDefault) { <span class="badge success" style="font-size: 10px; padding: 2px 6px;" [translate]="'CHECKOUT.STEP2.DEFAULT_BADGE'">По умолчанию</span> }
                 </div>
                 <p>{{ addr.city }}, {{ addr.street }}</p>
-                <p class="address-zip">Индекс: {{ addr.zip }}</p>
+                <p class="address-zip"><span [translate]="'CHECKOUT.STEP2.ZIP'">Индекс</span>: {{ addr.zip }}</p>
               </label>
               }
 
               <label class="address-card-select custom-address" [class.active]="isCustomAddress()">
-                <input type="radio" name="saved_addr" value="custom"
-                       (change)="isCustomAddress.set(true)" hidden>
+                <input type="radio" name="saved_addr" value="custom" (change)="isCustomAddress.set(true)" hidden>
                 <div class="custom-icon">+</div>
-                <strong>Другой адрес</strong>
-                <p>Ввести адрес вручную</p>
+                <strong [translate]="'CHECKOUT.STEP2.OTHER_ADDRESS'">Другой адрес</strong>
+                <p [translate]="'CHECKOUT.STEP2.ENTER_MANUALLY'">Ввести адрес вручную</p>
               </label>
             </div>
           </div>
@@ -103,8 +101,8 @@
 
           @if (isCustomAddress() || !authService.isAuthenticated() || profileService.addresses().length === 0) {
           <div class="delivery-address-field animate-fade-in">
-            <label>Адрес доставки</label>
-            <input type="text" [(ngModel)]="deliveryAddress" placeholder="Город, улица, дом, квартира" />
+            <label [translate]="'CHECKOUT.STEP2.ADDRESS_LABEL'">Адрес доставки</label>
+            <input type="text" [(ngModel)]="deliveryAddress" [placeholder]="'CHECKOUT.STEP2.ADDRESS_PH' | translate" />
           </div>
           }
           }
@@ -117,7 +115,7 @@
             </label>
             <label class="company-card" [class.active]="deliveryCompany() === 'pochta'">
               <input type="radio" name="company" value="pochta" [(ngModel)]="deliveryCompany" hidden>
-              <div class="company-logo">Почта России</div>
+              <div class="company-logo" [translate]="'CHECKOUT.STEP2.POST'">Почта России</div>
             </label>
             <label class="company-card" [class.active]="deliveryCompany() === 'pek'">
               <input type="radio" name="company" value="pek" [(ngModel)]="deliveryCompany" hidden>
@@ -129,21 +127,20 @@
             </label>
           </div>
           <div class="delivery-address-field">
-            <label>Адрес пункта выдачи или отделения</label>
-            <input type="text" [(ngModel)]="deliveryAddress" placeholder="Город, улица, дом..." />
+            <label [translate]="'CHECKOUT.STEP2.PICKUP_POINT'">Адрес пункта выдачи или отделения</label>
+            <input type="text" [(ngModel)]="deliveryAddress" [placeholder]="'CHECKOUT.STEP2.PICKUP_POINT_PH' | translate" />
           </div>
           }
 
           @if (deliveryMethod() === 'pickup') {
           <div class="pickup-stores">
-            <h4>Выберите магазин для самовывоза</h4>
-
+            <h4 [translate]="'CHECKOUT.STEP2.PICKUP_TITLE'">Выберите магазин для самовывоза</h4>
             @if (isLoadingStores()) {
             <div class="loading-state">
-              <p>Проверяем наличие в магазинах...</p>
+              <p [translate]="'CHECKOUT.STEP2.CHECKING_STORES'">Проверяем наличие в магазинах...</p>
             </div>
             } @else if (storesInCity().length === 0) {
-            <p style="color: var(--text-muted);">В вашем городе пока нет магазинов.</p>
+            <p style="color: var(--text-muted);" [translate]="'CHECKOUT.STEP2.NO_STORES'">В вашем городе пока нет магазинов.</p>
             } @else {
             <div class="store-list">
               @for (store of storesInCity(); track store.id) {
@@ -152,13 +149,13 @@
                 <div class="store-info">
                   <strong>{{ store.name }}</strong>
                   <span>{{ store.fullAddress }}</span>
-                  <span>Режим: {{ store.workingHours }}</span>
+                  <span><span [translate]="'CHECKOUT.STEP2.WORKING_HOURS'">Режим</span>: {{ store.workingHours }}</span>
                 </div>
                 <div class="store-availability">
                   @if (isStoreAvailableToday(store.id)) {
-                  <span class="badge success">Забрать сегодня</span>
+                  <span class="badge success" [translate]="'CHECKOUT.STEP2.PICKUP_TODAY'">Забрать сегодня</span>
                   } @else {
-                  <span class="badge warning">Забрать {{ getNextWeekDate() }}</span>
+                  <span class="badge warning"><span [translate]="'CHECKOUT.STEP2.PICKUP_NEXT'">Забрать</span> {{ getNextWeekDate() }}</span>
                   }
                 </div>
               </label>
@@ -172,14 +169,14 @@
         <div class="checkout-step" id="step-payment">
           <div class="step-header">
             <span class="step-number">3</span>
-            <h2>Способ оплаты</h2>
+            <h2 [translate]="'CHECKOUT.STEP3.TITLE'">Способ оплаты</h2>
           </div>
           <div class="payment-options">
             <label class="option-card" [class.active]="paymentMethod() === 'card'">
               <input type="radio" name="payment" value="card" [(ngModel)]="paymentMethod" hidden />
               <svg lucideCreditCard size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Банковской картой</strong>
+                <strong [translate]="'CHECKOUT.STEP3.CARD'">Банковской картой</strong>
                 <span>Visa, Mastercard, МИР</span>
               </div>
             </label>
@@ -187,14 +184,14 @@
               <input type="radio" name="payment" value="cash" [(ngModel)]="paymentMethod" hidden />
               <svg lucideBanknote size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Наличными при получении</strong>
+                <strong [translate]="'CHECKOUT.STEP3.CASH'">Наличными при получении</strong>
               </div>
             </label>
             <label class="option-card" [class.active]="paymentMethod() === 'wallet'">
               <input type="radio" name="payment" value="wallet" [(ngModel)]="paymentMethod" hidden />
               <svg lucideWallet size="20" strokeWidth="2"></svg>
               <div>
-                <strong>Электронный кошелёк</strong>
+                <strong [translate]="'CHECKOUT.STEP3.WALLET'">Электронный кошелёк</strong>
                 <span>ЮMoney, Qiwi</span>
               </div>
             </label>
@@ -204,45 +201,35 @@
         <div class="checkout-step" id="step-discounts">
           <div class="step-header">
             <span class="step-number">4</span>
-            <h2>Промокод и бонусы</h2>
+            <h2 [translate]="'CHECKOUT.STEP4.TITLE'">Промокод и бонусы</h2>
           </div>
 
           <div class="promo-section">
             <div class="promo-input-group">
               <svg lucideTag size="16" strokeWidth="2.5" class="promo-icon"></svg>
-              <input type="text"
-                     placeholder="Введите промокод"
-                     [(ngModel)]="promoCode"
-                     (keyup.enter)="applyPromo()" />
-              <button class="apply-promo-btn" (click)="applyPromo()">Применить</button>
+              <input type="text" [placeholder]="'CHECKOUT.STEP4.PROMO_PH' | translate" [(ngModel)]="promoCode" (keyup.enter)="applyPromo()" />
+              <button class="apply-promo-btn" (click)="applyPromo()" [translate]="'CHECKOUT.STEP4.APPLY_BTN'">Применить</button>
             </div>
             @if (appliedPromo()) {
             <div class="applied-promo">
               <svg lucidePercent size="14" strokeWidth="2.5"></svg>
-              Промокод «{{ appliedPromo()?.code }}»
-              @if (appliedPromo()?.isPercentage) {
-              (-{{ appliedPromo()?.discountPercent }}%)
-              } @else {
-              (-{{ appliedPromo()?.discountValue }} ₽)
-              }
+              <span [translate]="'CHECKOUT.STEP4.PROMO_APPLIED'">Промокод</span> «{{ appliedPromo()?.code }}»
+              @if (appliedPromo()?.isPercentage) { (-{{ appliedPromo()?.discountPercent }}%) }
+              @else { (-{{ appliedPromo()?.discountValue }} ₽) }
               <button class="remove-promo-btn" (click)="removePromo()">✕</button>
             </div>
             }
-            @if (promoError()) {
-            <p class="promo-error">{{ promoError() }}</p>
-            }
+            @if (promoError()) { <p class="promo-error">{{ promoError() }}</p> }
           </div>
 
           @if (authService.isAuthenticated()) {
           <div class="bonuses-section">
             <div class="bonus-card">
               <div class="bonus-header">
-                <div class="bonus-icon-wrapper">
-                  <svg lucideGift size="24" strokeWidth="2"></svg>
-                </div>
+                <div class="bonus-icon-wrapper"><svg lucideGift size="24" strokeWidth="2"></svg></div>
                 <div class="bonus-text">
-                  <h4>Бонусные баллы Sigma</h4>
-                  <p>Доступно: <strong>{{ availableBonuses() }} ₽</strong></p>
+                  <h4 [translate]="'CHECKOUT.STEP4.BONUS_TITLE'">Бонусные баллы Sigma</h4>
+                  <p><span [translate]="'CHECKOUT.STEP4.BONUS_AVAILABLE'">Доступно:</span> <strong>{{ availableBonuses() }} ₽</strong></p>
                 </div>
               </div>
 
@@ -253,7 +240,7 @@
                     <input type="checkbox" [checked]="useBonuses()" (change)="toggleBonuses()">
                     <span class="slider round"></span>
                   </label>
-                  <span>Списать баллы для оплаты</span>
+                  <span [translate]="'CHECKOUT.STEP4.USE_BONUS'">Списать баллы для оплаты</span>
                 </div>
 
                 @if (useBonuses()) {
@@ -263,19 +250,15 @@
                     <span class="current-val">{{ bonusesToSpend() }} ₽</span>
                     <span>{{ maxBonusesForOrder() }}</span>
                   </div>
-                  <input type="range"
-                         [min]="0"
-                         [max]="maxBonusesForOrder()"
-                         [value]="bonusesToSpend()"
-                         (input)="onBonusesChange($event)"
-                         class="bonus-range">
-                  <p class="bonus-hint">Баллами можно оплатить до 30% стоимости заказа.</p>
+                  <input type="range" [min]="0" [max]="maxBonusesForOrder()" [value]="bonusesToSpend()" (input)="onBonusesChange($event)" class="bonus-range">
+                  <p class="bonus-hint" [translate]="'CHECKOUT.STEP4.BONUS_HINT'">Баллами можно оплатить до 30% стоимости заказа.</p>
                 </div>
                 } @else {
                 <div class="bonus-earn-wrapper animate-fade-in">
                   <div class="bonus-earn-info">
                     <span class="sparkle-icon">✨</span>
-                    <span class="earn-text">За этот заказ мы начислим <strong>+{{ earnedBonuses() }} баллов</strong></span>
+                    <!-- 👈 Разделяем статику и динамику через span -->
+                    <span class="earn-text"><span [translate]="'CHECKOUT.STEP4.EARN_TEXT_1'">За этот заказ мы начислим</span> <strong>+{{ earnedBonuses() }} <span [translate]="'CHECKOUT.STEP4.BONUS_WORD'">баллов</span></strong></span>
                   </div>
                 </div>
                 }
@@ -284,7 +267,7 @@
               <div class="bonus-earn-wrapper">
                 <div class="bonus-earn-info">
                   <span class="sparkle-icon">✨</span>
-                  <span class="earn-text">Совершите покупку и получите <strong>+{{ earnedBonuses() }} баллов</strong></span>
+                  <span class="earn-text"><span [translate]="'CHECKOUT.STEP4.EARN_TEXT_2'">Совершите покупку и получите</span> <strong>+{{ earnedBonuses() }} <span [translate]="'CHECKOUT.STEP4.BONUS_WORD'">баллов</span></strong></span>
                 </div>
               </div>
               }
@@ -294,36 +277,30 @@
         </div>
 
         <div class="checkout-submit">
-          <button class="place-order-btn" (click)="placeOrder()"
-                  [disabled]="cartService.cart()?.items?.length === 0 || !cartService.cart()">
+          <button class="place-order-btn" (click)="placeOrder()" [disabled]="cartService.cart()?.items?.length === 0 || !cartService.cart()">
             <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
-            Оформить заказ
+            <span [translate]="'CHECKOUT.SUBMIT_BTN'">Оформить заказ</span>
           </button>
-          <p class="agree-text">Нажимая кнопку, вы соглашаетесь с условиями обработки данных</p>
+          <p class="agree-text" [translate]="'CHECKOUT.AGREE_TEXT'">Нажимая кнопку, вы соглашаетесь с условиями обработки данных</p>
         </div>
       </div>
 
       <aside class="checkout-sidebar">
         <div class="sidebar-card">
-
           <div class="estimated-date-card">
-            <div class="ed-icon">
-              <svg lucideCalendar size="20" strokeWidth="2"></svg>
-            </div>
+            <div class="ed-icon"><svg lucideCalendar size="20" strokeWidth="2"></svg></div>
             <div class="ed-text">
-              <span>Ориентировочная дата получения:</span>
+              <span [translate]="'CHECKOUT.SIDEBAR.ESTIMATED_DATE'">Ориентировочная дата получения:</span>
               <strong>{{ estimatedDeliveryDate() }}</strong>
             </div>
           </div>
 
-          <h3>Ваш заказ</h3>
+          <h3 [translate]="'CHECKOUT.SIDEBAR.YOUR_ORDER'">Ваш заказ</h3>
           <div class="sidebar-items">
             @for (item of cartService.cart()?.items; track item.id) {
             <div class="sidebar-item">
               <div class="sidebar-item-main">
-                <div class="sidebar-item-image">
-                  <img [src]="item.productImage || '/assets/placeholder.jpg'" alt="{{ item.productName }}">
-                </div>
+                <div class="sidebar-item-image"><img [src]="item.productImage || '/assets/placeholder.jpg'" alt="{{ item.productName }}"></div>
                 <div class="sidebar-item-details">
                   <span class="sidebar-item-name">{{ item.productName }}</span>
                   <div class="sidebar-item-price-row">
@@ -332,46 +309,29 @@
                   </div>
                 </div>
               </div>
-
               @if (getItemStockInfo(item); as stockInfo) {
               <div class="sidebar-item-stock" [ngClass]="stockInfo.status">
                 <div class="stock-dot"></div>
-                {{ stockInfo.text }}
+                {{ stockInfo.text }} <!-- 👈 Строка уже склеена в TS -->
               </div>
               }
             </div>
             }
-
             @if (cartService.cart()?.items?.length === 0 || !cartService.cart()) {
-            <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Ваша корзина пуста</p>
+            <p style="color: var(--text-muted); text-align: center; font-size: 14px;" [translate]="'CHECKOUT.SIDEBAR.EMPTY_CART'">Ваша корзина пуста</p>
             }
           </div>
 
           <div class="sidebar-totals">
-            <div class="sidebar-line">
-              <span>Сумма заказа</span>
-              <span>{{ subtotal() | currency:'₽':'symbol':'1.0-0' }}</span>
-            </div>
+            <div class="sidebar-line"><span [translate]="'CHECKOUT.SIDEBAR.SUBTOTAL'">Сумма заказа</span> <span>{{ subtotal() | currency:'₽':'symbol':'1.0-0' }}</span></div>
             @if (promoDiscountAmount() > 0) {
-            <div class="sidebar-line discount">
-              <span>Скидка по промокоду</span>
-              <span>–{{ promoDiscountAmount() | currency:'₽':'symbol':'1.0-0' }}</span>
-            </div>
+            <div class="sidebar-line discount"><span [translate]="'CHECKOUT.SIDEBAR.PROMO_DISCOUNT'">Скидка по промокоду</span> <span>–{{ promoDiscountAmount() | currency:'₽':'symbol':'1.0-0' }}</span></div>
             }
             @if (bonusesDiscount() > 0) {
-            <div class="sidebar-line discount">
-              <span>Бонусные баллы</span>
-              <span>–{{ bonusesDiscount() | currency:'₽':'symbol':'1.0-0' }}</span>
-            </div>
+            <div class="sidebar-line discount"><span [translate]="'CHECKOUT.SIDEBAR.BONUS_DISCOUNT'">Бонусные баллы</span> <span>–{{ bonusesDiscount() | currency:'₽':'symbol':'1.0-0' }}</span></div>
             }
-            <div class="sidebar-line">
-              <span>Доставка</span>
-              <span>{{ deliveryCost() === 0 ? 'Бесплатно' : (deliveryCost() | currency:'₽':'symbol':'1.0-0') }}</span>
-            </div>
-            <div class="sidebar-line total">
-              <span>Итого</span>
-              <span>{{ total() | currency:'₽':'symbol':'1.0-0' }}</span>
-            </div>
+            <div class="sidebar-line"><span [translate]="'CHECKOUT.SIDEBAR.DELIVERY'">Доставка</span> <span>{{ deliveryCost() === 0 ? ('CHECKOUT.SIDEBAR.FREE' | translate) : (deliveryCost() | currency:'₽':'symbol':'1.0-0') }}</span></div>
+            <div class="sidebar-line total"><span [translate]="'CHECKOUT.SIDEBAR.TOTAL'">Итого</span> <span>{{ total() | currency:'₽':'symbol':'1.0-0' }}</span></div>
           </div>
         </div>
       </aside>
@@ -379,7 +339,5 @@
   </div>
 </div>
 @if (showAuthModal()) {
-<app-auth-modal (close)="showAuthModal.set(false)"
-                (authenticated)="showAuthModal.set(false)">
-</app-auth-modal>
+<app-auth-modal (close)="showAuthModal.set(false)" (authenticated)="showAuthModal.set(false)"></app-auth-modal>
 }

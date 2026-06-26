@@ -1,0 +1,210 @@
+/* Общий контейнер */
+.page-container {
+  padding: 40px 0 80px;
+  background: var(--bg-color, #f8fafc);
+  min-height: 70vh;
+}
+
+/* Хлебные крошки */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+  .breadcrumbs a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+    .breadcrumbs a:hover {
+      color: var(--primary-color);
+    }
+
+  .breadcrumbs .sep {
+    color: var(--text-muted);
+    opacity: 0.6;
+  }
+
+  .breadcrumbs .current {
+    color: var(--text-main);
+    font-weight: 600;
+  }
+
+/* Сетка страницы */
+.doc-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* === БОКОВОЕ МЕНЮ === */
+.doc-sidebar {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
+  padding: 16px;
+  position: sticky;
+  top: 90px;
+  box-shadow: var(--shadow-sm);
+}
+
+.doc-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-nav-link {
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: var(--text-main, #111827);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+  .doc-nav-link:hover {
+    background: var(--bg-color, #f8fafc);
+    color: var(--primary-color, #7c3aed);
+  }
+
+  .doc-nav-link.active {
+    background: rgba(124, 58, 237, 0.08);
+    color: var(--primary-color, #7c3aed);
+  }
+
+.nav-divider {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+  font-weight: 700;
+  margin: 20px 16px 8px;
+  letter-spacing: 0.5px;
+}
+
+/* === ТЕКСТОВЫЙ БЛОК === */
+.content-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 20px;
+  padding: 48px;
+  box-shadow: var(--shadow-sm);
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main, #111827);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.last-update {
+  font-size: 14px;
+  color: var(--text-muted, #6b7280);
+  margin: 0 0 32px 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.doc-text {
+  max-width: 800px;
+}
+
+.doc-section {
+  margin-bottom: 40px;
+}
+
+  .doc-section:last-child {
+    margin-bottom: 0;
+  }
+
+.doc-text h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main, #111827);
+  margin: 0 0 16px 0;
+}
+
+.doc-text p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-muted, #4b5563);
+  margin: 0 0 16px 0;
+}
+
+/* Красивые списки */
+.doc-text ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+
+  .doc-text ul li {
+    position: relative;
+    padding-left: 24px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted, #4b5563);
+    margin-bottom: 10px;
+  }
+
+    .doc-text ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-color, #7c3aed);
+    }
+
+.doc-text strong {
+  color: var(--text-main, #111827);
+  font-weight: 600;
+}
+
+.doc-text a {
+  color: var(--primary-color, #7c3aed);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: all 0.2s;
+}
+
+  .doc-text a:hover {
+    color: var(--primary-hover, #6d28d9);
+    text-decoration-color: transparent;
+  }
+
+/* === АДАПТИВНОСТЬ === */
+@media (max-width: 992px) {
+  .doc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-sidebar {
+    position: static;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-card {
+    padding: 24px;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
+
+  .doc-text p, .doc-text ul li {
+    font-size: 14px;
+  }
+}

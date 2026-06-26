@@ -2,9 +2,11 @@
   <section class="about-hero">
     <div class="container">
       <div class="hero-content">
-        <span class="badge">О нас</span>
-        <h1 class="hero-title">Больше, чем просто <span class="accent">магазин электроники</span></h1>
-        <p class="hero-subtitle">
+        <span class="badge" [translate]="'ABOUT.HERO.BADGE'">О нас</span>
+        <h1 class="hero-title">
+          {{ 'ABOUT.HERO.TITLE_PRE' | translate }} <span class="accent">{{ 'ABOUT.HERO.TITLE_ACCENT' | translate }}</span>
+        </h1>
+        <p class="hero-subtitle" [translate]="'ABOUT.HERO.SUBTITLE'">
           Мы в SigmaElectronix стремимся сделать новейшие технологии доступными каждому. Наша миссия — предоставлять лучший сервис и только оригинальную технику для комфортной жизни и работы.
         </p>
       </div>
@@ -15,20 +17,20 @@
     <div class="container">
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-number">10+</div>
-          <div class="stat-label">Лет на рынке</div>
+          <div class="stat-number" [translate]="'ABOUT.STATS.YEARS_NUM'">10+</div>
+          <div class="stat-label" [translate]="'ABOUT.STATS.YEARS_LABEL'">Лет на рынке</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number">500k</div>
-          <div class="stat-label">Счастливых клиентов</div>
+          <div class="stat-number" [translate]="'ABOUT.STATS.CLIENTS_NUM'">500k</div>
+          <div class="stat-label" [translate]="'ABOUT.STATS.CLIENTS_LABEL'">Счастливых клиентов</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number">50+</div>
-          <div class="stat-label">Магазинов по стране</div>
+          <div class="stat-number" [translate]="'ABOUT.STATS.STORES_NUM'">50+</div>
+          <div class="stat-label" [translate]="'ABOUT.STATS.STORES_LABEL'">Магазинов по стране</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number">100%</div>
-          <div class="stat-label">Оригинальная продукция</div>
+          <div class="stat-number" [translate]="'ABOUT.STATS.ORIGINAL_NUM'">100%</div>
+          <div class="stat-label" [translate]="'ABOUT.STATS.ORIGINAL_LABEL'">Оригинальная продукция</div>
         </div>
       </div>
     </div>
@@ -37,8 +39,8 @@
   <section class="values-section">
     <div class="container">
       <div class="section-header center">
-        <h2 class="section-title">Наши принципы</h2>
-        <p class="section-subtitle">То, на чем строится работа SigmaElectronix каждый день</p>
+        <h2 class="section-title" [translate]="'ABOUT.VALUES.TITLE'">Наши принципы</h2>
+        <p class="section-subtitle" [translate]="'ABOUT.VALUES.SUBTITLE'">То, на чем строится работа SigmaElectronix каждый день</p>
       </div>
 
       <div class="values-grid">
@@ -46,32 +48,32 @@
           <div class="icon-wrap purple">
             <svg lucideShieldCheck size="28" strokeWidth="1.5"></svg>
           </div>
-          <h3>Надежность и качество</h3>
-          <p>Мы работаем только с официальными брендами и гарантируем 100% подлинность каждого гаджета.</p>
+          <h3 [translate]="'ABOUT.VALUES.QUALITY_TITLE'">Надежность и качество</h3>
+          <p [translate]="'ABOUT.VALUES.QUALITY_DESC'">Мы работаем только с официальными брендами и гарантируем 100% подлинность каждого гаджета.</p>
         </div>
 
         <div class="value-card">
           <div class="icon-wrap blue">
             <svg lucideZap size="28" strokeWidth="1.5"></svg>
           </div>
-          <h3>Скорость и удобство</h3>
-          <p>Быстрая логистика, комфортные пункты выдачи и удобный сайт для покупок в пару кликов.</p>
+          <h3 [translate]="'ABOUT.VALUES.SPEED_TITLE'">Скорость и удобство</h3>
+          <p [translate]="'ABOUT.VALUES.SPEED_DESC'">Быстрая логистика, комфортные пункты выдачи и удобный сайт для покупок в пару кликов.</p>
         </div>
 
         <div class="value-card">
           <div class="icon-wrap green">
             <svg lucideThumbsUp size="28" strokeWidth="1.5"></svg>
           </div>
-          <h3>Ориентация на клиента</h3>
-          <p>Наша поддержка всегда на связи. Мы помогаем с выбором, решаем проблемы и ценим ваши отзывы.</p>
+          <h3 [translate]="'ABOUT.VALUES.CLIENT_TITLE'">Ориентация на клиента</h3>
+          <p [translate]="'ABOUT.VALUES.CLIENT_DESC'">Наша поддержка всегда на связи. Мы помогаем с выбором, решаем проблемы и ценим ваши отзывы.</p>
         </div>
 
         <div class="value-card">
           <div class="icon-wrap orange">
             <svg lucideAward size="28" strokeWidth="1.5"></svg>
           </div>
-          <h3>Справедливые цены</h3>
-          <p>Мы регулярно проводим акции, предлагаем программу лояльности и скидки постоянным покупателям.</p>
+          <h3 [translate]="'ABOUT.VALUES.PRICE_TITLE'">Справедливые цены</h3>
+          <p [translate]="'ABOUT.VALUES.PRICE_DESC'">Мы регулярно проводим акции, предлагаем программу лояльности и скидки постоянным покупателям.</p>
         </div>
       </div>
     </div>
@@ -81,18 +83,18 @@
     <div class="container">
       <div class="story-layout">
         <div class="story-content">
-          <h2>Как мы начинали</h2>
-          <p>
+          <h2 [translate]="'ABOUT.STORY.TITLE'">Как мы начинали</h2>
+          <p [translate]="'ABOUT.STORY.P1'">
             SigmaElectronix начинался с небольшого шоурума в 2014 году, когда команда энтузиастов решила изменить подход к продаже умной техники. Нас не устраивал уровень сервиса на рынке, и мы решили создать место, в котором хотелось бы покупать самим.
           </p>
-          <p>
+          <p [translate]="'ABOUT.STORY.P2'">
             Сегодня мы — крупная технологичная сеть. Но наши базовые ценности остались неизменными: честность, внимание к деталям и искренняя любовь к гаджетам. Мы не просто продаем электронику, мы помогаем вам выбрать идеальный инструмент для работы, творчества и развлечений.
           </p>
         </div>
         <div class="story-image">
           <div class="image-placeholder">
             <svg lucideUsers size="64" strokeWidth="1"></svg>
-            <span>Команда Sigma</span>
+            <span [translate]="'ABOUT.STORY.TEAM'">Команда Sigma</span>
           </div>
         </div>
       </div>

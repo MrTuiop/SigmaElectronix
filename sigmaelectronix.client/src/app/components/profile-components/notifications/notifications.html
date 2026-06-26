@@ -1,10 +1,10 @@
 <div class="content-card fade-in">
-  <h2>Настройки уведомлений</h2>
+  <h2 [translate]="'PROFILE.NOTIFICATIONS.SETTINGS'">Настройки уведомлений</h2>
 
   <div class="notification-option">
     <div class="option-text">
-      <span class="option-title">Email-рассылка</span>
-      <span class="option-desc">Получать информацию об акциях и новинках</span>
+      <span class="option-title" [translate]="'PROFILE.NOTIFICATIONS.EMAIL_TITLE'">Email-рассылка</span>
+      <span class="option-desc" [translate]="'PROFILE.NOTIFICATIONS.EMAIL_DESC'">Получать информацию об акциях и новинках</span>
     </div>
     <button class="toggle-btn"
             [class.active]="data.notifications().email"
@@ -15,8 +15,8 @@
 
   <div class="notification-option">
     <div class="option-text">
-      <span class="option-title">SMS-уведомления</span>
-      <span class="option-desc">Статус заказа и напоминания о доставке</span>
+      <span class="option-title" [translate]="'PROFILE.NOTIFICATIONS.SMS_TITLE'">SMS-уведомления</span>
+      <span class="option-desc" [translate]="'PROFILE.NOTIFICATIONS.SMS_DESC'">Статус заказа и напоминания о доставке</span>
     </div>
     <button class="toggle-btn"
             [class.active]="data.notifications().sms"
@@ -27,8 +27,8 @@
 
   <div class="notification-option">
     <div class="option-text">
-      <span class="option-title">Push-уведомления</span>
-      <span class="option-desc">Мгновенные оповещения в браузере</span>
+      <span class="option-title" [translate]="'PROFILE.NOTIFICATIONS.PUSH_TITLE'">Push-уведомления</span>
+      <span class="option-desc" [translate]="'PROFILE.NOTIFICATIONS.PUSH_DESC'">Мгновенные оповещения в браузере</span>
     </div>
     <button class="toggle-btn"
             [class.active]="data.notifications().push"

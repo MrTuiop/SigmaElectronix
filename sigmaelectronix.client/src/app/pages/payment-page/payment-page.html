@@ -3,36 +3,41 @@
     @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Загрузка данных для оплаты...</p>
+      <p [translate]="'PAYMENT.LOADING'">Загрузка данных для оплаты...</p>
     </div>
     } @else if (order()) {
     <div class="payment-card">
       <div class="payment-header">
-        <h2>К оплате: {{ order()?.totalAmount | currency:'₽':'symbol':'1.0-0' }}</h2>
-        <p>Заказ №{{ order()?.orderNumber }}</p>
+        <h2>
+          <span [translate]="'PAYMENT.TO_PAY'">К оплате:</span>
+          {{ order()?.totalAmount | currency:'₽':'symbol':'1.0-0' }}
+        </h2>
+        <p>
+          <span [translate]="'PAYMENT.ORDER_NUMBER'">Заказ</span> №{{ order()?.orderNumber }}
+        </p>
       </div>
 
       <div class="qr-section">
-        <p>Отсканируйте QR-код для оплаты 🎵</p>
+        <p [translate]="'PAYMENT.QR_TITLE'">Отсканируйте QR-код для оплаты 🎵</p>
         <div class="qr-wrapper">
-          <img [src]="qrCodeUrl" alt="QR Code для оплаты" />
+          <img [src]="qrCodeUrl" [alt]="'PAYMENT.QR_ALT' | translate" />
         </div>
-        <p class="hint">Наведите камеру смартфона</p>
+        <p class="hint" [translate]="'PAYMENT.QR_HINT'">Наведите камеру смартфона</p>
       </div>
 
       <div class="payment-actions">
         <button class="pay-btn" (click)="simulatePayment()" [disabled]="isPaying()">
           @if (isPaying()) {
-          <span>Обработка транзакции...</span>
+          <span [translate]="'PAYMENT.PROCESSING'">Обработка транзакции...</span>
           } @else {
           <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
-          <span>Подтвердить оплату</span>
+          <span [translate]="'PAYMENT.CONFIRM_BTN'">Подтвердить оплату</span>
           }
         </button>
 
         <p class="safe-payment-text">
           <svg lucideCheckCircle size="14" strokeWidth="2.5"></svg>
-          Безопасный платеж
+          <span [translate]="'PAYMENT.SAFE_TEXT'">Безопасный платеж</span>
         </p>
       </div>
     </div>

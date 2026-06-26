@@ -1,9 +1,9 @@
 <div class="content-card fade-in">
   <div class="section-header-inner">
-    <h2>Мои адреса</h2>
+    <h2 [translate]="'PROFILE.ADDRESSES.MY'">Мои адреса</h2>
     <button class="btn-primary btn-sm" (click)="addAddress()">
       <svg lucidePlus size="16" strokeWidth="2.5"></svg>
-      Добавить
+      <span [translate]="'PROFILE.ADDRESSES.ADD'">Добавить</span>
     </button>
   </div>
 
@@ -19,7 +19,7 @@
         </div>
 
         @if (addr.isDefault) {
-        <span class="default-badge">По умолчанию</span>
+        <span class="default-badge" [translate]="'PROFILE.ADDRESSES.DEFAULT'">По умолчанию</span>
         }
       </div>
 
@@ -29,8 +29,8 @@
       </div>
 
       <div class="address-actions">
-        <button class="action-btn edit-btn" (click)="editAddress(addr.id)">Изменить</button>
-        <button class="action-btn delete-btn" (click)="deleteAddress(addr.id)">Удалить</button>
+        <button class="action-btn edit-btn" (click)="editAddress(addr.id)"><span [translate]="'PROFILE.ADDRESSES.CHANGE'">Изменить</span></button>
+        <button class="action-btn delete-btn" (click)="deleteAddress(addr.id)"><span [translate]="'PROFILE.ADDRESSES.DELETE'">Удалить</span></button>
       </div>
     </div>
     }
@@ -38,8 +38,8 @@
     @if (data.addresses().length === 0) {
     <div class="empty-state">
       <svg lucideMapPin size="48" strokeWidth="1.5"></svg>
-      <p>У вас пока нет сохраненных адресов.</p>
-      <button class="btn-primary btn-sm" (click)="addAddress()">Добавить первый адрес</button>
+      <p [translate]="'PROFILE.ADDRESSES.NOTFOUND'">У вас пока нет сохраненных адресов.</p>
+      <button class="btn-primary btn-sm" (click)="addAddress()"><span [translate]="'PROFILE.ADDRESSES.ADDFIRST'">Добавить первый адрес</span></button>
     </div>
     }
   </div>
@@ -57,14 +57,14 @@
 
     <form [formGroup]="addressForm" (ngSubmit)="saveAddress()" class="address-form">
       <div class="form-group">
-        <label>Название (например, "Дом" или "Работа")</label>
-        <input type="text" formControlName="title" class="form-input" placeholder="Дом">
+        <label [translate]="'PROFILE.ADDRESSES.NAME'">Название (например, "Дом" или "Работа")</label>
+        <input type="text" formControlName="title" class="form-input" [placeholder]="'PROFILE.ADDRESSES.PLACEHOLDER.NAME' | translate">
       </div>
 
       <div class="form-group">
-        <label>Город</label>
+        <label [translate]="'PROFILE.ADDRESSES.CITY'">Город</label>
         <select formControlName="cityId" class="form-input">
-          <option [ngValue]="null" disabled selected>Выберите город</option>
+          <option [ngValue]="null" disabled selected [translate]="'PROFILE.ADDRESSES.SELECTCITY'">Выберите город</option>
 
           @for (city of cities(); track city.id) {
           <option [value]="city.id">{{ city.name }}</option>
@@ -80,33 +80,33 @@
 
       <div class="form-row">
         <div class="form-group" style="flex: 2;">
-          <label>Улица</label>
-          <input type="text" formControlName="street" class="form-input" placeholder="ул. Ленина">
+          <label [translate]="'PROFILE.ADDRESSES.STREET'">Улица</label>
+          <input type="text" formControlName="street" class="form-input" [placeholder]="'PROFILE.ADDRESSES.PLACEHOLDER.STREET' | translate">
         </div>
         <div class="form-group" style="flex: 1;">
-          <label>Дом</label>
+          <label [translate]="'PROFILE.ADDRESSES.HOUSE'">Дом</label>
           <input type="text" formControlName="building" class="form-input" placeholder="10А">
         </div>
         <div class="form-group" style="flex: 1;">
-          <label>Квартира</label>
+          <label [translate]="'PROFILE.ADDRESSES.APARTAMENT'">Квартира</label>
           <input type="text" formControlName="apartment" class="form-input" placeholder="42">
         </div>
       </div>
 
       <div class="form-group">
-        <label>Почтовый индекс</label>
+        <label [translate]="'PROFILE.ADDRESSES.POST'">Почтовый индекс</label>
         <input type="text" formControlName="postalCode" class="form-input" placeholder="123456">
       </div>
 
       <div class="form-checkbox">
         <input type="checkbox" id="isDefault" formControlName="isDefault">
-        <label for="isDefault">Сделать адресом по умолчанию</label>
+        <label for="isDefault" [translate]="'PROFILE.ADDRESSES.SETDEFAULT'">Сделать адресом по умолчанию</label>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="closeModal()">Отмена</button>
+        <button type="button" class="btn-secondary" (click)="closeModal()"><span [translate]="'PROFILE.ADDRESSES.BACK'">Отмена</span></button>
         <button type="submit" class="btn-primary" [disabled]="addressForm.invalid">
-          Сохранить
+          <span [translate]="'PROFILE.ADDRESSES.SAVE'">Сохранить</span>
         </button>
       </div>
     </form>

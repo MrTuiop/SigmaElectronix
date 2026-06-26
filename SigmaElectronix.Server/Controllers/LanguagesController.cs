@@ -106,5 +106,23 @@ namespace SigmaElectronix.Server.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // DELETE: api/languages/ru (Админ)
+        [HttpDelete("{code}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(string code)
+        {
+            try
+            {
+                var success = await _languageService.DeleteAsync(code);
+                if (!success) return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

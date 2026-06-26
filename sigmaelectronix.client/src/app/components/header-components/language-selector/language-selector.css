@@ -1,6 +1,7 @@
 .lang-selector-wrapper {
   position: relative;
   display: inline-block;
+
 }
 
 /* Стили кнопки как у остальных кнопок в топе */
@@ -49,7 +50,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: var(--shadow-md);
-  z-index: 1000;
+  z-index: 2000;
   overflow: hidden;
 }
 

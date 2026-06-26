@@ -15,11 +15,13 @@
     <!-- Загрузка -->
     @if (isLoading()) {
     <div class="catalog-loading">
-      <p>Загрузка каталога...</p>
+      <p [translate]="'CATALOG.LOADING'">Загрузка каталога...</p>
     </div>
     } @else {
     <div class="catalog-content">
-      <h1 class="catalog-title">{{ category()?.name || 'Каталог' }}</h1>
+      <h1 class="catalog-title">
+        {{ category()?.name || ('CATALOG.FALLBACK_TITLE' | translate) }}
+      </h1>
 
       <!-- Если есть подкатегории — показываем сетку -->
       @if (category()?.subcategories?.length) {

@@ -1,0 +1,92 @@
+<div class="page-container">
+  <div class="container">
+
+    <div class="breadcrumbs">
+      <a routerLink="/" [translate]="'PRIVACY.BREADCRUMBS.HOME'">Главная</a>
+      <span class="sep">/</span>
+      <span class="current" [translate]="'PRIVACY.BREADCRUMBS.TITLE'">Политика конфиденциальности</span>
+    </div>
+
+    <div class="doc-layout">
+      <aside class="doc-sidebar">
+        <nav class="doc-nav">
+          <a routerLink="/about" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.ABOUT'">О компании</a>
+          <a routerLink="/delivery" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.DELIVERY'">Доставка и оплата</a>
+          <a routerLink="/warranty" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.WARRANTY'">Гарантия и возврат</a>
+          <a routerLink="/stores" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.STORES'">Наши магазины</a>
+
+          <div class="nav-divider" [translate]="'PRIVACY.SIDEBAR.LEGAL_DIVIDER'">Правовые документы</div>
+
+          <a routerLink="/privacy" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.PRIVACY'">Политика конфиденциальности</a>
+          <a routerLink="/agreement" routerLinkActive="active" class="doc-nav-link" [translate]="'PRIVACY.SIDEBAR.AGREEMENT'">Пользовательское соглашение</a>
+        </nav>
+      </aside>
+
+      <div class="doc-content content-card">
+        <h1 class="page-title" [translate]="'PRIVACY.TITLE'">Политика конфиденциальности</h1>
+
+        <div class="doc-text">
+          <p class="last-update">
+            <span [translate]="'PRIVACY.LAST_UPDATE'">Последнее обновление:</span> {{ lastUpdate }}
+          </p>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S1.TITLE'">1. Общие положения</h2>
+            <p>
+              <span [translate]="'PRIVACY.S1.P1_1'">Настоящая политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей интернет-магазина</span>
+              <strong>SigmaElectronix</strong>.
+              <span [translate]="'PRIVACY.S1.P1_2'">Мы с большим уважением относимся к конфиденциальной информации всех лиц, посетивших наш сайт.</span>
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S2.TITLE'">2. Какие данные мы собираем</h2>
+            <p [translate]="'PRIVACY.S2.P1'">При использовании нашего сервиса, оформлении заказа или регистрации личного кабинета мы можем собирать следующие данные:</p>
+            <ul>
+              <li [translate]="'PRIVACY.S2.LI1'">Фамилия, Имя, Отчество;</li>
+              <li [translate]="'PRIVACY.S2.LI2'">Контактный номер телефона и адрес электронной почты;</li>
+              <li [translate]="'PRIVACY.S2.LI3'">Адрес доставки заказа;</li>
+              <li [translate]="'PRIVACY.S2.LI4'">Файлы cookie и данные о пользовательском устройстве (IP-адрес, тип браузера).</li>
+            </ul>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S3.TITLE'">3. Как мы используем информацию</h2>
+            <p [translate]="'PRIVACY.S3.P1'">Собранные данные используются исключительно для того, чтобы сделать наш сервис лучше и удобнее для вас. В частности, для:</p>
+            <ul>
+              <li [translate]="'PRIVACY.S3.LI1'">Обработки и выполнения ваших заказов;</li>
+              <li [translate]="'PRIVACY.S3.LI2'">Предоставления персонализированной клиентской поддержки;</li>
+              <li [translate]="'PRIVACY.S3.LI3'">Информирования о статусе заказа и доставке;</li>
+              <li [translate]="'PRIVACY.S3.LI4'">Начисления бонусных баллов и кэшбека в личном кабинете.</li>
+            </ul>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S4.TITLE'">4. Защита информации</h2>
+            <p>
+              <span [translate]="'PRIVACY.S4.P1_1'">Мы применяем современные стандарты и технологии для защиты ваших персональных данных от несанкционированного доступа. Доступ к личной информации имеют только те сотрудники</span>
+              <strong>SigmaElectronix</strong><span [translate]="'PRIVACY.S4.P1_2'">, которым она необходима для выполнения рабочих обязанностей (например, специалисты службы поддержки или курьеры).</span>
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S5.TITLE'">5. Передача данных третьим лицам</h2>
+            <p [translate]="'PRIVACY.S5.P1'">
+              Мы не продаем, не обмениваем и не передаем ваши личные данные сторонним компаниям. Исключение составляют надежные партнеры, помогающие нам в работе сайта и доставке товаров (например, транспортные компании СДЭК, ПЭК), которые также обязуются сохранять конфиденциальность.
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'PRIVACY.S6.TITLE'">6. Согласие</h2>
+            <p>
+              <span [translate]="'PRIVACY.S6.P1_1'">Используя наш сайт, вы автоматически соглашаетесь с нашей политикой конфиденциальности. Если у вас возникли вопросы, вы всегда можете связаться с нами по адресу</span>
+              <a href="mailto:help@sigma-electronix.ru">help&#64;sigma-electronix.ru</a>.
+            </p>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

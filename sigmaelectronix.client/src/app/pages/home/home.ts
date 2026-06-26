@@ -1,5 +1,5 @@
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 
 import {
   LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch,
@@ -12,6 +12,8 @@ import { BestSellersComponent } from '../../components/home-components/best-sell
 import { NewProductsComponent } from '../../components/home-components/new-products/new-products';
 import { CategoriesComponent } from '../../components/home-components/categories/categories';
 import { HeroBannerComponent } from '../../components/home-components/hero-banner/hero-banner';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
+import { LanguageService } from '../../services/language-service'; // 👈 ДОБАВИЛИ
 
 interface Advantage {
   icon: string;
@@ -33,35 +35,43 @@ interface Advantage {
     LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch,
     LucideTv, LucideGamepad2, LucideArrowRight, LucideHeart,
     LucideShoppingCart, LucideStar, LucideTruck, LucideShieldCheck,
-    LucideRefreshCw, LucideHeadset, LucideMail, LucideSend, LucideZap
+    LucideRefreshCw, LucideHeadset, LucideMail, LucideSend, LucideZap,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class HomePage {
-  // ---- ПРЕИМУЩЕСТВА ----
-  advantages = signal<Advantage[]>([
-    {
-      icon: 'truck',
-      title: 'Быстрая доставка',
-      description: 'Доставляем по всей России за 1–5 дней. Бесплатно при заказе от 5 000 ₽.',
-    },
-    {
-      icon: 'shield-check',
-      title: 'Гарантия до 3 лет',
-      description: 'Официальная гарантия производителя и расширенная сервисная поддержка.',
-    },
-    {
-      icon: 'refresh-cw',
-      title: 'Возврат за 30 дней',
-      description: 'Если товар не подошёл, верните его в течение 30 дней без лишних вопросов.',
-    },
-    {
-      icon: 'headset',
-      title: 'Поддержка 24/7',
-      description: 'Наша служба заботы всегда на связи: по телефону, в чате и по email.',
-    },
-  ]);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ
+  private languageService = inject(LanguageService); // 👈 ИНЖЕКТ
+
+  // 👈 Превратили signal в computed для реактивности при смене языка
+  advantages = computed<Advantage[]>(() => {
+    this.languageService.currentLanguage(); // Зависимость для пересчета
+    return [
+      {
+        icon: 'truck',
+        title: this.translate.instant('HOME.ADVANTAGES.DELIVERY_TITLE'),
+        description: this.translate.instant('HOME.ADVANTAGES.DELIVERY_DESC'),
+      },
+      {
+        icon: 'shield-check',
+        title: this.translate.instant('HOME.ADVANTAGES.WARRANTY_TITLE'),
+        description: this.translate.instant('HOME.ADVANTAGES.WARRANTY_DESC'),
+      },
+      {
+        icon: 'refresh-cw',
+        title: this.translate.instant('HOME.ADVANTAGES.RETURN_TITLE'),
+        description: this.translate.instant('HOME.ADVANTAGES.RETURN_DESC'),
+      },
+      {
+        icon: 'headset',
+        title: this.translate.instant('HOME.ADVANTAGES.SUPPORT_TITLE'),
+        description: this.translate.instant('HOME.ADVANTAGES.SUPPORT_DESC'),
+      },
+    ];
+  });
 
   onSubscribe(event: Event): void {
     event.preventDefault();

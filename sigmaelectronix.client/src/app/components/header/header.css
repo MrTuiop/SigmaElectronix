@@ -482,3 +482,139 @@
     transform: translate3d(0, -2px, 0);
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
   }
+
+/* ===== АДАПТИВНОСТЬ (TABLET & MOBILE) ===== */
+
+/* --- Планшеты и небольшие ноутбуки (до 992px) --- */
+@media (max-width: 992px) {
+  .top-center-nav,
+  .top-right {
+    display: none; /* Прячем ссылки по центру и телефон сверху */
+  }
+
+  .top-inner {
+    justify-content: flex-start; /* Сдвигаем оставшиеся селекторы (язык, тема) влево */
+  }
+
+  .bottom-inner {
+    gap: 16px;
+  }
+
+  .search-block {
+    max-width: 350px; /* Сужаем поиск */
+  }
+
+  .action-label {
+    display: none; /* Убираем текст "Корзина", "Избранное", оставляем только иконки */
+  }
+
+  .actions-block {
+    gap: 12px;
+  }
+}
+
+/* --- Мобильные устройства (до 768px) --- */
+@media (max-width: 768px) {
+  .header-top-layer {
+    display: none; /* Полностью скрываем верхний бар на телефонах */
+  }
+
+  .header-bottom-layer {
+    padding: 12px 0;
+  }
+
+  .bottom-inner {
+    flex-wrap: wrap; /* Разрешаем перенос блоков на новые строки */
+    gap: 12px;
+  }
+
+  /* Перестраиваем фиолетовый блок в горизонт */
+  .purple-brand-box {
+    flex: 1; /* Занимает доступное место на первой строке */
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+    .purple-brand-box .logo {
+      font-size: 18px; /* Уменьшаем лого */
+    }
+
+  .catalog-text {
+    display: none; /* Скрываем слово "Каталог", оставляем только гамбургер */
+  }
+
+  .catalog-btn {
+    width: auto;
+    padding: 8px 10px;
+    margin: 0;
+  }
+
+  .actions-block {
+    gap: 10px;
+    /* Иконки остаются справа на первой строке */
+  }
+
+  .action-item {
+    padding: 4px;
+  }
+
+  .header-divider {
+    display: none; /* Убираем разделитель перед Workspace */
+  }
+
+  .workspace-item {
+    padding: 8px;
+  }
+
+  /* Переносим поиск на вторую строку на всю ширину */
+  .search-block {
+    flex: 0 0 100%;
+    order: 3; /* Спускаем вниз */
+    max-width: 100%;
+  }
+}
+
+/* --- Компактные смартфоны (до 480px) --- */
+@media (max-width: 480px) {
+  .purple-brand-box {
+    padding: 8px 12px;
+  }
+
+    .purple-brand-box .logo {
+      font-size: 16px;
+    }
+
+  .actions-block {
+    gap: 4px; /* Прижимаем иконки ближе друг к другу */
+  }
+
+  .icon-box {
+    font-size: 20px;
+  }
+
+    .icon-box svg {
+      width: 22px;
+      height: 22px;
+    }
+
+  .avatar-placeholder {
+    width: 24px;
+    height: 24px;
+  }
+
+    .avatar-placeholder svg {
+      width: 18px;
+      height: 18px;
+    }
+
+  .counter-badge {
+    top: -4px;
+    right: -6px;
+    padding: 1px 4px;
+    font-size: 9px;
+  }
+}

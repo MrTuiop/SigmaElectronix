@@ -6,7 +6,7 @@
         <a routerLink="/" class="footer-logo">
           <span class="logo-text">Sigma<span>Electronix</span></span>
         </a>
-        <p class="brand-desc">
+        <p class="brand-desc" [translate]="'FOOTER.DESCRIPTION'">
           Современная электроника по честным ценам. Доставка по всей России, гарантия до 3 лет.
         </p>
         <div class="social-links">
@@ -25,27 +25,27 @@
       </div>
 
       <div class="footer-col">
-        <h4 class="col-title">Каталог</h4>
+        <h4 class="col-title" [translate]="'FOOTER.CATALOG'">Каталог</h4>
         <ul class="footer-links">
-          <li><a routerLink="/catalog">Каталог товаров</a></li>
-          <li><a routerLink="/brands">Наши бренды</a></li>
-          <li><a routerLink="/catalog/new-arrivals">Новинки</a></li>
-          <li><a routerLink="/catalog/best-sellers">Хиты продаж</a></li>
+          <li><a routerLink="/catalog" [translate]="'HEADER.CATALOG'">Каталог товаров</a></li>
+          <li><a routerLink="/brands" [translate]="'FOOTER.BRANDS'">Наши бренды</a></li>
+          <li><a routerLink="/catalog/new-arrivals" [translate]="'FOOTER.NEW'">Новинки</a></li>
+          <li><a routerLink="/catalog/best-sellers" [translate]="'FOOTER.BEST'">Хиты продаж</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h4 class="col-title">Покупателям</h4>
+        <h4 class="col-title" [translate]="'FOOTER.CUSTOMER'">Покупателям</h4>
         <ul class="footer-links">
-          <li><a routerLink="/about">О компании</a></li>
-          <li><a routerLink="/stores">Наши магазины</a></li>
-          <li><a routerLink="/delivery">Доставка и оплата</a></li>
-          <li><a routerLink="/warranty">Гарантия и возврат</a></li>
+          <li><a routerLink="/about" [translate]="'HEADER.ABOUT'">О компании</a></li>
+          <li><a routerLink="/stores" [translate]="'FOOTER.STORES'">Наши магазины</a></li>
+          <li><a routerLink="/delivery" [translate]="'FOOTER.DELIVERY'">Доставка и оплата</a></li>
+          <li><a routerLink="/warranty" [translate]="'FOOTER.WARRANTY'">Гарантия и возврат</a></li>
         </ul>
       </div>
 
       <div class="footer-col contact-col">
-        <h4 class="col-title">Контакты</h4>
+        <h4 class="col-title" [translate]="'FOOTER.CONTACTS'">Контакты</h4>
         <ul class="footer-contacts">
           <li>
             <svg lucidePhone size="16" strokeWidth="2" class="contact-icon"></svg>
@@ -57,11 +57,11 @@
           </li>
           <li>
             <svg lucideMapPin size="16" strokeWidth="2" class="contact-icon"></svg>
-            <span>Москва, ул. Техническая, д. 42</span>
+            <span [translate]="'FOOTER.ADDRESS'">Севастополь, ул. Университетская, д. 33</span>
           </li>
           <li>
             <svg lucideClock size="16" strokeWidth="2" class="contact-icon"></svg>
-            <span>Пн–Вс: 10:00 – 21:00</span>
+            <span><span [translate]="'HEADER.DATES'">Пн–Вс</span>: 10:00 – 21:00</span>
           </li>
         </ul>
       </div>
@@ -72,11 +72,11 @@
   <div class="footer-bottom">
     <div class="container footer-bottom-inner">
       <span class="copyright">
-        © 2026 SigmaElectronix. Все права защищены.
+        © 2026 SigmaElectronix. <span [translate]="'FOOTER.RIGHTS'">Все права защищены.</span>
       </span>
       <div class="bottom-links">
-        <a href="#">Политика конфиденциальности</a>
-        <a href="#">Пользовательское соглашение</a>
+        <a routerLink="/privacy" [translate]="'FOOTER.POLITICS'">Политика конфиденциальности</a>
+        <a routerLink="/agreement" [translate]="'FOOTER.AGREEMENT'">Пользовательское соглашение</a>
       </div>
     </div>
   </div>

@@ -19,15 +19,15 @@
 
       <nav class="top-center-nav">
         <a routerLink="/stores" [translate]="'HEADER.STORES'">Магазины</a>
-        <a routerLink="/delivery">Доставка и оплата</a>
-        <a routerLink="/warranty">Гарантия</a>
-        <a routerLink="/about">О компании</a>
+        <a routerLink="/delivery" [translate]="'HEADER.DELIVERY'">Доставка и оплата</a>
+        <a routerLink="/warranty" [translate]="'HEADER.WARRANTY'">Гарантия</a>
+        <a routerLink="/about" [translate]="'HEADER.ABOUT'">О компании</a>
       </nav>
 
       <div class="top-right">
         <a href="tel:+78005553535" class="phone-link">
           8 (800) 555-35-35
-          <span class="phone-tooltip">Пн–Вс: 10:00 – 22:00</span>
+          <span class="phone-tooltip"><span [translate]="'HEADER.DATES'">Пн–Вс</span>: 10:00 – 22:00</span>
         </a>
       </div>
     </div>
@@ -37,13 +37,13 @@
     <div class="container bottom-inner">
 
       <div class="purple-brand-box">
-        <a href="/" class="logo">Sigma<span>Electronix</span></a>
+        <a routerLink="/" class="logo">Sigma<span>Electronix</span></a>
 
         <button class="catalog-btn" (click)="toggleMenu()">
           <div class="hamburger-icon" [class.open]="isCategoryMenuOpen()">
             <span></span><span></span><span></span>
           </div>
-          <span class="catalog-text">Каталог товаров</span>
+          <span class="catalog-text" [translate]="'HEADER.CATALOG'">Каталог товаров</span>
         </button>
 
         <app-category-menu [isOpen]="isCategoryMenuOpen()"
@@ -61,7 +61,7 @@
             <span class="counter-badge">{{ favoritesCount() }}</span>
             }
           </div>
-          <span class="action-label">Избранное</span>
+          <span class="action-label" [translate]="'HEADER.WISHLIST'">Избранное</span>
         </button>
 
         <a class="action-item" routerLink="/cart">
@@ -71,7 +71,7 @@
             <span class="counter-badge badge-alert">{{ cartCount() }}</span>
             }
           </div>
-          <span class="action-label">Корзина</span>
+          <span class="action-label" [translate]="'HEADER.CART'">Корзина</span>
         </a>
 
         @if (isLoggedIn()) {
@@ -90,7 +90,7 @@
           <div class="avatar-placeholder">
             <svg lucideUser size="24" strokeWidth="2"></svg>
           </div>
-          <span class="action-label">Войти</span>
+          <span class="action-label" [translate]="'HEADER.LOGIN'">Войти</span>
         </button>
         }
 

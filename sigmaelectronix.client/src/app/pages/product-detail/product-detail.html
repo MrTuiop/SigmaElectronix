@@ -1,7 +1,7 @@
 <div class="product-page">
   <div class="container">
     @if (isLoading()) {
-    <div class="loading">Загрузка...</div>
+    <div class="loading" [translate]="'PRODUCT.LOADING'">Загрузка...</div>
     }
     @else if (error()) {
     <div class="error-message">{{ error() }}</div>
@@ -22,7 +22,6 @@
       <div class="product-gallery">
         <div class="gallery-main" (click)="nextImage()">
           @let images = product()?.images ?? [];
-
           @if (images.length > 0) {
           <img [src]="images[activeImageIndex()].url" [alt]="product()?.name" class="gallery-image" />
           } @else {
@@ -41,16 +40,13 @@
           </button>
           <div class="gallery-dots">
             @for (img of product()?.images ?? []; track img.id; let i = $index) {
-            <button class="dot"
-                    [class.active]="i === activeImageIndex()"
-                    (click)="setImageIndex(i)"></button>
+            <button class="dot" [class.active]="i === activeImageIndex()" (click)="setImageIndex(i)"></button>
             }
           </div>
         </div>
       </div>
 
       <div class="product-info">
-
         <div class="product-header-top">
           <div class="product-title-area">
             <span class="brand">{{ product()?.brand?.name }}</span>
@@ -60,7 +56,7 @@
           @if (product()?.brand) {
           <a [routerLink]="product()?.brand?.slug ? ['/brands', product()!.brand!.slug] : null"
              class="brand-logo-wrap"
-             [title]="'Все товары ' + product()?.brand?.name">
+             [title]="('PRODUCT.BRAND_ALL_PRODUCTS' | translate) + ' ' + product()?.brand?.name">
             @if (product()?.brand?.logoUrl) {
             <img [src]="product()?.brand?.logoUrl" [alt]="product()?.brand?.name" class="brand-logo-img">
             } @else {
@@ -73,8 +69,7 @@
         <div class="rating-row">
           <div class="stars">
             @for (star of [1,2,3,4,5]; track star) {
-            <svg lucideStar
-                 size="16"
+            <svg lucideStar size="16"
                  [strokeWidth]="star <= (product()?.averageRating ?? 0) - 0.5 ? 0 : 2"
                  [class.filled]="star <= Math.round(product()?.averageRating ?? 0)"
                  [class.empty]="star > Math.round(product()?.averageRating ?? 0)"></svg>
@@ -93,16 +88,10 @@
         </div>
 
         <div class="quantity-block">
-          <span>Количество:</span>
+          <span [translate]="'PRODUCT.QUANTITY'">Количество:</span>
           <div class="quantity-controls">
             <button (click)="quantity.set(quantity() - 1)" [disabled]="quantity() <= 1">–</button>
-
-            <input type="number"
-                   [ngModel]="quantity()"
-                   (ngModelChange)="onQuantityChange($event)"
-                   min="1"
-                   max="10" />
-
+            <input type="number" [ngModel]="quantity()" (ngModelChange)="onQuantityChange($event)" min="1" max="10" />
             <button (click)="quantity.set(quantity() + 1)" [disabled]="quantity() >= 10">+</button>
           </div>
         </div>
@@ -111,13 +100,12 @@
           <button class="add-to-cart-btn"
                   [class.in-cart]="cartService.isInCart(product()?.id || 0)"
                   (click)="addToCart()">
-
             @if (cartService.isInCart(product()?.id || 0)) {
             <svg lucideCheck size="20" strokeWidth="3"></svg>
-            Перейти в корзину ({{ cartService.getItemQuantity(product()?.id || 0) }} шт.)
+            <span [translate]="'PRODUCT.GO_TO_CART'">Перейти в корзину</span> ({{ cartService.getItemQuantity(product()?.id || 0) }} <span [translate]="'PRODUCT.PCS'">шт.</span>)
             } @else {
             <svg lucideShoppingCart size="20" strokeWidth="2.5"></svg>
-            В корзину
+            <span [translate]="'PRODUCT.ADD_TO_CART'">В корзину</span>
             }
           </button>
 
@@ -132,11 +120,15 @@
           </div>
           <div class="availability-text">
             @if (inStockStoresCount() > 0) {
-            <span class="in-stock-title">В наличии в {{ inStockStoresCount() }} магазинах (г. {{ currentCityName() }})</span>
-            <span class="in-stock-subtitle">Нажмите, чтобы посмотреть список адресов</span>
+            <span class="in-stock-title">
+              <span [translate]="'PRODUCT.IN_STOCK_1'">В наличии в</span> {{ inStockStoresCount() }} <span [translate]="'PRODUCT.IN_STOCK_2'">магазинах</span> (г. {{ currentCityName() }})
+            </span>
+            <span class="in-stock-subtitle" [translate]="'PRODUCT.IN_STOCK_SUBTITLE'">Нажмите, чтобы посмотреть список адресов</span>
             } @else {
-            <span class="out-of-stock-title">Нет в наличии в г. {{ currentCityName() }}</span>
-            <span class="out-of-stock-subtitle">Доступно только под заказ со склада</span>
+            <span class="out-of-stock-title">
+              <span [translate]="'PRODUCT.OUT_OF_STOCK_1'">Нет в наличии в г.</span> {{ currentCityName() }}
+            </span>
+            <span class="out-of-stock-subtitle" [translate]="'PRODUCT.OUT_OF_STOCK_SUBTITLE'">Доступно только под заказ со склада</span>
             }
           </div>
           <svg lucideChevronRight size="18" class="availability-arrow"></svg>
@@ -145,38 +137,38 @@
         <div class="delivery-info">
           <div class="info-item">
             <svg lucideTruck size="18" strokeWidth="2"></svg>
-            Бесплатная доставка от 5 000 ₽
+            <span [translate]="'PRODUCT.FREE_DELIVERY'">Бесплатная доставка от 5 000 ₽</span>
           </div>
           <div class="info-item">
             <svg lucideRefreshCw size="18" strokeWidth="2"></svg>
-            Возврат 30 дней
+            <span [translate]="'PRODUCT.RETURN_30'">Возврат 30 дней</span>
           </div>
           <div class="info-item">
             <svg lucideShieldCheck size="18" strokeWidth="2"></svg>
-            Гарантия 1 год
+            <span [translate]="'PRODUCT.WARRANTY_1'">Гарантия 1 год</span>
           </div>
         </div>
 
         @if (!priceAlertRequested() && !product()?.discountPrice) {
         <button class="price-alert-btn" (click)="requestPriceAlert()">
           <svg lucideBell size="16" strokeWidth="2"></svg>
-          Сообщить о снижении цены
+          <span [translate]="'PRODUCT.PRICE_ALERT_BTN'">Сообщить о снижении цены</span>
         </button>
         }
         @if (priceAlertRequested()) {
         <div class="alert-success">
           <svg lucideCheck size="16" strokeWidth="2"></svg>
-          Вы подписаны на уведомление о снижении цены
+          <span [translate]="'PRODUCT.PRICE_ALERT_SUCCESS'">Вы подписаны на уведомление о снижении цены</span>
         </div>
         }
       </div>
     </div>
 
     <div class="details-section">
-      <h2>Описание</h2>
+      <h2 [translate]="'PRODUCT.DESCRIPTION_TITLE'">Описание</h2>
       <p>{{ product()?.fullDescription }}</p>
 
-      <h2>Характеристики</h2>
+      <h2 [translate]="'PRODUCT.SPECS_TITLE'">Характеристики</h2>
       <table class="specs-table">
         @for (spec of product()?.specifications | keyvalue; track spec.key) {
         <tr>
@@ -189,7 +181,7 @@
 
     <div class="reviews-section">
       <div class="reviews-header">
-        <h2>Отзывы о товаре <span>{{ reviews().length }}</span></h2>
+        <h2><span [translate]="'PRODUCT.REVIEWS_TITLE'">Отзывы о товаре</span> <span>{{ reviews().length }}</span></h2>
       </div>
 
       <div class="review-form-container">
@@ -198,25 +190,25 @@
         <div class="auth-prompt success-prompt">
           <div class="prompt-icon"><svg lucideCheck size="32"></svg></div>
           <div>
-            <h3>Вы уже оставили отзыв</h3>
-            <p>Спасибо за ваше мнение! Вы можете изменить свой отзыв ниже в списке.</p>
+            <h3 [translate]="'PRODUCT.REVIEWS.ALREADY_LEFT_TITLE'">Вы уже оставили отзыв</h3>
+            <p [translate]="'PRODUCT.REVIEWS.ALREADY_LEFT_DESC'">Спасибо за ваше мнение! Вы можете изменить свой отзыв ниже в списке.</p>
           </div>
         </div>
         } @else {
         <div class="write-review-box">
-          <h3>Оставьте свой отзыв</h3>
+          <h3 [translate]="'PRODUCT.REVIEWS.LEAVE_TITLE'">Оставьте свой отзыв</h3>
           <div class="rating-selector">
-            <span>Ваша оценка:</span>
+            <span [translate]="'PRODUCT.REVIEWS.YOUR_RATING'">Ваша оценка:</span>
             <div class="stars-interactive">
               @for (star of [1,2,3,4,5]; track star) {
               <svg lucideStar size="24" strokeWidth="2" [class.filled]="star <= newReviewRating()" (click)="setRating(star)"></svg>
               }
             </div>
           </div>
-          <input type="text" [(ngModel)]="newReviewTitle" placeholder="Заголовок отзыва (например: Отличный товар!)" class="review-title-input" />
-          <textarea [(ngModel)]="newReviewText" placeholder="Расскажите о достоинствах и недостатках товара..." rows="4"></textarea>
+          <input type="text" [(ngModel)]="newReviewTitle" [placeholder]="'PRODUCT.REVIEWS.TITLE_PH' | translate" class="review-title-input" />
+          <textarea [(ngModel)]="newReviewText" [placeholder]="'PRODUCT.REVIEWS.TEXT_PH' | translate" rows="4"></textarea>
           <button class="submit-review-btn" [disabled]="isSubmittingReview() || !newReviewText().trim()" (click)="submitReview()">
-            {{ isSubmittingReview() ? 'Отправка...' : 'Отправить отзыв' }}
+            {{ isSubmittingReview() ? ('PRODUCT.REVIEWS.SUBMITTING' | translate) : ('PRODUCT.REVIEWS.SUBMIT_BTN' | translate) }}
           </button>
         </div>
         }
@@ -224,11 +216,11 @@
         <div class="auth-prompt">
           <div class="prompt-icon"><svg lucideUser size="32"></svg></div>
           <div>
-            <h3>Войдите, чтобы оставить отзыв</h3>
-            <p>Только зарегистрированные пользователи могут делиться впечатлениями.</p>
+            <h3 [translate]="'PRODUCT.REVIEWS.AUTH_TITLE'">Войдите, чтобы оставить отзыв</h3>
+            <p [translate]="'PRODUCT.REVIEWS.AUTH_DESC'">Только зарегистрированные пользователи могут делиться впечатлениями.</p>
           </div>
           <button class="login-btn-outline" (click)="openAuthModal()">
-            Войти в аккаунт
+            <span [translate]="'PRODUCT.REVIEWS.AUTH_BTN'">Войти в аккаунт</span>
           </button>
         </div>
         }
@@ -238,13 +230,12 @@
         @if (reviews().length === 0) {
         <div class="no-reviews">
           <svg lucideMessageSquare size="48" strokeWidth="1.5"></svg>
-          <p>На этот товар пока нет отзывов. Станьте первым!</p>
+          <p [translate]="'PRODUCT.REVIEWS.EMPTY'">На этот товар пока нет отзывов. Станьте первым!</p>
         </div>
         }
 
         @for (review of reviews(); track review.id) {
         <div class="review-card" [class.is-mine]="review.isMine">
-
           @if (editingReviewId() !== review.id) {
           <div class="review-header">
             <div class="review-author">
@@ -260,10 +251,10 @@
             <div class="header-right">
               <span class="review-date">{{ review.createdAt | date:'dd.MM.yyyy' }}</span>
               @if (review.isMine || authService.isAdmin()) {
-              <button class="icon-edit-btn" (click)="startEditReview(review)" title="Редактировать">
+              <button class="icon-edit-btn" (click)="startEditReview(review)" [title]="'PRODUCT.REVIEWS.EDIT_BTN' | translate">
                 <svg lucideEdit2 size="16"></svg>
               </button>
-              <button class="icon-delete-btn" (click)="deleteReview(review.id)" title="Удалить">
+              <button class="icon-delete-btn" (click)="deleteReview(review.id)" [title]="'PRODUCT.REVIEWS.DELETE_BTN' | translate">
                 <svg lucideTrash2 size="16"></svg>
               </button>
               }
@@ -287,12 +278,12 @@
 
             <div class="actions-right">
               <button class="reply-btn" (click)="openReplyForm(review.id)">
-                <svg lucideMessageSquare size="16"></svg> Ответить
+                <svg lucideMessageSquare size="16"></svg> <span [translate]="'PRODUCT.REVIEWS.REPLY_BTN'">Ответить</span>
               </button>
 
               @if (review.comments && review.comments.length > 0) {
               <button class="reply-btn toggle-comments-btn" (click)="toggleComments(review.id)">
-                {{ expandedReviews().has(review.id) ? 'Скрыть ответы' : 'Ответы (' + review.comments.length + ')' }}
+                {{ expandedReviews().has(review.id) ? ('PRODUCT.REVIEWS.HIDE_REPLIES' | translate) : (('PRODUCT.REVIEWS.SHOW_REPLIES' | translate) + ' (' + review.comments.length + ')') }}
               </button>
               }
             </div>
@@ -301,25 +292,25 @@
           @else {
           <div class="write-review-box inline-edit">
             <div class="rating-selector">
-              <span>Оценка:</span>
+              <span [translate]="'PRODUCT.REVIEWS.EDIT_RATING'">Оценка:</span>
               <div class="stars-interactive">
                 @for (star of [1,2,3,4,5]; track star) {
                 <svg lucideStar size="24" strokeWidth="2" [class.filled]="star <= editReviewRating()" (click)="editReviewRating.set(star)"></svg>
                 }
               </div>
             </div>
-            <input type="text" [(ngModel)]="editReviewTitle" class="review-tiАtle-input" />
+            <input type="text" [(ngModel)]="editReviewTitle" class="review-title-input" />
             <textarea [(ngModel)]="editReviewText" rows="3"></textarea>
             <div class="edit-actions">
-              <button class="submit-review-btn" (click)="saveEditReview(review.id)">Сохранить</button>
-              <button class="cancel-btn" (click)="cancelEditReview()">Отмена</button>
+              <button class="submit-review-btn" (click)="saveEditReview(review.id)" [translate]="'PRODUCT.REVIEWS.SAVE_BTN'">Сохранить</button>
+              <button class="cancel-btn" (click)="cancelEditReview()" [translate]="'PRODUCT.REVIEWS.CANCEL_BTN'">Отмена</button>
             </div>
           </div>
           }
 
           @if (replyingToReviewId() === review.id) {
           <div class="reply-form">
-            <input type="text" [(ngModel)]="newCommentText" placeholder="Напишите ваш ответ..." />
+            <input type="text" [(ngModel)]="newCommentText" [placeholder]="'PRODUCT.REVIEWS.REPLY_PH' | translate" />
             <button class="send-btn" (click)="submitComment(review.id)">
               <svg lucideSend size="18"></svg>
             </button>
@@ -336,10 +327,10 @@
                 <div class="header-right">
                   <span class="comment-date">{{ comment.createdAt | date:'dd.MM.yyyy' }}</span>
                   @if (comment.isMine || authService.isAdmin()) {
-                  <button class="icon-edit-btn" (click)="startEditComment(comment)" title="Изменить">
+                  <button class="icon-edit-btn" (click)="startEditComment(comment)" [title]="'PRODUCT.COMMENTS.EDIT_BTN' | translate">
                     <svg lucideEdit2 size="14"></svg>
                   </button>
-                  <button class="icon-delete-btn" (click)="deleteComment(comment.id)" title="Удалить">
+                  <button class="icon-delete-btn" (click)="deleteComment(comment.id)" [title]="'PRODUCT.COMMENTS.DELETE_BTN' | translate">
                     <svg lucideTrash2 size="14"></svg>
                   </button>
                   }
@@ -372,7 +363,7 @@
 
     @if (relatedProducts().length > 0) {
     <div class="related-section">
-      <h2>Похожие товары</h2>
+      <h2 [translate]="'PRODUCT.RELATED_TITLE'">Похожие товары</h2>
       <div class="related-grid">
         @for (rel of relatedProducts(); track rel.id) {
         <a [routerLink]="['/product', rel.slug]" class="related-card">
@@ -403,9 +394,7 @@
   </div>
 
   @if (showAuthModal()) {
-  <app-auth-modal (close)="closeAuthModal()"
-                  (authenticated)="onAuthenticated()">
-  </app-auth-modal>
+  <app-auth-modal (close)="closeAuthModal()" (authenticated)="onAuthenticated()"></app-auth-modal>
   }
 
   @if (showConfirmModal()) {
@@ -422,8 +411,8 @@
   <div class="modal-overlay" (click)="showStoresModal.set(false)">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Наличие в г. {{ currentCityName() }}</h2>
-        <button class="close-btn" (click)="showStoresModal.set(false)" title="Закрыть">
+        <h2><span [translate]="'PRODUCT.STORES_MODAL.TITLE_1'">Наличие в г.</span> {{ currentCityName() }}</h2>
+        <button class="close-btn" (click)="showStoresModal.set(false)" [title]="'PRODUCT.STORES_MODAL.CLOSE_BTN' | translate">
           <svg lucideX size="24"></svg>
         </button>
       </div>
@@ -431,7 +420,11 @@
         @if (storeAvailability().length === 0) {
         <div class="empty-state">
           <svg lucideStore size="48" style="color: var(--text-muted); opacity: 0.5; margin-bottom: 12px;"></svg>
-          <p>В городе {{ currentCityName() }} пока нет магазинов или пунктов выдачи.</p>
+          <p>
+            <span [translate]="'PRODUCT.STORES_MODAL.EMPTY_1'">В городе</span>
+            {{ currentCityName() }}
+            <span [translate]="'PRODUCT.STORES_MODAL.EMPTY_2'">пока нет магазинов или пунктов выдачи.</span>
+          </p>
         </div>
         } @else {
         <div class="stores-list">
@@ -439,14 +432,16 @@
           <div class="store-item" [class.out-of-stock-item]="item.quantity === 0">
             <div class="store-info">
               <h4>{{ item.storeDetails.name }}</h4>
-              <p class="store-address"><svg lucideMapPin size="14"></svg> {{ item.storeDetails.fullAddress || 'Адрес уточняется' }}</p>
-              <p class="store-hours"><svg lucideClock size="14"></svg> {{ item.storeDetails.workingHours || 'Уточняйте по телефону' }}</p>
+              <p class="store-address"><svg lucideMapPin size="14"></svg> {{ item.storeDetails.fullAddress || ('PRODUCT.STORES_MODAL.ADDRESS_TBD' | translate) }}</p>
+              <p class="store-hours"><svg lucideClock size="14"></svg> {{ item.storeDetails.workingHours || ('PRODUCT.STORES_MODAL.HOURS_TBD' | translate) }}</p>
             </div>
             <div class="store-stock">
               @if (item.quantity > 0) {
-              <span class="stock-badge in-stock">{{ item.quantity }} шт.</span>
+              <span class="stock-badge in-stock">{{ item.quantity }} <span [translate]="'PRODUCT.PCS'">шт.</span></span>
               } @else {
-              <span class="stock-badge out-of-stock-badge">Под заказ (с {{ getDeliveryDate() | date:'dd.MM' }})</span>
+              <span class="stock-badge out-of-stock-badge">
+                <span [translate]="'PRODUCT.STORES_MODAL.ON_ORDER'">Под заказ (с</span> {{ getDeliveryDate() | date:'dd.MM' }})
+              </span>
               }
             </div>
           </div>
@@ -457,5 +452,4 @@
     </div>
   </div>
   }
-
 </div>

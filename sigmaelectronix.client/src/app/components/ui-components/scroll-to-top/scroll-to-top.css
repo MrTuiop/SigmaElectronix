@@ -1,39 +1,47 @@
+/* ===== КНОПКА "НАВЕРХ" ===== */
 .scroll-to-top-btn {
   position: fixed;
-  bottom: 40px; /* Отступ снизу (учти высоту футера, чтобы не перекрывался) */
+  bottom: 40px;
   right: 30px;
-  z-index: 9999; /* Гарантирует, что кнопка будет поверх всего */
-
-  width: 50px;
-  height: 50px;
-  border: none;
-  border-radius: 50%; /* Круглая форма */
-  /* Подстрой под дизайн своего магазина */
-  background-color: #333;
-  color: white;
-  cursor: pointer;
+  z-index: 999;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  /* Адаптивные цвета под светлую/темную тему */
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
   /* Начальное состояние (скрыто) */
   opacity: 0;
   visibility: hidden;
-  transform: translateY(20px);
-  /* Плавные переходы */
-  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+  transform: translateY(30px) scale(0.85); /* Плавный вылет снизу с небольшим увеличением */
+  /* Красивая плавная анимация (cubic-bezier дает легкий эффект пружинистости) */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
   /* Состояние, когда кнопка видима */
   .scroll-to-top-btn.visible {
-    opacity: 0.9;
+    opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
-  /* Эффект при наведении */
+  /* Эффект при наведении (Hover) */
   .scroll-to-top-btn:hover {
-    background-color: #007bff; /* Твой основной цвет магазина */
-    transform: translateY(-5px); /* Легка приподнимается */
-    opacity: 1;
+    background: var(--purple-gradient); /* Заливаем фирменным градиентом */
+    color: #ffffff; /* Делаем стрелочку белой */
+    border-color: transparent;
+    transform: translateY(-5px); /* Приподнимаем */
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.35); /* Фиолетовое свечение от кнопки */
+  }
+
+  /* Эффект при клике (Active) */
+  .scroll-to-top-btn:active {
+    transform: translateY(-2px); /* Слегка вдавливаем обратно при клике */
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
   }

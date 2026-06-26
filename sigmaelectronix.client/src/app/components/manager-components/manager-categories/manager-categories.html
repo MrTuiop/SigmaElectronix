@@ -286,3 +286,12 @@
   </div>
   }
 </ng-template>
+@if (showDeleteModal()) {
+<app-confirm-modal title="Удаление категории"
+                   [message]="'Вы уверены, что хотите удалить категорию «' + deletingCategoryName() + '»? Все товары должны быть предварительно удалены или перенесены.'"
+                   confirmText="Удалить"
+                   cancelText="Отмена"
+                   [isDestructive]="true"
+                   (confirm)="onConfirmDelete()"
+                   (cancel)="onCancelDelete()"></app-confirm-modal>
+}

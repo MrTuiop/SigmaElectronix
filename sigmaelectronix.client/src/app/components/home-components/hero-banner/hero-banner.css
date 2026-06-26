@@ -181,9 +181,12 @@
   font-weight: 600;
   background: transparent;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease; /* Изменил на all 0.3s ease для плавности */
   text-decoration: none;
-  display: inline-block;
+  /* Добавьте это: */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
   .btn-outline:hover {
@@ -259,10 +262,11 @@
   position: absolute;
   bottom: -16px;
   right: -20px;
-  background: #ffffff;
+  background: var(--card-bg); /* <-- Используем переменную вместо #ffffff */
+  border: 1px solid var(--border-color); /* <-- Рамка, чтобы блок не сливался с фоном в темной теме */
   border-radius: 16px;
   padding: 12px 20px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
   text-align: center;
   z-index: 2;
 }
@@ -270,7 +274,7 @@
 .price-badge .old-price {
   display: block;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted); /* <-- Переменная вместо #9ca3af */
   text-decoration: line-through;
 }
 
@@ -278,7 +282,7 @@
   display: block;
   font-size: 20px;
   font-weight: 800;
-  color: #111827; /* Сделали темным, чтобы подходило под любой фон слайдера */
+  color: var(--text-main); /* <-- Переменная вместо #111827 */
 }
 
 /* Адаптивность для баннера */
@@ -332,3 +336,54 @@
     text-align: center;
   }
 }
+
+/* === Главные кнопки баннера (Изолировано от остального сайта!) === */
+.hero-actions .btn-primary {
+  padding: 14px 32px;
+  font-size: 15px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: #ffffff; /* Белый фон только для кнопки на тёмном баннере */
+  color: #7c3aed;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+  .hero-actions .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    background: #f8fafc;
+    color: #6d28d9;
+  }
+
+  .hero-actions .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+.hero-actions .btn-outline {
+  padding: 14px 32px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  font-weight: 600;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+  .hero-actions .btn-outline:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }

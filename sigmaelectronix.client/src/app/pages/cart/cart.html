@@ -1,13 +1,13 @@
 <div class="cart-page">
   <div class="container">
-    <h1 class="cart-title">Корзина</h1>
+    <h1 class="cart-title" [translate]="'CART.TITLE'">Корзина</h1>
 
     @if (!cart() || cart()?.items?.length === 0) {
     <div class="empty-cart">
       <svg lucideShoppingCart size="64" strokeWidth="1" class="empty-icon"></svg>
-      <h2>В корзине пока пусто</h2>
-      <p>Добавьте товары из каталога</p>
-      <a routerLink="/catalog" class="btn-primary">Перейти к покупкам</a>
+      <h2 [translate]="'CART.EMPTY_TITLE'">В корзине пока пусто</h2>
+      <p [translate]="'CART.EMPTY_DESC'">Добавьте товары из каталога</p>
+      <a routerLink="/catalog" class="btn-primary" [translate]="'CART.GO_SHOPPING'">Перейти к покупкам</a>
     </div>
     } @else {
     <div class="cart-layout">
@@ -54,7 +54,7 @@
         <div class="cart-footer">
           <button class="clear-cart-btn" (click)="clearCart()">
             <svg lucideTrash2 size="16" strokeWidth="2.5"></svg>
-            Очистить корзину
+            <span [translate]="'CART.CLEAR'">Очистить корзину</span>
           </button>
         </div>
       </div>
@@ -62,13 +62,13 @@
       <aside class="cart-summary">
         <div class="summary-lines">
           <div class="summary-line">
-            <span>Товары ({{ cart()?.items?.length || 0 }})</span>
+            <span>{{ 'CART.ITEMS' | translate }} ({{ cart()?.items?.length || 0 }})</span>
             <span>{{ cartTotal() | currency:'₽':'symbol':'1.0-0' }}</span>
           </div>
         </div>
 
         <div class="summary-total">
-          <span>Итого</span>
+          <span [translate]="'CART.TOTAL'">Итого</span>
           <span class="total-price">
             {{ cartTotal() | currency:'₽':'symbol':'1.0-0' }}
           </span>
@@ -76,12 +76,12 @@
 
         <button class="checkout-btn" routerLink="/checkout">
           <svg lucideShieldCheck size="20" strokeWidth="2.5"></svg>
-          Оформить заказ
+          <span [translate]="'CART.CHECKOUT'">Оформить заказ</span>
         </button>
 
         <div class="secure-info">
           <svg lucideShieldCheck size="14" strokeWidth="2.5"></svg>
-          Безопасная оплата
+          <span [translate]="'CART.SECURE'">Безопасная оплата</span>
         </div>
       </aside>
     </div>

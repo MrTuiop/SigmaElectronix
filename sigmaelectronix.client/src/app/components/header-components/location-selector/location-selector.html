@@ -6,13 +6,13 @@
   @if (showConfirmPrompt()) {
   <div class="location-prompt">
     <div class="prompt-arrow"></div>
-    <p class="prompt-text">Ваш город — <strong>{{ selectedCityName() }}</strong>?</p>
+    <p class="prompt-text"><span [translate]="'HEADER.LOCATION.MYCITY'">Ваш город</span> — <strong>{{ selectedCityName() }}</strong>?</p>
     <div class="prompt-actions">
       <button class="btn-confirm" (click)="confirmDetectedCity()">
-        <svg lucideCheck size="12"></svg> Да, верно
+        <svg lucideCheck size="12"></svg> <span [translate]="'HEADER.LOCATION.AGREE'">Да, верно</span>
       </button>
       <button class="btn-change" (click)="openModal()">
-        Сменить город
+        <span [translate]="'HEADER.LOCATION.CHANGE'">Сменить город</span>
       </button>
     </div>
   </div>
@@ -25,7 +25,7 @@
       <div class="modal-header">
         <div class="title-wrap">
           <svg lucideBuilding size="20" class="title-icon"></svg>
-          <h2>Выбор города</h2>
+          <h2 [translate]="'HEADER.LOCATION.SELECT'">Выбор города</h2>
         </div>
         <button class="close-btn" (click)="showModal.set(false)">
           <svg lucideX size="20"></svg>
@@ -35,7 +35,7 @@
       <div class="search-box">
         <svg lucideSearch size="16" class="search-icon"></svg>
         <input type="text"
-               placeholder="Введите название города..."
+               [placeholder]="'HEADER.LOCATION.PLACEHOLDER' | translate"
                [ngModel]="searchQuery()"
                (ngModelChange)="searchQuery.set($event)" />
         @if (searchQuery()) {
@@ -49,11 +49,11 @@
         @if (allCities().length === 0) {
         <div class="loading-state">
           <div class="spinner"></div>
-          <p>Загрузка списка городов...</p>
+          <p [translate]="'HEADER.LOCATION.LOADING'">Загрузка списка городов...</p>
         </div>
         } @else if (regionNames().length === 0) {
         <div class="empty-state">
-          <p>Город «{{ searchQuery() }}» не найден</p>
+          <p><span [translate]="'HEADER.LOCATION.CITY'">Город</span> «{{ searchQuery() }}» <span [translate]="'HEADER.LOCATION.NOTFOUND'">не найден</span></p>
         </div>
         } @else {
         @for (region of regionNames(); track region) {

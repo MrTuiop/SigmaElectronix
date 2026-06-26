@@ -105,6 +105,10 @@
               <button class="action-btn edit" title="Редактировать" (click)="editLanguage(lang)">
                 <svg lucideEdit2 size="16" strokeWidth="1.5"></svg>
               </button>
+
+              <button class="action-btn delete" title="Удалить" (click)="deleteLanguage(lang)" [disabled]="lang.isDefault">
+                <svg lucideTrash2 size="16" strokeWidth="1.5"></svg>
+              </button>
             </div>
           </td>
         </tr>
@@ -218,3 +222,14 @@
   </form>
   }
 </div>
+
+@if (showConfirmModal()) {
+<app-confirm-modal title="Удаление языка"
+                   [message]="'Вы уверены, что хотите удалить язык ' + languageToDelete()?.name + '? Это действие удалит все переводы связанные с этим языком.'"
+                   confirmText="Удалить"
+                   cancelText="Отмена"
+                   [isDestructive]="true"
+                   (confirm)="confirmDelete()"
+                   (cancel)="cancelDelete()">
+</app-confirm-modal>
+}

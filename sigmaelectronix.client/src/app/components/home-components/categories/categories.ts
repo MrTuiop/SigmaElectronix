@@ -1,14 +1,18 @@
-import { Component, inject, signal, computed, OnInit, ChangeDetectorRef, effect } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import {
   LucideArrowRight, LucideSmartphone, LucideLaptop, LucideHeadphones,
-  LucideWatch, LucideTv, LucideGamepad2, LucideTag, LucideFolder,
-  LucideMonitor, LucideCamera
+  LucideWatch, LucideTv, LucideGamepad2, LucideFolder,
+  LucideMonitor, LucideCamera, LucideHome, LucideCoffee,
+  LucideSnowflake, LucideLightbulb, LucideBot, LucideTablet,
+  LucideCpu, LucideCircuitBoard, LucideServer, LucideHardDrive,
+  LucideRouter, LucideNetwork, LucideWifi, LucideCable
 } from '@lucide/angular';
 import { CategoryDto } from '../../../models/category-models';
 import { CategoryService } from '../../../services/category-service';
-import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
+import { LanguageService } from '../../../services/language-service';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-categories',
@@ -16,90 +20,96 @@ import { LanguageService } from '../../../services/language-service'; // 👈 И
   imports: [
     CommonModule,
     RouterModule,
+    TranslateDirective,
     LucideArrowRight,
+    // ⚠️ ВАЖНО: Для работы *ngComponentOutlet все динамические иконки 
+    // ОБЯЗАТЕЛЬНО должны быть импортированы сюда, иначе будет ошибка NG0912
+    LucideSmartphone, LucideLaptop, LucideHeadphones, LucideWatch,
+    LucideTv, LucideGamepad2, LucideFolder, LucideMonitor,
+    LucideCamera, LucideHome, LucideCoffee, LucideSnowflake,
+    LucideLightbulb, LucideBot, LucideTablet, LucideCpu,
+    LucideCircuitBoard, LucideServer, LucideHardDrive, LucideRouter,
+    LucideNetwork, LucideWifi, LucideCable
   ],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent {
   private categoryService = inject(CategoryService);
-  private cdr = inject(ChangeDetectorRef);
-  private languageService = inject(LanguageService); // 👈 Инжектим сервис
+  private languageService = inject(LanguageService);
 
-  private previousLanguage = signal<string>(this.languageService.currentLanguage()); // 👈 Отслеживаем прошлый язык
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
   loading = signal(true);
   error = signal<string | null>(null);
   skeletonArray = Array(6).fill(0);
 
-  // Массив доступных иконок
-  availableIcons: Array<{ id: string, component: any }> = [
-    { id: 'smartphone', component: LucideSmartphone },
-    { id: 'laptop', component: LucideLaptop },
-    { id: 'headphones', component: LucideHeadphones },
-    { id: 'watch', component: LucideWatch },
-    { id: 'tv', component: LucideTv },
-    { id: 'gamepad-2', component: LucideGamepad2 },
-    { id: 'monitor', component: LucideMonitor },
-    { id: 'camera', component: LucideCamera },
-    { id: 'folder', component: LucideFolder },
-    { id: 'tag', component: LucideTag }
-  ];
+  // 📦 Единый словарь иконок
+  private availableIcons: Record<string, any> = {
+    'smartphone': LucideSmartphone,
+    'laptop': LucideLaptop,
+    'headphones': LucideHeadphones,
+    'watch': LucideWatch,
+    'tv': LucideTv,
+    'gamepad-2': LucideGamepad2,
+    'monitor': LucideMonitor,
+    'camera': LucideCamera,
+    'home': LucideHome,
+    'coffee': LucideCoffee,
+    'snowflake': LucideSnowflake,
+    'lightbulb': LucideLightbulb,
+    'bot': LucideBot,
+    'tablet': LucideTablet,
+    'cpu': LucideCpu,
+    'circuit-board': LucideCircuitBoard,
+    'server': LucideServer,
+    'hard-drive': LucideHardDrive,
+    'router': LucideRouter,
+    'network': LucideNetwork,
+    'wifi': LucideWifi,
+    'cable': LucideCable,
+    'folder': LucideFolder // Дефолтная заглушка
+  };
 
-  // Берем просто чистые данные из сервиса
   categories = computed<CategoryDto[]>(() => {
     const all = this.categoryService.allCategories();
     return all.filter(c => c.parentCategoryId == null);
   });
 
-  // 👇 Магия effect: срабатывает только когда меняется currentLanguage
   private readonly languageEffect = effect(() => {
     const currentLang = this.languageService.currentLanguage();
     if (this.previousLanguage() !== currentLang) {
       this.previousLanguage.set(currentLang);
 
-      // Перезагружаем категории и дерево при смене языка
       this.categoryService.loadAll().subscribe({
         error: () => console.error('Ошибка перезагрузки категорий при смене языка')
       });
-
-      // Обновляем дерево тоже, так как оно нужно для хлебных крошек на других страницах
       this.categoryService.loadTree().subscribe({
         error: () => console.error('Ошибка перезагрузки дерева категорий при смене языка')
       });
     }
   });
 
-  ngOnInit(): void {
+  // 👇 В Angular 16+ при использовании inject() инициализацию лучше делать в constructor
+  constructor() {
     if (this.categoryService.allCategories().length > 0) {
       this.loading.set(false);
       return;
     }
+
     this.categoryService.loadAll().subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Ошибка загрузки категорий', err);
+      next: () => this.loading.set(false), // Signal сам обновит UI!
+      error: () => {
         this.error.set('Не удалось загрузить категории');
         this.loading.set(false);
-        this.cdr.detectChanges();
       }
     });
   }
 
-  // Умное получение иконки
+  // 🎯 Максимально простой вывод: получаем ключ и берем компонент из словаря
   getIconComponent(cat: CategoryDto): any {
-    let iconId = cat.icon;
-
-    // Фолбэк: если иконки в базе еще нет, подбираем по названию
-    if (!iconId) {
-      iconId = this.mapIconType(cat);
-    }
-
-    const icon = this.availableIcons.find(i => i.id === iconId);
-    return icon ? icon.component : LucideTag;
+    const iconKey = cat.icon || this.mapIconType(cat);
+    return this.availableIcons[iconKey] || LucideFolder;
   }
 
   private mapIconType(cat: CategoryDto): string {
@@ -110,6 +120,6 @@ export class CategoriesComponent implements OnInit {
     if (name.includes('час') || name.includes('watch')) return 'watch';
     if (name.includes('телевизор') || name.includes('tv')) return 'tv';
     if (name.includes('игр') || name.includes('game')) return 'gamepad-2';
-    return 'tag';
+    return 'folder'; // Возвращаем ключ папки по умолчанию
   }
 }

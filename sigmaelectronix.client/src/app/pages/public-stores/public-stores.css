@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background-color: var(--bg-color, #f8fafc);
+  background-color: var(--bg-color);
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -13,12 +13,12 @@
 
 /* === Хедер секции === */
 .stores-header {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: var(--purple-gradient); /* Используем твою переменную градиента */
   border-radius: 24px;
   padding: 48px;
   color: #ffffff;
   margin-bottom: 32px;
-  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.15);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
 }
@@ -83,11 +83,11 @@
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  background: #ffffff;
+  background: var(--card-bg); /* <-- Переменная */
   padding: 16px 24px;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-color); /* <-- Переменная */
+  box-shadow: var(--shadow-sm);
   margin-bottom: 32px;
 }
 
@@ -102,7 +102,7 @@
 .search-icon {
   position: absolute;
   left: 14px;
-  color: #94a3b8;
+  color: var(--text-muted); /* <-- Переменная */
   width: 18px;
   height: 18px;
 }
@@ -110,15 +110,17 @@
 .search-box input {
   width: 100%;
   padding: 12px 40px 12px 44px;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-color); /* <-- Переменная */
+  color: var(--text-main); /* <-- Переменная */
+  border: 1px solid var(--border-color); /* <-- Переменная */
   border-radius: 10px;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   outline: none;
 }
 
   .search-box input:focus {
-    border-color: #7c3aed;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
   }
 
@@ -127,22 +129,22 @@
   right: 14px;
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--text-muted); /* <-- Переменная */
   cursor: pointer;
   font-size: 14px;
 }
 
   .clear-btn:hover {
-    color: #64748b;
+    color: var(--text-main); /* <-- Переменная */
   }
 
 .stores-count {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-muted); /* <-- Переменная */
 }
 
   .stores-count strong {
-    color: #1e293b;
+    color: var(--text-main); /* <-- Переменная */
   }
 
 /* === Сетка и Карточки === */
@@ -153,26 +155,27 @@
 }
 
 .store-card {
-  background: #ffffff;
+  background: var(--card-bg); /* <-- Переменная */
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color); /* <-- Переменная */
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  transition: var(--transition);
 }
 
   .store-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 24px -10px rgba(124, 58, 237, 0.12);
+    border-color: var(--primary-color);
+    box-shadow: 0 12px 32px rgba(124, 58, 237, 0.12);
   }
 
 /* Стилизация верхней части карточки (Имитация мини-карты) */
 .store-map-preview {
   height: 120px;
-  background-color: #f1f5f9;
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px), radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-color: var(--bg-color); /* <-- Переменная */
+  background-image: radial-gradient(var(--border-color) 1px, transparent 1px), radial-gradient(var(--border-color) 1px, transparent 1px);
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
   position: relative;
@@ -181,7 +184,7 @@
 .map-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(124, 58, 237, 0.03), rgba(0,0,0,0.05));
+  background: linear-gradient(to bottom, transparent, var(--card-bg)); /* Плавный переход в цвет карточки */
   padding: 14px;
 }
 
@@ -219,11 +222,11 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: #64748b;
-  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-muted); /* <-- Переменная */
+  background: var(--card-bg); /* <-- Избегаем прозрачного белого в темной теме */
   padding: 3px 8px;
   border-radius: 6px;
-  backdrop-filter: blur(4px);
+  border: 1px solid var(--border-color);
 }
 
 .compass-icon {
@@ -242,13 +245,13 @@
 .store-name {
   font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-main); /* <-- Переменная */
   margin: 0 0 4px 0;
 }
 
 .store-code {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-muted); /* <-- Переменная */
   margin-bottom: 20px;
   display: block;
 }
@@ -261,7 +264,7 @@
 }
 
 .info-icon {
-  color: #7c3aed;
+  color: var(--primary-color); /* <-- Переменная */
   width: 16px;
   height: 16px;
   margin-top: 3px;
@@ -277,19 +280,19 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #94a3b8;
+    color: var(--text-muted); /* <-- Переменная */
     font-weight: 600;
   }
 
   .info-text .value {
     font-size: 14px;
-    color: #334155;
+    color: var(--text-main); /* <-- Переменная */
     font-weight: 500;
     line-height: 1.4;
   }
 
 .highlight-time {
-  color: #0f172a !important;
+  color: var(--text-main) !important; /* <-- Переменная */
   font-weight: 600 !important;
 }
 
@@ -299,7 +302,7 @@
 }
 
   .phone-link:hover {
-    color: #7c3aed;
+    color: var(--primary-hover);
   }
 
 /* Действия */
@@ -314,17 +317,19 @@
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: #f1f5f9;
+  background: var(--bg-color); /* <-- Переменная */
+  border: 1px solid var(--border-color); /* <-- Добавил границу для четкости */
   border-radius: 12px;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-  color: #475569;
-  transition: all 0.2s ease;
+  color: var(--text-main); /* <-- Переменная */
+  transition: var(--transition);
 }
 
   .btn-route:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: var(--purple-gradient); /* <-- Переменная */
+    border-color: transparent;
     color: #ffffff;
   }
 
@@ -335,7 +340,7 @@
 .btn-icon {
   width: 16px;
   height: 16px;
-  color: #64748b;
+  color: var(--text-muted); /* <-- Переменная */
   transition: color 0.2s;
 }
 
@@ -343,25 +348,25 @@
 .loading-state, .empty-state, .error-state {
   text-align: center;
   padding: 60px 20px;
-  background: #ffffff;
+  background: var(--card-bg); /* <-- Переменная */
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color); /* <-- Переменная */
 }
 
 .empty-icon {
   width: 48px;
   height: 48px;
-  color: #94a3b8;
+  color: var(--text-muted); /* <-- Переменная */
   margin-bottom: 16px;
 }
 
 .empty-state h3 {
   margin: 0 0 8px;
-  color: #1e293b;
+  color: var(--text-main); /* <-- Переменная */
 }
 
 .empty-state p {
-  color: #64748b;
+  color: var(--text-muted); /* <-- Переменная */
   max-width: 400px;
   margin: 0 auto;
 }
@@ -369,13 +374,18 @@
 .btn-retry {
   margin-top: 16px;
   padding: 10px 20px;
-  background: #7c3aed;
+  background: var(--primary-color); /* <-- Переменная */
   color: #ffffff;
   border: none;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+  transition: var(--transition);
 }
+
+  .btn-retry:hover {
+    background: var(--primary-hover);
+  }
 
 /* === Адаптивность === */
 @media (max-width: 768px) {

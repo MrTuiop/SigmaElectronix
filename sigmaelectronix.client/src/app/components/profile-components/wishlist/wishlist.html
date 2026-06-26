@@ -1,15 +1,15 @@
 <div class="content-card fade-in">
   <div class="section-header-inner">
-    <h2>Избранные товары</h2>
+    <h2 [translate]="'PROFILE.WISHLIST.TITLE'">Избранные товары</h2>
     <span class="count-badge">{{ items().length }}</span>
   </div>
 
   @if (items().length === 0) {
   <div class="empty-state">
     <svg lucideHeart size="56" strokeWidth="1.5"></svg>
-    <p>В избранном пока пусто</p>
-    <span class="empty-subtitle">Добавляйте товары в избранное, чтобы не потерять их</span>
-    <a routerLink="/catalog" class="go-to-catalog-btn">Перейти в каталог</a>
+    <p [translate]="'PROFILE.WISHLIST.EMPTY_TITLE'">В избранном пока пусто</p>
+    <span class="empty-subtitle" [translate]="'PROFILE.WISHLIST.EMPTY_SUBTITLE'">Добавляйте товары в избранное, чтобы не потерять их</span>
+    <a routerLink="/catalog" class="go-to-catalog-btn" [translate]="'PROFILE.WISHLIST.GO_TO_CATALOG'">Перейти в каталог</a>
   </div>
   } @else {
   <div class="wishlist-grid">
@@ -18,7 +18,7 @@
 
       <button class="wishlist-remove-btn"
               (click)="$event.preventDefault(); $event.stopPropagation(); removeFromWishlist(item.productId)"
-              title="Удалить из избранного">
+              [attr.title]="'PROFILE.WISHLIST.REMOVE_TITLE' | translate">
         <svg lucideX size="18" strokeWidth="2.5"></svg>
       </button>
 
@@ -33,7 +33,7 @@
       </div>
 
       <div class="product-info">
-        <span class="product-brand">Товар</span>
+        <span class="product-brand" [translate]="'PROFILE.WISHLIST.PRODUCT_BRAND'">Товар</span>
         <h3 class="product-name">{{ item.productName }}</h3>
 
         <div class="price-row">
@@ -46,10 +46,10 @@
 
           @if (cartService.isInCart(item.productId)) {
           <svg lucideCheck size="16" strokeWidth="2.5"></svg>
-          В корзине
+          <span [translate]="'PROFILE.WISHLIST.IN_CART'">В корзине</span>
           } @else {
           <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
-          В корзину
+          <span [translate]="'PROFILE.WISHLIST.ADD_TO_CART'">В корзину</span>
           }
         </button>
       </div>

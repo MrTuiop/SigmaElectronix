@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-// все нужные lucide иконки
 import { LucideUser, LucidePackage, LucideHeart, LucideMapPin, LucideBell, LucideStar, LucideGift, LucideLogOut } from '@lucide/angular';
 import { AuthService } from '../../services/auth-service';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-profile',
@@ -10,6 +10,8 @@ import { AuthService } from '../../services/auth-service';
   imports: [
     RouterModule,
     LucideUser, LucidePackage, LucideHeart, LucideMapPin, LucideBell, LucideStar, LucideGift, LucideLogOut,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css',

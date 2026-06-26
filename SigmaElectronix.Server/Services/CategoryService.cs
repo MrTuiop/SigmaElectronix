@@ -205,16 +205,20 @@ namespace SigmaElectronix.Server.Services
 
             var category = await _context.Categories
                 .AsNoTracking()
-                .Where(c => c.Translations.Any(t => t.Slug == slug && (t.LanguageCode == currentLang || t.LanguageCode == DefaultLanguage)))
+                // 🔥 ИЗМЕНЕНИЕ: Ищем категорию по ЛЮБОМУ слагу, игнорируя язык на этапе поиска сущности
+                .Where(c => c.Translations.Any(t => t.Slug == slug))
                 .Select(c => new CategoryDto
                 {
                     Id = c.Id,
                     Name = c.Translations.Where(t => t.LanguageCode == currentLang).Select(t => t.Name).FirstOrDefault() ??
                            c.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
                            c.Translations.Select(t => t.Name).FirstOrDefault() ?? "Unknown",
+
+                    // Сервер сам вернет актуальный слаг для ТЕКУЩЕГО языка клиента
                     Slug = c.Translations.Where(t => t.LanguageCode == currentLang).Select(t => t.Slug).FirstOrDefault() ??
                            c.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Slug).FirstOrDefault() ??
                            c.Translations.Select(t => t.Slug).FirstOrDefault() ?? "",
+
                     ImageUrl = c.ImageUrl,
                     Icon = c.Icon,
                     ParentCategoryId = c.ParentCategoryId,
@@ -223,7 +227,15 @@ namespace SigmaElectronix.Server.Services
                            c.ParentCategory.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
                            c.ParentCategory.Translations.Select(t => t.Name).FirstOrDefault())
                         : null,
-                    SubCategoriesCount = c.SubCategories.Count
+                    SubCategoriesCount = c.SubCategories.Count,
+
+                    // 🚀 БОНУС: Возвращаем все переводы (пригодится для SEO hreflang тегов)
+                    Translations = c.Translations.Select(t => new CategoryTranslationDto
+                    {
+                        LanguageCode = t.LanguageCode,
+                        Name = t.Name,
+                        Slug = t.Slug
+                    }).ToList()
                 })
                 .FirstOrDefaultAsync();
 

@@ -6,8 +6,9 @@ import {
 } from '@lucide/angular';
 import { AuthModalComponent } from '../../auth-components/auth-modal/auth-modal';
 import { WishlistService } from '../../../services/wishlist-service';
-import { CartService } from '../../../services/cart-service';       // <-- добавлено
-import { ToastService } from '../../../services/toast';             // <-- путь, как у вас
+import { CartService } from '../../../services/cart-service';
+import { ToastService } from '../../../services/toast';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-public-wishlist',
@@ -15,7 +16,9 @@ import { ToastService } from '../../../services/toast';             // <-- пу�
   imports: [
     CommonModule, CurrencyPipe, RouterModule,
     LucideHeart, LucideX, LucideShoppingCart, LucidePackage, LucideStar, LucideCheck, LucideTrash2,
-    AuthModalComponent
+    AuthModalComponent,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './public-wishlist.html',
   styleUrl: './public-wishlist.css'
@@ -23,8 +26,10 @@ import { ToastService } from '../../../services/toast';             // <-- пу�
 export class PublicWishlistComponent {
   wishlistService = inject(WishlistService);
   private router = inject(Router);
-  private cartService = inject(CartService);        // <-- инжектим
-  private toastService = inject(ToastService);      // <-- инжектим
+  private cartService = inject(CartService);
+  private toastService = inject(ToastService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
+
   private gradientCache = new Map<number, string>();
 
   showAuthModal = signal(false);
@@ -48,13 +53,12 @@ export class PublicWishlistComponent {
   removeFromWishlist(productId: number) {
     this.wishlistService.toggleItem(productId).subscribe({
       next: () => {
-        // После переключения проверяем, что товар действительно удалён
         const stillInWishlist = this.wishlistService.isInWishlist(productId);
         if (!stillInWishlist) {
-          this.toastService.info('Удалено из избранного');
+          this.toastService.info(this.translate.instant('PUBLIC_WISHLIST.TOAST.REMOVED')); // 👈
         }
       },
-      error: () => this.toastService.error('Не удалось удалить из избранного')
+      error: () => this.toastService.error(this.translate.instant('PUBLIC_WISHLIST.TOAST.REMOVE_ERROR')) // 👈
     });
   }
 
@@ -79,8 +83,8 @@ export class PublicWishlistComponent {
       quantity: 1,
       price: price
     }).subscribe({
-      next: () => this.toastService.success('Товар добавлен в корзину'),
-      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+      next: () => this.toastService.success(this.translate.instant('PUBLIC_WISHLIST.TOAST.ADDED_TO_CART')), // 👈
+      error: () => this.toastService.error(this.translate.instant('PUBLIC_WISHLIST.TOAST.ADD_ERROR')) // 👈
     });
   }
 
@@ -98,7 +102,12 @@ export class PublicWishlistComponent {
   }
 
   getItemsWord(count: number): string {
-    const words = ['товар', 'товара', 'товаров'];
+    // 👈 Переводим сами слова внутри твоего плюрализатора
+    const words = [
+      this.translate.instant('PUBLIC_WISHLIST.ITEMS.SINGLE'),
+      this.translate.instant('PUBLIC_WISHLIST.ITEMS.FEW'),
+      this.translate.instant('PUBLIC_WISHLIST.ITEMS.MANY')
+    ];
     const cases = [2, 0, 1, 1, 1, 2];
     const index = (count % 100 > 4 && count % 100 < 20) ? 2 : cases[(count % 10 < 5) ? count % 10 : 5];
     return `${count} ${words[index]}`;
@@ -106,8 +115,8 @@ export class PublicWishlistComponent {
 
   clearWishlist() {
     this.wishlistService.clearWishlist().subscribe({
-      next: () => this.toastService.info('Избранное очищено'),
-      error: () => this.toastService.error('Ошибка при очистке')
+      next: () => this.toastService.info(this.translate.instant('PUBLIC_WISHLIST.TOAST.CLEARED')), // 👈
+      error: () => this.toastService.error(this.translate.instant('PUBLIC_WISHLIST.TOAST.CLEAR_ERROR')) // 👈
     });
   }
 

@@ -5,6 +5,7 @@ import { BrandListDto } from '../../../models/brand-models';
 import { BrandService } from '../../../services/brand-service';
 import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
 import { LucideImage, LucidePackage, LucideArrowRight } from '@lucide/angular';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-featured-brands',
@@ -14,7 +15,8 @@ import { LucideImage, LucidePackage, LucideArrowRight } from '@lucide/angular';
     RouterModule,
     LucideImage,
     LucidePackage,
-    LucideArrowRight
+    LucideArrowRight,
+    TranslateDirective
   ],
   templateUrl: './featured-brands.html',
   styleUrl: './featured-brands.css',

@@ -9,6 +9,7 @@ import { StoreService } from '../../services/store-service';
 import { StoreDto } from '../../models/store-models';
 import { CurrentLocationService } from '../../services/current-location-service';
 import { SpinnerComponent } from '../../components/ui-components/spinner/spinner';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-public-stores',
@@ -23,35 +24,33 @@ import { SpinnerComponent } from '../../components/ui-components/spinner/spinner
     LucideClock,
     LucideSearch,
     LucideCompass,
-    SpinnerComponent
+    SpinnerComponent,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './public-stores.html',
   styleUrl: './public-stores.css'
 })
 export class PublicStoresComponent implements OnInit {
   private storeService = inject(StoreService);
-
-  // 🔥 Внедряем глобальный сервис
   private currentLocationService = inject(CurrentLocationService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   allStores = signal<StoreDto[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
   searchQuery = signal('');
 
-  // 🎯 Теперь мы читаем реактивный Сигнал! Angular сам будет отслеживать изменения.
   currentCityName = computed(() => this.currentLocationService.currentCityName());
 
   filteredStores = computed(() => {
     const city = this.currentCityName().toLowerCase().trim();
     const query = this.searchQuery().toLowerCase().trim();
 
-    // 1. Мгновенная реактивная фильтрация по городу
     let storesInCity = this.allStores().filter(
       s => s.cityName.toLowerCase() === city && s.isActive
     );
 
-    // 2. Фильтрация по поисковой строке
     if (query) {
       storesInCity = storesInCity.filter(
         s => s.name.toLowerCase().includes(query) ||
@@ -64,7 +63,6 @@ export class PublicStoresComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      // Сбрасываем строку поиска при изменении города
       this.currentCityName();
       this.searchQuery.set('');
     });
@@ -85,19 +83,21 @@ export class PublicStoresComponent implements OnInit {
       },
       error: (err) => {
         console.error('Ошибка при загрузке магазинов:', err);
-        this.error.set('Не удалось загрузить список магазинов. Пожалуйста, попробуйте позже.');
+        // 👈 ПЕРЕВОДИМ ТЕКСТ ОШИБКИ
+        this.error.set(this.translate.instant('STORES.LOAD_ERROR'));
         this.isLoading.set(false);
       }
     });
   }
 
+  // 👈 ПЕРЕВОДИМ ТИПЫ МАГАЗИНОВ
   translateType(type: string): string {
     switch (type) {
-      case 'Retail': return 'Розничный магазин';
-      case 'PickupPoint': return 'Пункт выдачи';
-      case 'Warehouse': return 'Магазин-склад';
-      case 'ServiceCenter': return 'Сервисный центр';
-      default: return 'Точка продаж';
+      case 'Retail': return this.translate.instant('STORES.TYPE.RETAIL');
+      case 'PickupPoint': return this.translate.instant('STORES.TYPE.PICKUP');
+      case 'Warehouse': return this.translate.instant('STORES.TYPE.WAREHOUSE');
+      case 'ServiceCenter': return this.translate.instant('STORES.TYPE.SERVICE');
+      default: return this.translate.instant('STORES.TYPE.DEFAULT');
     }
   }
 }

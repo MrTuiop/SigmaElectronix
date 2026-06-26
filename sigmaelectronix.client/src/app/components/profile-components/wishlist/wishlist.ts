@@ -8,7 +8,8 @@ import {
 import { WishlistService } from '../../../services/wishlist-service';
 import { CartService } from '../../../services/cart-service';
 import { ToastService } from '../../../services/toast';
-import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем
+import { LanguageService } from '../../../services/language-service';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-wishlist',
@@ -16,7 +17,9 @@ import { LanguageService } from '../../../services/language-service'; // 👈 И
   imports: [
     CommonModule, CurrencyPipe, RouterModule,
     LucideHeart, LucideX, LucideSmartphone, LucideHeadphones,
-    LucideStar, LucideShoppingCart, LucidePackage, LucideCheck
+    LucideStar, LucideShoppingCart, LucidePackage, LucideCheck,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './wishlist.html',
   styleUrl: './wishlist.css',
@@ -26,7 +29,8 @@ export class WishlistComponent {
   cartService = inject(CartService);
   private router = inject(Router);
   private toastService = inject(ToastService);
-  private languageService = inject(LanguageService); // 👈 Инжектим
+  private languageService = inject(LanguageService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
@@ -45,7 +49,6 @@ export class WishlistComponent {
     const currentLang = this.languageService.currentLanguage();
     if (this.previousLanguage() !== currentLang) {
       this.previousLanguage.set(currentLang);
-      // Перезагружаем вишлист с сервера — товары придут с новыми переводами
       this.wishlistService.loadWishlist().subscribe({
         error: () => console.error('Ошибка перезагрузки вишлиста при смене языка')
       });
@@ -67,8 +70,9 @@ export class WishlistComponent {
       quantity: 1,
       price: item.price
     }).subscribe({
-      next: () => this.toastService.success('Товар добавлен в корзину'),
-      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+      // 👈 ПЕРЕВОДИМ ТОСТЫ
+      next: () => this.toastService.success(this.translate.instant('PROFILE.WISHLIST.TOAST.ADDED_TO_CART')),
+      error: () => this.toastService.error(this.translate.instant('PROFILE.WISHLIST.TOAST.ADD_ERROR'))
     });
   }
 

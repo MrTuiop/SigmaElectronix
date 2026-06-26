@@ -15,8 +15,9 @@ import {
   LucideX
 } from '@lucide/angular';
 import { OrderService } from '../../../services/order-service';
-import { OrderDto, OrderItemDto } from '../../../models/order-models'; // ✅ Исправлено: order-models + импорт OrderItemDto
+import { OrderDto, OrderItemDto } from '../../../models/order-models';
 import { ProfileService } from '../../../services/profile-service';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ ИМПОРТ
 
 @Component({
   selector: 'app-orders-history',
@@ -33,7 +34,9 @@ import { ProfileService } from '../../../services/profile-service';
     LucideReceipt,
     LucideLoader2,
     LucideSearch,
-    LucideX
+    LucideX,
+    TranslateDirective,
+    TranslatePipe
   ],
   templateUrl: './orders-history.html',
   styleUrl: './orders-history.css',
@@ -42,6 +45,7 @@ export class OrdersHistoryComponent implements OnInit {
   private orderService = inject(OrderService);
   private toastService = inject(ToastService);
   private profileService = inject(ProfileService);
+  private translate = inject(TranslateService); // 👈 ДОБАВИЛИ ИНЖЕКТ
 
   ordersList = signal<any[]>([]);
   isLoadingOrders = signal(true);
@@ -74,7 +78,6 @@ export class OrdersHistoryComponent implements OnInit {
           date: new Date(o.createdAt).toLocaleDateString('ru-RU'),
           statusColor: this.getStatusColor(o.status),
           statusName: this.getStatusName(o.status),
-          // ✅ Исправлено: добавлены типы параметров
           itemsCount: o.items ? o.items.reduce((sum: number, i: OrderItemDto) => sum + i.quantity, 0) : 0
         }));
 
@@ -115,7 +118,6 @@ export class OrdersHistoryComponent implements OnInit {
     }
   }
 
-  // === ЛОГИКА ПРИВЯЗКИ ЗАКАЗА ===
   openLinkModal() {
     this.showLinkModal.set(true);
     this.linkOrderNumber.set('');
@@ -143,13 +145,13 @@ export class OrdersHistoryComponent implements OnInit {
     this.isLinking.set(true);
     this.orderService.linkGuestOrder(orderNum).subscribe({
       next: () => {
-        this.toastService.success('Заказ успешно добавлен в ваш профиль!');
+        this.toastService.success(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_SUCCESS')); // 👈
         this.closeLinkModal();
         this.loadMyOrders();
         this.isLinking.set(false);
       },
       error: (err) => {
-        this.toastService.error(err.message || 'Ошибка. Проверьте номер заказа.');
+        this.toastService.error(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_ERROR_NUMBER')); // 👈
         this.isLinking.set(false);
       }
     });
@@ -163,11 +165,11 @@ export class OrdersHistoryComponent implements OnInit {
       this.isLinking.set(true);
       this.orderService.linkGuestOrder(orderNum).subscribe({
         next: () => {
-          this.toastService.success('Заказ успешно добавлен в ваш профиль!');
+          this.toastService.success(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_SUCCESS')); // 👈
           this.finalizeLinking();
         },
         error: (err) => {
-          this.toastService.error(err.message || 'Ошибка. Проверьте номер заказа.');
+          this.toastService.error(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_ERROR_NUMBER')); // 👈
           this.isLinking.set(false);
         }
       });
@@ -179,15 +181,15 @@ export class OrdersHistoryComponent implements OnInit {
       this.orderService.linkGuestOrdersByPhone(phone).subscribe({
         next: (res) => {
           if (res.count > 0) {
-            this.toastService.success(`Успешно привязано заказов: ${res.count}`);
+            this.toastService.success(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_SUCCESS_PHONE', { count: res.count })); // 👈
             this.finalizeLinking();
           } else {
-            this.toastService.info('Не найдено непривязанных заказов с таким номером.');
+            this.toastService.info(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_INFO_PHONE')); // 👈
             this.isLinking.set(false);
           }
         },
         error: (err) => {
-          this.toastService.error(err.message || 'Ошибка при поиске заказов.');
+          this.toastService.error(this.translate.instant('PROFILE.ORDERS.TOAST.LINK_ERROR_PHONE')); // 👈
           this.isLinking.set(false);
         }
       });
@@ -202,51 +204,47 @@ export class OrdersHistoryComponent implements OnInit {
 
   getPaymentMethodName(method: string): string {
     const methods: Record<string, string> = {
-      'Online': 'Картой онлайн',
-      'InStore': 'В магазине при получении',
-      'CashOnDelivery': 'При получении',
-      'Card': 'Банковская карта',
-      'Cash': 'Наличными при получении',
-      'Wallet': 'Кошелек'
+      'Online': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.ONLINE'),
+      'InStore': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.IN_STORE'),
+      'CashOnDelivery': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.COD'),
+      'Card': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.CARD'),
+      'Cash': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.CASH'),
+      'Wallet': this.translate.instant('PROFILE.ORDERS.PAYMENT_METHODS.WALLET')
     };
     return methods[method] || method;
   }
 
   getPaymentStatusName(status: string): string {
     const map: Record<string, string> = {
-      'Pending': 'Ожидает оплаты',
-      'Paid': 'Оплачено',
-      'Failed': 'Ошибка оплаты',
-      'Refunded': 'Возврат средств',
-      'Expired': 'Истёк резерв'
+      'Pending': this.translate.instant('PROFILE.ORDERS.PAYMENT_STATUS.PENDING'),
+      'Paid': this.translate.instant('PROFILE.ORDERS.PAYMENT_STATUS.PAID'),
+      'Failed': this.translate.instant('PROFILE.ORDERS.PAYMENT_STATUS.FAILED'),
+      'Refunded': this.translate.instant('PROFILE.ORDERS.PAYMENT_STATUS.REFUNDED'),
+      'Expired': this.translate.instant('PROFILE.ORDERS.PAYMENT_STATUS.EXPIRED')
     };
     return map[status] || status;
   }
 
   getStatusColor(status: string): string {
+    // Цвета не переводим :)
     const colors: Record<string, string> = {
-      'Pending': '#f59e0b',
-      'Paid': '#10b981',
-      'Confirmed': '#0ea5e9',
-      'Processing': '#8b5cf6',
-      'Shipped': '#6366f1',
-      'Delivered': '#10b981',
-      'Cancelled': '#ef4444',
-      'Refunded': '#6b7280'
+      'Pending': '#f59e0b', 'Paid': '#10b981', 'Confirmed': '#0ea5e9',
+      'Processing': '#8b5cf6', 'Shipped': '#6366f1', 'Delivered': '#10b981',
+      'Cancelled': '#ef4444', 'Refunded': '#6b7280'
     };
     return colors[status] ?? '#6b7280';
   }
 
   getStatusName(status: string): string {
     const names: Record<string, string> = {
-      'Pending': 'Ожидает',
-      'Paid': 'Оплачен',
-      'Confirmed': 'Подтверждён',
-      'Processing': 'В сборке',
-      'Shipped': 'Отправлен',
-      'Delivered': 'Доставлен',
-      'Cancelled': 'Отменён',
-      'Refunded': 'Возврат средств'
+      'Pending': this.translate.instant('PROFILE.ORDERS.STATUS.PENDING'),
+      'Paid': this.translate.instant('PROFILE.ORDERS.STATUS.PAID'),
+      'Confirmed': this.translate.instant('PROFILE.ORDERS.STATUS.CONFIRMED'),
+      'Processing': this.translate.instant('PROFILE.ORDERS.STATUS.PROCESSING'),
+      'Shipped': this.translate.instant('PROFILE.ORDERS.STATUS.SHIPPED'),
+      'Delivered': this.translate.instant('PROFILE.ORDERS.STATUS.DELIVERED'),
+      'Cancelled': this.translate.instant('PROFILE.ORDERS.STATUS.CANCELLED'),
+      'Refunded': this.translate.instant('PROFILE.ORDERS.STATUS.REFUNDED')
     };
     return names[status] ?? status;
   }

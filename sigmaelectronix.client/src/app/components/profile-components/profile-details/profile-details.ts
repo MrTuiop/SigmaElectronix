@@ -2,12 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideUser, LucidePencil, LucideCheck, LucideX, LucideCamera } from '@lucide/angular';
 import { ProfileService } from '../../../services/profile-service';
-
 import { DatePipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { ToastService } from '../../../services/toast';
 import { FileService } from '../../../services/file-service';
 import { HttpEventType } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ ИМПОРТ
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДЛЯ ШАБЛОНА
 
 @Component({
   selector: 'app-profile-details',
@@ -15,15 +16,18 @@ import { HttpEventType } from '@angular/common/http';
   imports: [
     DatePipe,
     FormsModule,
-    LucideUser, LucidePencil, LucideCheck, LucideX, LucideCamera
+    LucideUser, LucidePencil, LucideCheck, LucideX, LucideCamera,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './profile-details.html',
   styleUrl: './profile-details.css',
 })
 export class ProfileDetailsComponent {
   data = inject(ProfileService);
-  toastService = inject(ToastService); // <-- сервис уведомлений
+  toastService = inject(ToastService);
   fileService = inject(FileService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   editingField: string | null = null;
   editValue = '';
@@ -39,42 +43,34 @@ export class ProfileDetailsComponent {
     const userId = this.data.user()?.id;
 
     if (!userId) {
-      alert('Ошибка: пользователь не найден');
+      alert(this.translate.instant('PROFILE.DETAILS.ALERT_USER_NOT_FOUND')); // 👈
       return;
     }
 
     this.isUploadingAvatar.set(true);
     this.avatarUploadProgress.set(0);
 
-    // Загружаем картинку в папку 'avatars'
     this.fileService.uploadImageWithProgress(file, 'avatars', userId).subscribe({
       next: (e: any) => {
-        // Отслеживаем проценты
         if (e.type === HttpEventType.UploadProgress && e.total) {
           const percentDone = Math.round(100 * e.loaded / e.total);
           this.avatarUploadProgress.set(percentDone);
         }
-        // Загрузка завершена, получили ссылку
         else if (e.type === HttpEventType.Response) {
           const res = e.body;
           if (res?.url) {
-
-            // 💡 РЕШЕНИЕ ПРОБЛЕМЫ С КЭШЕМ:
-            // Генерируем уникальную метку времени
             const timestamp = new Date().getTime();
-            // Если в URL уже есть параметры (?), добавляем через &, иначе через ?
             const noCacheUrl = res.url.includes('?')
               ? `${res.url}&t=${timestamp}`
               : `${res.url}?t=${timestamp}`;
 
-            // Отправляем новый URL на сервер для сохранения профиля
             this.data.updateAvatar(noCacheUrl).subscribe({
               next: () => {
-                this.toastService.success('Аватар успешно обновлён');
+                this.toastService.success(this.translate.instant('PROFILE.DETAILS.TOAST.AVATAR_UPDATED')); // 👈
                 this.isUploadingAvatar.set(false);
               },
               error: () => {
-                this.toastService.error('Не удалось сохранить аватар в профиль');
+                this.toastService.error(this.translate.instant('PROFILE.DETAILS.TOAST.AVATAR_SAVE_ERROR')); // 👈
                 this.isUploadingAvatar.set(false);
               }
             });
@@ -82,7 +78,7 @@ export class ProfileDetailsComponent {
         }
       },
       error: () => {
-        this.toastService.error('Ошибка при загрузке картинки');
+        this.toastService.error(this.translate.instant('PROFILE.DETAILS.TOAST.AVATAR_UPLOAD_ERROR')); // 👈
         this.isUploadingAvatar.set(false);
       }
     });
@@ -118,7 +114,7 @@ export class ProfileDetailsComponent {
       case 'phone':
         request$ = this.data.updatePhone(this.editValue);
         break;
-      case 'userName':                    // <-- новый case
+      case 'userName':
         request$ = this.data.updateUserName(this.editValue);
         break;
       default:
@@ -130,19 +126,21 @@ export class ProfileDetailsComponent {
       next: () => {
         this.editingField = null;
         this.saving = false;
+
+        // 👈 ПЕРЕВОДИМ СООБЩЕНИЯ ОБ УСПЕХЕ
         const messages: Record<string, string> = {
-          firstName: 'Имя успешно обновлено',
-          lastName: 'Фамилия успешно обновлена',
-          email: 'Email успешно обновлён',
-          phone: 'Телефон успешно обновлён',
-          userName: 'Логин успешно обновлён',   // <-- сообщение
+          firstName: this.translate.instant('PROFILE.DETAILS.TOAST.FIRST_NAME_UPDATED'),
+          lastName: this.translate.instant('PROFILE.DETAILS.TOAST.LAST_NAME_UPDATED'),
+          email: this.translate.instant('PROFILE.DETAILS.TOAST.EMAIL_UPDATED'),
+          phone: this.translate.instant('PROFILE.DETAILS.TOAST.PHONE_UPDATED'),
+          userName: this.translate.instant('PROFILE.DETAILS.TOAST.USERNAME_UPDATED'),
         };
-        this.toastService.success(messages[field] || 'Данные сохранены');
+        this.toastService.success(messages[field] || this.translate.instant('PROFILE.DETAILS.TOAST.DATA_SAVED'));
       },
       error: (err) => {
         console.error('Ошибка сохранения', err);
         this.saving = false;
-        this.toastService.error('Не удалось сохранить изменения. Попробуйте позже.');
+        this.toastService.error(this.translate.instant('PROFILE.DETAILS.TOAST.SAVE_ERROR')); // 👈
       }
     });
   }

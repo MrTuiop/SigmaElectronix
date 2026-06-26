@@ -22,5 +22,7 @@ namespace SigmaElectronix.Server.DTOs.ProductDTOs
         public DateTime CreatedAt { get; set; }
 
         public int TranslationsCount { get; set; }
+
+        public int Quantity {  get; set; }
     }
 }

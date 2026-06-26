@@ -1,13 +1,17 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-// Удалили кучу иконок корзины и звездочек, оставили только нужные странице бренда
-import { LucideArrowLeft, LucidePackage, LucideFolder, LucideChevronRight, LucideLaptop, LucideSmartphone, LucideHeadphones, LucideWatch, LucideTv, LucideGamepad2, LucideMonitor, LucideCamera } from '@lucide/angular';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import {
+  LucideArrowLeft, LucidePackage, LucideFolder, LucideChevronRight,
+  LucideLaptop, LucideSmartphone, LucideHeadphones, LucideWatch,
+  LucideTv, LucideGamepad2, LucideMonitor, LucideCamera
+} from '@lucide/angular';
 import { BrandService } from '../../services/brand-service';
 import { BrandShowcaseDto } from '../../models/brand-models';
 import { WishlistService } from '../../services/wishlist-service';
 import { ProductCardComponent, UiProduct } from '../../components/product-components/product-card/product-card';
-// Подключаем карточку (проверь путь!)
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LanguageService } from '../../services/language-service';
 
 @Component({
   selector: 'app-brand-detail',
@@ -19,60 +23,80 @@ import { ProductCardComponent, UiProduct } from '../../components/product-compon
     LucidePackage,
     LucideFolder,
     LucideChevronRight,
-    ProductCardComponent // <-- Добавили карточку
+    ProductCardComponent,
+    TranslateDirective,
+    TranslatePipe
   ],
   templateUrl: './brand-detail.html',
   styleUrl: './brand-detail.css'
 })
 export class BrandDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private location = inject(Location);
   private brandService = inject(BrandService);
   private wishlistService = inject(WishlistService);
-  private cdr = inject(ChangeDetectorRef);
+  private translate = inject(TranslateService);
+  private languageService = inject(LanguageService);
 
-  brand: BrandShowcaseDto | null = null;
-  uiProducts: UiProduct[] = [];
+  private currentSlug = signal<string>('');
 
-  loading = true;
-  error: string | null = null;
+  brand = signal<BrandShowcaseDto | null>(null);
+  uiProducts = signal<UiProduct[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
 
   private gradientCache = new Map<number, string>();
 
   ngOnInit(): void {
+    // 1. Реагируем на изменение URL (если пользователь перейдет по другому бренду)
     this.route.paramMap.subscribe(params => {
       const slug = params.get('slug');
       if (slug) {
+        this.currentSlug.set(slug);
         this.loadBrand(slug);
+      }
+    });
+
+    // 👇 2. Реагируем на смену языка (Аналогично ProductDetailPage и CatalogPage)
+    this.languageService.languageChanged$.subscribe(() => {
+      const slug = this.currentSlug();
+      if (slug) {
+        this.loadBrand(slug); // Перезагружаем бренд на новом языке
       }
     });
   }
 
   loadBrand(slug: string): void {
-    this.loading = true;
-    this.error = null;
-    this.cdr.detectChanges();
+    this.loading.set(true);
+    this.error.set(null);
 
     this.brandService.getBrandBySlug(slug).subscribe({
       next: (data) => {
-        this.brand = data;
+        this.brand.set(data);
 
-        // 🚀 Добавили .slice(0, 8), чтобы оставить максимум 8 товаров (2 строки)
-        this.uiProducts = (data.featuredProducts || []).slice(0, 8).map((p: any) => ({
+        // 🚀 Если slug изменился при смене языка — бесшовно обновляем URL
+        if (data.slug && data.slug !== slug) {
+          this.currentSlug.set(data.slug);
+          const newUrl = this.router.createUrlTree(['/brands', data.slug]).toString();
+          this.location.replaceState(newUrl);
+        }
+
+        const products: UiProduct[] = (data.featuredProducts || []).slice(0, 8).map((p: any) => ({
           ...p,
           inWishlist: this.wishlistService.isInWishlist(p.id),
           isNew: p.isNew || false,
           discount: this.calcDiscount(p),
           gradient: this.getGradient(p.id)
-        } as UiProduct));
+        }));
 
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.uiProducts.set(products);
+        this.loading.set(false);
       },
       error: (err) => {
         console.error('Ошибка загрузки страницы бренда', err);
-        this.error = 'Не удалось загрузить информацию о бренде.';
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.error.set(this.translate.instant('BRAND_DETAIL.ERROR'));
+        this.loading.set(false);
       }
     });
   }
@@ -110,7 +134,7 @@ export class BrandDetailComponent implements OnInit {
   };
 
   getIconComponent(iconId: string | undefined): any {
-    if (!iconId) return LucideFolder; // По умолчанию папка
+    if (!iconId) return LucideFolder;
     return this.iconMap[iconId] || LucideFolder;
   }
 }

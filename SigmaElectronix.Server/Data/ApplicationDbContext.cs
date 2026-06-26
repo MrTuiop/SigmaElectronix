@@ -397,9 +397,10 @@ namespace SigmaElectronix.Server.Data
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(si => si.Product)
-                    .WithMany()
+                    .WithMany(p => p.Inventories)
                     .HasForeignKey(si => si.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
+
 
                 // 🚀 МАГИЯ POSTGRESQL ДЛЯ ОПТИМИСТИЧНОЙ БЛОКИРОВКИ (ЗАЩИТА ОТ ГОНКИ)
                 // EF Core создаст скрытое (shadow) свойство xmin и будет проверять его при обновлениях
@@ -612,6 +613,12 @@ namespace SigmaElectronix.Server.Data
 
                 // 🔒 Уникальный индекс: один ключ = один перевод для конкретного языка
                 entity.HasIndex(e => new { e.Key, e.LanguageCode }).IsUnique();
+
+                // 🚀 НАСТРОЙКА СВЯЗИ С ТАБЛИЦЕЙ ЯЗЫКОВ
+                entity.HasOne(e => e.Language)
+                    .WithMany() // У самого класса Language нет коллекции List<UiTranslation>, поэтому скобки пустые
+                    .HasForeignKey(e => e.LanguageCode)
+                    .OnDelete(DeleteBehavior.Restrict); // Запрещаем удалять язык из базы, если для него написаны тексты интерфейса
             });
 
             #endregion

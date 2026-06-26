@@ -5,11 +5,12 @@ import { LucidePlus, LucideMapPin, LucideX } from '@lucide/angular';
 import { ProfileService } from '../../../services/profile-service';
 import { CityService } from '../../../services/city-service'; // 👈 ДОБАВИЛИ ИМПОРТ
 import { CityDto } from '../../../models/location-models';   // 👈 ДОБАВИЛИ ИМПОРТ
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-addresses',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucidePlus, LucideMapPin, LucideX],
+  imports: [CommonModule, ReactiveFormsModule, LucidePlus, LucideMapPin, LucideX, TranslateDirective, TranslatePipe],
   templateUrl: './addresses.html',
   styleUrl: './addresses.css',
 })

@@ -82,6 +82,12 @@ export class HeaderComponent implements OnInit{
 
     this.cartService.loadCart().subscribe();
     // Если неавторизован — счётчик и так будет 0, и бейдж скроется
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkTheme.set(true);
+      document.body.classList.add('dark-theme');
+    }
   }
 
   showAuthModal = signal(false);
@@ -109,8 +115,10 @@ export class HeaderComponent implements OnInit{
     this.isDarkTheme.update(dark => !dark);
     if (this.isDarkTheme()) {
       document.body.classList.add('dark-theme');
+      localStorage.setItem('theme', 'dark'); // Сохраняем выбор
     } else {
       document.body.classList.remove('dark-theme');
+      localStorage.setItem('theme', 'light'); // Сохраняем выбор
     }
   }
 }

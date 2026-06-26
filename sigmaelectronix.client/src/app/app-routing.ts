@@ -5,7 +5,6 @@ import { CartPage } from './pages/cart/cart';
 import { CheckoutPage } from './pages/checkout/checkout';
 import { ProductDetailPage } from './pages/product-detail/product-detail';
 import { CatalogPage } from './pages/catalog/catalog';
-import { ProductCartComponent } from './components/category-components/product-cart/product-cart';
 import { ProfileDetailsComponent } from './components/profile-components/profile-details/profile-details';
 import { OrdersHistoryComponent } from './components/profile-components/orders-history/orders-history';
 import { WishlistComponent } from './components/profile-components/wishlist/wishlist';
@@ -46,6 +45,8 @@ import { DeliveryPage } from './pages/delivery/delivery';
 import { WarrantyPage } from './pages/warranty/warranty';
 import { AboutPage } from './pages/about/about';
 import { ManagerUiTranslationsComponent } from './components/manager-components/manager-ui-translations/manager-ui-translations';
+import { PrivacyPolicyComponent } from './pages/privacy-policy/privacy-policy';
+import { AgreementComponent } from './pages/agreement/agreement';
 
 // Здесь будут прописываться пути для страниц вашего магазина электроники
 export const routes: Routes = [
@@ -154,6 +155,8 @@ export const routes: Routes = [
         title: 'Гарантия и возврат | SigmaElectronix'
       },
       { path: 'about', component: AboutPage, title: 'О компании' },
+      { path: 'privacy', component: PrivacyPolicyComponent, title: 'Политика приватности' },
+      { path: 'agreement', component: AgreementComponent, title: 'Пользовательское соглашение' },
     ]
   },
 

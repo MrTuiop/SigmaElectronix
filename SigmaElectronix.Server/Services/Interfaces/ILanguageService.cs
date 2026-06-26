@@ -10,5 +10,6 @@ namespace SigmaElectronix.Server.Services.Interfaces
         Task<LanguageDto?> UpdateAsync(string code, CreateUpdateLanguageDto dto);
         Task<bool> ToggleActiveStatusAsync(string code);
         Task<bool> SetDefaultAsync(string code);
+        Task<bool> DeleteAsync(string code);
     }
 }

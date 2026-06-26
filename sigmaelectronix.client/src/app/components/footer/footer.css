@@ -217,3 +217,11 @@
     gap: 8px;
   }
 }
+
+:host-context(body.dark-theme) .logo-text,
+body.dark-theme .logo-text {
+  background: linear-gradient(135deg, #a855f7 0%, #e9d5ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

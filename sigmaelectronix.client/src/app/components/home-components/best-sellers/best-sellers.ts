@@ -9,6 +9,7 @@ import { CartService } from '../../../services/cart-service';
 import { ToastService } from '../../../services/toast';
 import { ProductCardComponent } from '../../product-components/product-card/product-card';
 import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
+import { TranslateDirective } from '@ngx-translate/core';
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -25,7 +26,7 @@ interface UiProduct extends ProductListDto {
     CurrencyPipe,
     RouterModule,
     LucideArrowRight, LucideHeart, LucideShoppingCart, LucideStar, LucidePackage, LucideCheck,
-    ProductCardComponent
+    ProductCardComponent, TranslateDirective
   ],
   templateUrl: './best-sellers.html',
   styleUrl: './best-sellers.css',

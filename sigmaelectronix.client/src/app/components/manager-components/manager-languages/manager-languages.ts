@@ -13,6 +13,7 @@ import {
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
 import { FileService } from '../../../services/file-service';
 import { ToastService } from '../../../services/toast';
+import { ConfirmModalComponent } from '../../shared-components/confirm-modal/confirm-modal'; // <-- ДОБАВИЛИ
 
 @Component({
   selector: 'app-manager-languages',
@@ -23,7 +24,8 @@ import { ToastService } from '../../../services/toast';
     LucideEye, LucideEyeOff, LucideArrowLeft, LucideCheck,
     LucideChevronDown, LucideChevronUp, LucideSearch, LucideX,
     LucideStar, LucideUploadCloud, LucideLanguages,
-    SpinnerComponent
+    SpinnerComponent,
+    ConfirmModalComponent // <-- ДОБАВИЛИ
   ],
   templateUrl: './manager-languages.html',
   styleUrl: './manager-languages.css'
@@ -51,6 +53,10 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
   isDragoverIcon = signal(false);
   iconUploadProgress = signal(0);
 
+  // --- Состояния для окна подтверждения удаления ---
+  showConfirmModal = signal(false);
+  languageToDelete = signal<LanguageDto | null>(null);
+
   // Сборщик мусора
   private tempUploadedFiles: string[] = [];
   private filesToDeleteOnSave: string[] = [];
@@ -77,7 +83,6 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
       return 0;
     });
 
-    // Принудительно выводим дефолтный язык первым
     return result.sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1));
   });
 
@@ -191,12 +196,10 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
     this.viewMode.set('list');
   }
 
-  // ✅ ИСПРАВЛЕННЫЙ МЕТОД (иммутабельный подход)
   toggleActive(lang: LanguageDto) {
     const origStatus = lang.isActive;
     const newStatus = !origStatus;
 
-    // Optimistic UI: создаём НОВЫЙ массив с обновлённым элементом
     this.languages.update(list =>
       list.map(l => l.code === lang.code ? { ...l, isActive: newStatus } : l)
     );
@@ -204,7 +207,6 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
     this.languageService.toggleLanguageStatus(lang.code).subscribe({
       next: () => this.toastService.info(`Статус языка ${lang.code} изменен`),
       error: (err) => {
-        // Rollback: создаём новый массив с исходным статусом
         this.languages.update(list =>
           list.map(l => l.code === lang.code ? { ...l, isActive: origStatus } : l)
         );
@@ -218,13 +220,11 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
 
     const origDefault = this.languages().find(l => l.isDefault)?.code;
 
-    // Optimistic UI update
     this.languages.update(list => list.map(l => ({ ...l, isDefault: l.code === lang.code })));
 
     this.languageService.setLanguageAsDefault(lang.code).subscribe({
       next: () => this.toastService.success(`${lang.name} теперь основной язык`),
       error: (err) => {
-        // Rollback
         this.languages.update(list => list.map(l => ({ ...l, isDefault: l.code === origDefault })));
         this.toastService.error(err.error?.message || 'Ошибка изменения дефолтного языка');
       }
@@ -241,7 +241,6 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
     else if (column === 'code') this.currentSort.set(curr === 'code_asc' ? 'code_desc' : 'code_asc');
   }
 
-  // --- ЗАГРУЗКА КАРТИНКИ ---
   onDragOver(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.isDragoverIcon.set(true); }
   onDragLeave(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.isDragoverIcon.set(false); }
   onDrop(event: DragEvent) {
@@ -305,5 +304,37 @@ export class ManagerLanguagesComponent implements OnInit, OnDestroy {
     this.tempUploadedFiles.forEach(url => this.fileService.deleteImage(url).subscribe());
     this.tempUploadedFiles = [];
     this.filesToDeleteOnSave = [];
+  }
+
+  // --- НОВАЯ ЛОГИКА УДАЛЕНИЯ ---
+  deleteLanguage(lang: LanguageDto) {
+    this.languageToDelete.set(lang);
+    this.showConfirmModal.set(true);
+  }
+
+  confirmDelete(): void {
+    const lang = this.languageToDelete();
+    if (!lang) return;
+
+    this.showConfirmModal.set(false);
+    this.loading.set(true);
+
+    this.languageService.deleteLanguage(lang.code).subscribe({
+      next: () => {
+        this.toastService.success(`Язык "${lang.name}" успешно удален`);
+        this.loadLanguages();
+        this.languageToDelete.set(null);
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Ошибка при удалении языка');
+        this.loading.set(false);
+        this.languageToDelete.set(null);
+      }
+    });
+  }
+
+  cancelDelete(): void {
+    this.showConfirmModal.set(false);
+    this.languageToDelete.set(null);
   }
 }

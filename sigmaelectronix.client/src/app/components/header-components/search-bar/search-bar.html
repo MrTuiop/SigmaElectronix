@@ -1,7 +1,7 @@
 <div class="search-block">
   <div class="search-wrapper">
     <input type="text"
-           [placeholder]="currentPlaceholder()"
+           [placeholder]="'HEADER.SEARCH.PLACEHOLDER' | translate"
            [value]="searchQuery()"
            (input)="onSearchInput($event)"
            (keyup.enter)="triggerSearch()"
@@ -12,7 +12,7 @@
   </div>
 
   <div class="quick-tags-row">
-    <span class="tags-label">Популярно:</span>
+    <span class="tags-label" [translate]="'HEADER.SEARCH.POPULAR'">Популярно:</span>
     @for (tag of quickTags(); track tag) {
     <span class="quick-tag"
           (mouseenter)="onTagHover(tag)"
@@ -30,7 +30,7 @@
     <div class="left-col">
       @if (suggestions()!.categories.length > 0) {
       <div class="suggest-group">
-        <h4>Категории</h4>
+        <h4 [translate]="'HEADER.SEARCH.CATEGORIES'">Категории</h4>
         @for (cat of suggestions()!.categories; track cat.slug) {
         <a [routerLink]="['/catalog', cat.slug]" (click)="closeDropdown()">
           {{ cat.name }}
@@ -41,7 +41,7 @@
 
       @if (suggestions()!.brands.length > 0) {
       <div class="suggest-group">
-        <h4>Бренды</h4>
+        <h4 [translate]="'HEADER.SEARCH.BRANDS'">Бренды</h4>
         @for (brand of suggestions()!.brands; track brand.slug) {
         <a [routerLink]="['/brands', brand.slug]" (click)="closeDropdown()">
           {{ brand.name }}
@@ -52,10 +52,10 @@
     </div>
 
     <div class="right-col">
-      <h4>Товары</h4>
+      <h4 [translate]="'HEADER.SEARCH.PRODUCTS'">Товары</h4>
 
       @if (suggestions()!.products.length === 0) {
-      <div class="no-results">По вашему запросу ничего не найдено</div>
+      <div class="no-results" [translate]="'HEADER.SEARCH.NOTFOUND'">По вашему запросу ничего не найдено</div>
       }
 
       @for (prod of suggestions()!.products; track prod.id) {

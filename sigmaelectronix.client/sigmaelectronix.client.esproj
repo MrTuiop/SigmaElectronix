@@ -16,7 +16,6 @@
     <Folder Include="src\app\components\manager-components\" />
     <Folder Include="src\app\components\ui-components\" />
     <Folder Include="src\app\components\shared-components\" />
-    <Folder Include="src\app\pages\public-wishlist\" />
     <Folder Include="src\app\layouts\" />
   </ItemGroup>
 </Project>

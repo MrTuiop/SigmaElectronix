@@ -10,6 +10,7 @@ import {
   LucideMapPin,
   LucideClock
 } from '@lucide/angular';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-footer',
@@ -23,7 +24,8 @@ import {
     LucidePhone,
     LucideMail,
     LucideMapPin,
-    LucideClock
+    LucideClock,
+    TranslateDirective
   ],
   templateUrl: './footer.html',
   styleUrl: './footer.css',

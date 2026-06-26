@@ -1,7 +1,7 @@
 <a class="product-card" [routerLink]="['/products', product.slug]">
   <div class="product-badges">
     @if (product.isNew) {
-    <span class="new-badge">Новинка</span>
+    <span class="new-badge" [translate]="'PRODUCT.CARD.NEW'">Новинка</span>
     }
     @if (product.discount) {
     <span class="discount-badge">–{{ product.discount }}%</span>
@@ -28,9 +28,11 @@
 
     <div class="rating-row">
       @for (star of [1,2,3,4,5]; track star) {
-      <svg lucideStar [size]="13" [strokeWidth]="0"
-           [class.filled-star]="star <= (product.averageRating || 5)"
-           [class.empty-star]="star > (product.averageRating || 5)">
+      <svg lucideStar
+           [size]="14"
+           [strokeWidth]="2"
+           [class.filled-star]="star <= (product.averageRating ?? 0)"
+           [class.empty-star]="star > (product.averageRating ?? 0)">
       </svg>
       }
       <span class="reviews-count">({{ product.reviewsCount || 0 }})</span>
@@ -48,10 +50,10 @@
          (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
       @if (isInCart(product.id)) {
       <svg lucideCheck size="18" strokeWidth="3"></svg>
-      В корзине
+      <span [translate]="'PRODUCT.CARD.INCART'">В корзине</span>
       } @else {
       <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
-      В корзину
+      <span [translate]="'PRODUCT.CARD.TOCART'">В корзину</span>
       }
     </div>
   </div>

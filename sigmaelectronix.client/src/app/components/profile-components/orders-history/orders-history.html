@@ -1,16 +1,16 @@
 <div class="content-card fade-in">
   <div class="section-header-inner">
-    <h2>История заказов</h2>
+    <h2 [translate]="'PROFILE.ORDERS.HISTORY'">История заказов</h2>
     <button class="btn-outline" (click)="openLinkModal()">
       <svg lucideSearch size="16"></svg>
-      Найти по номеру
+      <span [translate]="'PROFILE.ORDERS.FIND'">Найти по номеру</span>
     </button>
   </div>
 
   @if (isLoadingOrders()) {
   <div class="empty-state">
     <svg lucideLoader2 class="spinner" size="48" strokeWidth="1.5"></svg>
-    <p>Загружаем ваши заказы...</p>
+    <p [translate]="'PROFILE.ORDERS.LOADING'">Загружаем ваши заказы...</p>
   </div>
   }
   @else if (ordersList().length === 0) {
@@ -18,9 +18,9 @@
     <div class="empty-icon-wrapper">
       <svg lucidePackage size="56" strokeWidth="1.5"></svg>
     </div>
-    <h3>У вас пока нет заказов</h3>
-    <p>Здесь будет храниться история ваших покупок.</p>
-    <button class="btn-primary" routerLink="/catalog">Перейти к покупкам</button>
+    <h3 [translate]="'PROFILE.ORDERS.EMPTY_TITLE'">У вас пока нет заказов</h3>
+    <p [translate]="'PROFILE.ORDERS.EMPTY_DESC'">Здесь будет храниться история ваших покупок.</p>
+    <button class="btn-primary" routerLink="/catalog" [translate]="'PROFILE.ORDERS.GO_SHOPPING'">Перейти к покупкам</button>
   </div>
   }
   @else {
@@ -31,8 +31,12 @@
       <div class="order-summary" (click)="toggleOrder(order.id)">
         <div class="summary-left">
           <div class="order-id-group">
-            <span class="order-id">Заказ {{ order.orderNumber || '№' + order.id }}</span>
-            <span class="order-date">от {{ order.date }}</span>
+            <span class="order-id">
+              {{ 'PROFILE.ORDERS.ORDER_NUMBER' | translate }} {{ order.orderNumber || '№' + order.id }}
+            </span>
+            <span class="order-date">
+              {{ 'PROFILE.ORDERS.FROM_DATE' | translate }} {{ order.date }}
+            </span>
           </div>
           <div class="order-status" [style.background]="order.statusColor">
             {{ order.statusName }}
@@ -42,7 +46,7 @@
         <div class="summary-right">
           <div class="order-price-group">
             <span class="order-total">{{ order.totalAmount | currency:'₽':'symbol':'1.0-0' }}</span>
-            <span class="order-items-count">{{ order.itemsCount }} товар(а)</span>
+            <span class="order-items-count">{{ order.itemsCount }} {{ 'PROFILE.ORDERS.ITEMS' | translate }}</span>
           </div>
           <button class="expand-btn">
             @if (expandedOrderId() === order.id?.toString()) {
@@ -60,7 +64,7 @@
         @if (isLoadingDetails() && !currentOrderDetails()) {
         <div class="loading-state">
           <svg lucideLoader2 class="spinner" size="28"></svg>
-          <span>Загружаем состав заказа...</span>
+          <span [translate]="'PROFILE.ORDERS.LOADING_DETAILS'">Загружаем состав заказа...</span>
         </div>
         }
 
@@ -68,7 +72,7 @@
         <div class="details-grid">
 
           <div class="details-items-section">
-            <h4>Товары ({{ details.items.length }})</h4>
+            <h4>{{ 'PROFILE.ORDERS.PRODUCTS' | translate }} ({{ details.items.length }})</h4>
             <div class="items-list">
               @for (item of details.items; track item.id) {
               <div class="product-item">
@@ -77,7 +81,9 @@
                 </div>
                 <div class="item-info">
                   <span class="item-name" [routerLink]="['/product', item.productId]">{{ item.productName }}</span>
-                  <span class="item-qty">{{ item.quantity }} шт. × {{ item.unitPrice | currency:'₽':'symbol':'1.0-0' }}</span>
+                  <span class="item-qty">
+                    {{ item.quantity }} {{ 'PROFILE.ORDERS.PCS' | translate }} × {{ item.unitPrice | currency:'₽':'symbol':'1.0-0' }}
+                  </span>
                 </div>
                 <div class="item-total-price">
                   {{ item.totalPrice | currency:'₽':'symbol':'1.0-0' }}
@@ -92,7 +98,7 @@
             <div class="info-card">
               <div class="info-header">
                 <svg lucideMapPin size="18"></svg>
-                <h5>Доставка</h5>
+                <h5 [translate]="'PROFILE.ORDERS.DELIVERY'">Доставка</h5>
               </div>
               <p class="main-text">{{ details.shippingAddress }}</p>
               <p class="sub-text">{{ details.shippingFullName }} • {{ details.shippingPhone }}</p>
@@ -101,7 +107,7 @@
             <div class="info-card">
               <div class="info-header">
                 <svg lucideCreditCard size="18"></svg>
-                <h5>Оплата</h5>
+                <h5 [translate]="'PROFILE.ORDERS.PAYMENT'">Оплата</h5>
               </div>
               <p class="main-text">{{ getPaymentMethodName(details.paymentMethod) }}</p>
 
@@ -113,29 +119,29 @@
 
               @if (canPayOnline(details.paymentMethod, details.paymentStatus, details.status)) {
               <button class="btn-pay-online" [routerLink]="['/payment', details.id]">
-                Оплатить сейчас
+                <span [translate]="'PROFILE.ORDERS.PAY_NOW'">Оплатить сейчас</span>
               </button>
               }
             </div>
 
             <div class="receipt-card">
               <div class="receipt-row">
-                <span>Товары:</span>
+                <span [translate]="'PROFILE.ORDERS.PRODUCTS_SHORT'">Товары:</span>
                 <span>{{ (details.totalAmount - details.shippingCost + details.discountAmount) | currency:'₽':'symbol':'1.0-0' }}</span>
               </div>
               <div class="receipt-row">
-                <span>Доставка:</span>
-                <span>{{ details.shippingCost === 0 ? 'Бесплатно' : (details.shippingCost | currency:'₽':'symbol':'1.0-0') }}</span>
+                <span [translate]="'PROFILE.ORDERS.DELIVERY_SHORT'">Доставка:</span>
+                <span>{{ details.shippingCost === 0 ? ('PROFILE.ORDERS.FREE' | translate) : (details.shippingCost | currency:'₽':'symbol':'1.0-0') }}</span>
               </div>
               @if (details.discountAmount > 0) {
               <div class="receipt-row text-green">
-                <span>Скидка:</span>
+                <span [translate]="'PROFILE.ORDERS.DISCOUNT'">Скидка:</span>
                 <span>-{{ details.discountAmount | currency:'₽':'symbol':'1.0-0' }}</span>
               </div>
               }
               <div class="receipt-divider"></div>
               <div class="receipt-row total">
-                <span>Итого:</span>
+                <span [translate]="'PROFILE.ORDERS.TOTAL'">Итого:</span>
                 <span>{{ details.totalAmount | currency:'₽':'symbol':'1.0-0' }}</span>
               </div>
             </div>
@@ -150,6 +156,7 @@
   </div>
   }
 </div>
+
 @if (showLinkModal()) {
 <div class="modal-overlay fade-in" (mousedown)="onOverlayClick($event)">
   <div class="modal-content fade-in-up">
@@ -161,50 +168,52 @@
       <div class="icon-wrap">
         <svg lucidePackage size="24"></svg>
       </div>
-      <h3>Найти заказ</h3>
-      <p>Оформляли заказ без регистрации? Найдите его, чтобы добавить в историю покупок.</p>
+      <h3 [translate]="'PROFILE.ORDERS.FIND_MODAL_TITLE'">Найти заказ</h3>
+      <p [translate]="'PROFILE.ORDERS.FIND_MODAL_DESC'">Оформляли заказ без регистрации? Найдите его, чтобы добавить в историю покупок.</p>
     </div>
 
     <div class="modal-body">
       <div class="link-tabs">
         <button [class.active]="linkMode() === 'number'" (click)="linkMode.set('number')">
-          По номеру заказа
+          <span [translate]="'PROFILE.ORDERS.BY_NUMBER'">По номеру заказа</span>
         </button>
         <button [class.active]="linkMode() === 'phone'" (click)="linkMode.set('phone')">
-          По телефону
+          <span [translate]="'PROFILE.ORDERS.BY_PHONE'">По телефону</span>
         </button>
       </div>
 
       @if (linkMode() === 'number') {
       <div class="form-group fade-in">
-        <label>Номер заказа</label>
+        <label [translate]="'PROFILE.ORDERS.ORDER_NUMBER_LABEL'">Номер заказа</label>
         <input type="text"
                [(ngModel)]="linkOrderNumber"
-               placeholder="Например: ORD-20260618-12345"
+               [placeholder]="'PROFILE.ORDERS.ORDER_NUMBER_PLACEHOLDER' | translate"
                (keyup.enter)="submitLink()">
       </div>
       } @else {
       <div class="form-group fade-in">
-        <label>Номер телефона</label>
+        <label [translate]="'PROFILE.ORDERS.PHONE_LABEL'">Номер телефона</label>
         <input type="text"
                [(ngModel)]="linkPhone"
-               placeholder="Например: +7 (999) 123-45-67"
+               [placeholder]="'PROFILE.ORDERS.PHONE_PLACEHOLDER' | translate"
                (keyup.enter)="submitLink()">
-        <span class="field-hint">Будут привязаны все ваши гостевые заказы.</span>
+        <span class="field-hint" [translate]="'PROFILE.ORDERS.PHONE_HINT'">Будут привязаны все ваши гостевые заказы.</span>
       </div>
       }
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="closeLinkModal()">Отмена</button>
+      <button class="btn-secondary" (click)="closeLinkModal()">
+        <span [translate]="'PROFILE.ORDERS.CANCEL'">Отмена</span>
+      </button>
 
       <button class="btn-primary"
               (click)="submitLink()"
               [disabled]="(linkMode() === 'number' ? !linkOrderNumber().trim() : !linkPhone().trim()) || isLinking()">
         @if (isLinking()) {
-        <svg lucideLoader2 class="spinner" size="18"></svg> Поиск...
+        <svg lucideLoader2 class="spinner" size="18"></svg> <span [translate]="'PROFILE.ORDERS.SEARCHING'">Поиск...</span>
         } @else {
-        Привязать
+        <span [translate]="'PROFILE.ORDERS.LINK'">Привязать</span>
         }
       </button>
     </div>

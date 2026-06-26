@@ -154,5 +154,23 @@ namespace SigmaElectronix.Server.Services
             IsDefault = l.IsDefault,
             IsActive = l.IsActive
         };
+
+        public async Task<bool> DeleteAsync(string code)
+        {
+            var normalizedCode = code.Trim().ToLowerInvariant();
+            var language = await _context.Languages.FirstOrDefaultAsync(l => l.Code.ToLower() == normalizedCode);
+
+            if (language == null) return false;
+
+            if (language.IsDefault)
+            {
+                throw new InvalidOperationException("Нельзя удалить язык по умолчанию. Сначала назначьте основным другой язык.");
+            }
+
+            _context.Languages.Remove(language);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

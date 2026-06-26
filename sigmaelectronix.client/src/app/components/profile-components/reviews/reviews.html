@@ -1,11 +1,11 @@
 <div class="content-card fade-in">
-  <h2>Мои отзывы</h2>
+  <h2 [translate]="'PROFILE.REVIEWS.MY_REVIEWS'">Мои отзывы</h2>
 
   @if (isLoading()) {
-  <p class="loading-text">Загрузка отзывов...</p>
+  <p class="loading-text" [translate]="'PROFILE.REVIEWS.LOADING'">Загрузка отзывов...</p>
   } @else if (reviews().length === 0) {
   <div class="no-reviews">
-    <p>У вас пока нет отзывов.</p>
+    <p [translate]="'PROFILE.REVIEWS.EMPTY'">У вас пока нет отзывов.</p>
   </div>
   } @else {
   @for (review of reviews(); track review.id) {
@@ -36,11 +36,11 @@
     <p class="review-text">{{ review.comment }}</p>
 
     <div class="review-reactions">
-      <div class="reaction" title="Пользователи считают отзыв полезным">
+      <div class="reaction" [attr.title]="'PROFILE.REVIEWS.HELPFUL_TITLE' | translate">
         <svg lucideThumbsUp [size]="16"></svg>
         <span>{{ review.likesCount || 0 }}</span>
       </div>
-      <div class="reaction" title="Пользователи не согласны с отзывом">
+      <div class="reaction" [attr.title]="'PROFILE.REVIEWS.DISAGREE_TITLE' | translate">
         <svg lucideThumbsDown [size]="16"></svg>
         <span>{{ review.dislikesCount || 0 }}</span>
       </div>
@@ -48,7 +48,7 @@
 
     @if (review.adminResponse) {
     <div class="admin-response">
-      <strong>Ответ магазина:</strong>
+      <strong [translate]="'PROFILE.REVIEWS.STORE_RESPONSE'">Ответ магазина:</strong>
       <p>{{ review.adminResponse }}</p>
     </div>
     }

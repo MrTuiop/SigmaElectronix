@@ -28,14 +28,16 @@
 
     <div class="profile-info">
       <h2>{{ (user.firstName || user.lastName) ? user.fullName : user.userName }}</h2>
-      <span class="profile-meta">На сайте с {{ user.createdAt | date:'dd.MM.yyyy' }}</span>
+      <span class="profile-meta">
+        {{ 'PROFILE.DETAILS.MEMBER_SINCE' | translate }} {{ user.createdAt | date:'dd.MM.yyyy' }}
+      </span>
     </div>
   </div>
 
   <div class="details-grid">
     <!-- Имя -->
     <div class="detail-item">
-      <span class="detail-label">Имя</span>
+      <span class="detail-label" [translate]="'PROFILE.DETAILS.FIRST_NAME'">Имя</span>
       @if (editingField === 'firstName') {
       <div class="edit-row">
         <input [(ngModel)]="editValue" type="text" class="edit-input" />
@@ -58,7 +60,7 @@
 
     <!-- Фамилия -->
     <div class="detail-item">
-      <span class="detail-label">Фамилия</span>
+      <span class="detail-label" [translate]="'PROFILE.DETAILS.LAST_NAME'">Фамилия</span>
       @if (editingField === 'lastName') {
       <div class="edit-row">
         <input [(ngModel)]="editValue" type="text" class="edit-input" />
@@ -81,7 +83,7 @@
 
     <!-- Email -->
     <div class="detail-item">
-      <span class="detail-label">Email</span>
+      <span class="detail-label">Email</span> <!-- Обычно не переводится -->
       @if (editingField === 'email') {
       <div class="edit-row">
         <input [(ngModel)]="editValue" type="email" class="edit-input" />
@@ -104,7 +106,7 @@
 
     <!-- Телефон -->
     <div class="detail-item">
-      <span class="detail-label">Телефон</span>
+      <span class="detail-label" [translate]="'PROFILE.DETAILS.PHONE'">Телефон</span>
       @if (editingField === 'phone') {
       <div class="edit-row">
         <input [(ngModel)]="editValue" type="tel" class="edit-input" />
@@ -127,7 +129,7 @@
 
     <!-- Логин (username) -->
     <div class="detail-item">
-      <span class="detail-label">Логин</span>
+      <span class="detail-label" [translate]="'PROFILE.DETAILS.USERNAME'">Логин</span>
       @if (editingField === 'userName') {
       <div class="edit-row">
         <input [(ngModel)]="editValue" type="text" class="edit-input" />
@@ -149,6 +151,6 @@
     </div>
   </div>
   } @else {
-  <p class="loading-text">Загрузка профиля...</p>
+  <p class="loading-text" [translate]="'PROFILE.DETAILS.LOADING'">Загрузка профиля...</p>
   }
 </div>

@@ -1,6 +1,6 @@
 :host {
   display: block;
-  background: var(--bg-sidebar, #f9fafb);
+  background: var(--bg-color); /* Исправлено: используем переменную фона */
   min-height: 100vh;
   padding-bottom: 80px;
 }
@@ -27,7 +27,7 @@
   text-decoration: none;
   font-weight: 500;
   backdrop-filter: blur(8px);
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
   .back-btn:hover {
@@ -75,7 +75,7 @@
 /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
 .brand-main-content {
   position: relative;
-  margin-top: -60px; /* Эффект "наезда" на баннер */
+  margin-top: -60px;
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -84,26 +84,26 @@
 
 /* ===== ИНФО О БРЕНДЕ ===== */
 .brand-info-card {
-  background: var(--card-bg, #ffffff);
+  background: var(--card-bg); /* Исправлено */
   border-radius: 24px;
   padding: 40px;
   display: flex;
   gap: 40px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color); /* Исправлено */
 }
 
 .brand-logo-container {
   width: 140px;
   height: 140px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--card-bg); /* Исправлено: убран жесткий #fff */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   overflow: hidden;
   padding: 20px;
 }
@@ -115,17 +115,17 @@
 }
 
 .fallback-icon {
-  color: var(--accent-color, #667eea);
+  color: var(--primary-color); /* Исправлено */
 }
 
 .brand-text h2 {
   margin: 0 0 16px;
   font-size: 28px;
-  color: var(--text-main, #111827);
+  color: var(--text-main); /* Исправлено */
 }
 
 .brand-text p {
-  color: var(--text-muted, #6b7280);
+  color: var(--text-muted); /* Исправлено */
   line-height: 1.6;
   font-size: 16px;
   margin: 0;
@@ -138,14 +138,14 @@
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 24px;
-  border-bottom: 2px solid var(--border-color, #e5e7eb);
+  border-bottom: 2px solid var(--border-color); /* Исправлено */
   padding-bottom: 12px;
 }
 
 .section-title {
   font-size: 24px;
   margin: 0 0 24px;
-  color: var(--text-main, #111827);
+  color: var(--text-main); /* Исправлено */
 }
 
 .section-header .section-title {
@@ -153,7 +153,7 @@
 }
 
 .total-count {
-  color: var(--text-muted, #6b7280);
+  color: var(--text-muted); /* Исправлено */
   font-weight: 500;
 }
 
@@ -169,16 +169,16 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: var(--card-bg); /* Исправлено */
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
   .category-card:hover {
-    border-color: var(--accent-color, #667eea);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color); /* Исправлено */
+    box-shadow: var(--shadow-sm);
     transform: translateY(-2px);
   }
 
@@ -186,11 +186,11 @@
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: var(--bg-sidebar, #f3f4f6);
+  background: var(--bg-color); /* Исправлено */
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-color, #667eea);
+  color: var(--primary-color);
 }
 
   .cat-icon-wrapper img {
@@ -207,21 +207,21 @@
 
 .cat-name {
   font-weight: 600;
-  color: var(--text-main, #111827);
+  color: var(--text-main); /* Исправлено: убран #111827 */
 }
 
 .cat-count {
   font-size: 13px;
-  color: var(--text-muted, #6b7280);
+  color: var(--text-muted); /* Исправлено: убран #6b7280 */
 }
 
 .cat-arrow {
-  color: var(--text-muted, #6b7280);
-  transition: all 0.2s ease;
+  color: var(--text-muted);
+  transition: var(--transition);
 }
 
 .category-card:hover .cat-arrow {
-  color: var(--accent-color, #667eea);
+  color: var(--primary-color);
   transform: translateX(4px);
 }
 
@@ -267,14 +267,14 @@
   justify-content: center;
   height: 60vh;
   gap: 16px;
-  color: var(--text-muted, #6b7280);
+  color: var(--text-muted); /* Исправлено */
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--border-color, #e5e7eb);
-  border-top-color: var(--accent-color, #667eea);
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color); /* Исправлено */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -285,7 +285,54 @@
   }
 }
 
-/* ===== АДАПТИВНОСТЬ ===== */
+/* Сетка для карточек категорий в бренде */
+.brand-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.brand-cat-card {
+  background: var(--card-bg); /* Исправлено */
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+  .brand-cat-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-4px);
+  }
+
+  /* Переопределение иконки для больших карточек (brand-cat-card) */
+  .brand-cat-card .cat-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background-color: var(--bg-color); /* Исправлено: убран #f3f4f6 */
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    transition: var(--transition);
+  }
+
+  .brand-cat-card:hover .cat-icon-wrapper {
+    background: var(--purple-gradient); /* При наведении красивый градиент */
+    color: #ffffff;
+  }
+
+/* === АДАПТИВНОСТЬ === */
 @media (max-width: 1100px) {
   .products-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -317,6 +364,21 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
   }
+
+  .brand-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .brand-cat-card {
+    padding: 16px;
+  }
+
+    .brand-cat-card .cat-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -335,91 +397,4 @@
     font-size: 13px;
     padding: 6px 12px;
   }
-}
-
-/* Сетка для карточек категорий в бренде */
-.brand-categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-}
-
-.brand-cat-card {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-  /* Эффект взлета при наведении */
-  .brand-cat-card:hover {
-    border-color: var(--primary-color, #7c3aed);
-    box-shadow: 0 12px 24px rgba(124, 58, 237, 0.08);
-    transform: translateY(-4px);
-  }
-
-/* Блок вокруг самой иконки */
-.cat-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background-color: #f3f4f6; /* Базовый светло-серый фон */
-  color: var(--primary-color, #7c3aed); /* Иконка фиолетовая */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  transition: all 0.3s ease;
-}
-
-/* Магия цвета при наведении: инвертируем цвета иконки */
-.brand-cat-card:hover .cat-icon-wrapper {
-  background-color: var(--primary-color, #7c3aed);
-  color: #ffffff;
-}
-
-.cat-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.cat-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.cat-count {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-/* === АДАПТИВНОСТЬ === */
-@media (max-width: 768px) {
-  .brand-categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .brand-cat-card {
-    padding: 16px;
-  }
-
-  .cat-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
-  }
-
-  /* SVG внутри ngComponentOutlet подстроится, так как мы задали size: 40, но визуально будет плотнее */
 }

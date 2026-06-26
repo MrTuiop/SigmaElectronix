@@ -12,6 +12,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\uploads\images\avatars\**" />
+    <Compile Remove="wwwroot\uploads\images\brands\**" />
+    <Compile Remove="wwwroot\uploads\images\products\**" />
+    <Content Remove="wwwroot\uploads\images\avatars\**" />
+    <Content Remove="wwwroot\uploads\images\brands\**" />
+    <Content Remove="wwwroot\uploads\images\products\**" />
+    <EmbeddedResource Remove="wwwroot\uploads\images\avatars\**" />
+    <EmbeddedResource Remove="wwwroot\uploads\images\brands\**" />
+    <EmbeddedResource Remove="wwwroot\uploads\images\products\**" />
+    <None Remove="wwwroot\uploads\images\avatars\**" />
+    <None Remove="wwwroot\uploads\images\brands\**" />
+    <None Remove="wwwroot\uploads\images\products\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
@@ -33,10 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-    <Folder Include="wwwroot\uploads\images\avatars\" />
-    <Folder Include="wwwroot\uploads\images\brands\" />
-    <Folder Include="wwwroot\uploads\images\products\" />
+    <Folder Include="wwwroot\uploads\images\" />
   </ItemGroup>
 
 </Project>

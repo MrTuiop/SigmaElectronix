@@ -11,7 +11,7 @@
   <!-- ===== ХИТЫ ПРОДАЖ (исправлены иконки избранного) ===== -->
   <app-best-sellers></app-best-sellers>
 
-  <!-- ===== БЛОК ПРЕИМУЩЕСТВ (без изменений) ===== -->
+  <!-- ===== БЛОК ПРЕИМУЩЕСТВ ===== -->
   <section class="advantages-section">
     <div class="container">
       <div class="advantages-grid">
@@ -38,20 +38,20 @@
   <!-- ===== НОВИНКИ (исправлены иконки избранного) ===== -->
   <app-new-products></app-new-products>
 
-  <!-- ===== РАССЫЛКА (без изменений) ===== -->
+  <!-- ===== РАССЫЛКА ===== -->
   <section class="subscribe-section">
     <div class="container">
       <div class="subscribe-banner">
         <div class="subscribe-content">
-          <h2 class="subscribe-title">Подпишитесь на рассылку</h2>
-          <p class="subscribe-desc">
+          <h2 class="subscribe-title" [translate]="'HOME.SUBSCRIBE.TITLE'">Подпишитесь на рассылку</h2>
+          <p class="subscribe-desc" [translate]="'HOME.SUBSCRIBE.DESC'">
             Узнавайте первыми о новых поступлениях, акциях и эксклюзивных предложениях.
           </p>
           <form class="subscribe-form" (submit)="onSubscribe($event)">
-            <input type="text" placeholder="Введите ваш email" required class="subscribe-input">
+            <input type="text" [placeholder]="'HOME.SUBSCRIBE.PLACEHOLDER' | translate" required class="subscribe-input">
             <button type="submit" class="btn-primary subscribe-btn">
               <svg lucideSend size="18" strokeWidth="2.5"></svg>
-              Подписаться
+              <span [translate]="'HOME.SUBSCRIBE.BTN'">Подписаться</span>
             </button>
           </form>
         </div>

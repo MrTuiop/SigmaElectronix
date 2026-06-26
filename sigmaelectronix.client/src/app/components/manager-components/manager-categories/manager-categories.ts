@@ -12,9 +12,24 @@ import {
   LucideSmartphone, LucideLaptop, LucideHeadphones,
   LucideWatch, LucideTv, LucideGamepad2,
   LucideMonitor, LucideCamera,
-  LucideGlobe // 👈 Подключили иконку глобуса
+  LucideGlobe, // 👈 Подключили иконку глобуса
+  LucideHome,
+  LucideCoffee,
+  LucideSnowflake,
+  LucideLightbulb,
+  LucideBot,
+  LucideTablet,
+  LucideCpu,
+  LucideCircuitBoard,
+  LucideServer,
+  LucideHardDrive,
+  LucideNetwork,
+  LucideRouter,
+  LucideWifi,
+  LucideCable
 } from '@lucide/angular';
 import { SpinnerComponent } from '../../ui-components/spinner/spinner';
+import { ConfirmModalComponent } from '../../shared-components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-manager-categories',
@@ -26,7 +41,8 @@ import { SpinnerComponent } from '../../ui-components/spinner/spinner';
     LucideChevronRight, LucideChevronDown, LucideSave, LucideX,
     LucideImage, LucideFolder, LucideCheck,
     LucideGlobe, // 👈 Добавили в imports
-    SpinnerComponent
+    SpinnerComponent,
+    ConfirmModalComponent
   ],
   templateUrl: './manager-categories.html',
   styleUrl: './manager-categories.css'
@@ -55,6 +71,11 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
   isUploadingImage = signal(false);
   isDragoverImage = signal(false);
   imageUploadProgress = signal(0);
+
+  // МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ
+  showDeleteModal = signal(false);
+  deletingCategoryId = signal<number | null>(null);
+  deletingCategoryName = signal<string>('');
 
   // СБОРЩИК МУСОРА
   private tempUploadedFiles: string[] = [];      // Временные файлы
@@ -374,20 +395,40 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     this.isParentDropdownOpen.set(false);
   }
 
+  // Показываем модалку вместо confirm
   deleteCategory(id: number, name: string): void {
-    if (confirm(`Удалить категорию "${name}"?\nВсе товары должны быть предварительно удалены или перенесены.`)) {
-      this.loading.set(true);
-      this.categoryService.delete(id).subscribe({
-        next: () => this.loadData(),
-        error: (err) => {
-          alert(err.error?.message || 'Невозможно удалить категорию. Возможно, в ней есть товары.');
-          this.loading.set(false);
-        }
-      });
-    }
+    this.deletingCategoryId.set(id);
+    this.deletingCategoryName.set(name);
+    this.showDeleteModal.set(true);
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteModal.set(false);
+    this.deletingCategoryId.set(null);
+  }
+
+  onConfirmDelete(): void {
+    const id = this.deletingCategoryId();
+    if (!id) return;
+
+    this.loading.set(true);
+    this.categoryService.delete(id).subscribe({
+      next: () => {
+        this.showDeleteModal.set(false);
+        this.deletingCategoryId.set(null);
+        this.loadData();
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Невозможно удалить категорию. Возможно, в ней есть товары.');
+        this.loading.set(false);
+        this.showDeleteModal.set(false);
+        this.deletingCategoryId.set(null);
+      }
+    });
   }
 
   availableIcons: Array<{ id: string, name: string, component: any }> = [
+    // --- Базовые и старые ---
     { id: 'smartphone', name: 'Смартфоны', component: LucideSmartphone },
     { id: 'laptop', name: 'Ноутбуки', component: LucideLaptop },
     { id: 'headphones', name: 'Аудио', component: LucideHeadphones },
@@ -396,6 +437,30 @@ export class ManagerCategoriesComponent implements OnInit, OnDestroy {
     { id: 'gamepad-2', name: 'Игры', component: LucideGamepad2 },
     { id: 'monitor', name: 'Мониторы', component: LucideMonitor },
     { id: 'camera', name: 'Фото', component: LucideCamera },
+
+    // --- 🏠 Бытовая техника ---
+    { id: 'home', name: 'Бытовая техника', component: LucideHome },
+    { id: 'coffee', name: 'Кухонная техника', component: LucideCoffee },
+    { id: 'snowflake', name: 'Климат', component: LucideSnowflake },
+    { id: 'lightbulb', name: 'Умный дом', component: LucideLightbulb },
+    { id: 'bot', name: 'Роботы-пылесосы', component: LucideBot },
+
+    // --- 📱 Планшеты (в дополнение к смартфонам) ---
+    { id: 'tablet', name: 'Планшеты', component: LucideTablet },
+
+    // --- ⚙️ Комплектующие ПК ---
+    { id: 'cpu', name: 'Процессоры', component: LucideCpu },
+    { id: 'circuit-board', name: 'Видеокарты', component: LucideCircuitBoard },
+    { id: 'server', name: 'Материнские платы', component: LucideServer },
+    { id: 'hard-drive', name: 'Накопители', component: LucideHardDrive },
+
+    // --- 🛜 Сетевое оборудование ---
+    { id: 'router', name: 'Роутеры', component: LucideRouter },
+    { id: 'network', name: 'Коммутаторы', component: LucideNetwork },
+    { id: 'wifi', name: 'Wi-Fi / Усилители', component: LucideWifi },
+    { id: 'cable', name: 'Кабели', component: LucideCable },
+
+    // --- Дефолтная заглушка в самом конце ---
     { id: 'folder', name: 'Папка (по умолч.)', component: LucideFolder }
   ];
 

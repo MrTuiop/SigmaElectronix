@@ -1,14 +1,14 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router'; // 🆕 Импортируем RouterLink для работы ссылок
+import { RouterLink } from '@angular/router';
 import { LucideStar, LucideThumbsUp, LucideThumbsDown } from '@lucide/angular';
 import { ReviewService } from '../../../services/review-service';
 import { ProductService } from '../../../services/product-service';
 import { ReviewDto } from '../../../models/review-models';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
-// Расширяем тип, добавляя и productName, и productSlug
 export type EnrichedReview = ReviewDto & { productName?: string; productSlug?: string };
 
 @Component({
@@ -20,7 +20,9 @@ export type EnrichedReview = ReviewDto & { productName?: string; productSlug?: s
     LucideThumbsUp,
     LucideThumbsDown,
     DatePipe,
-    RouterLink // 🆕 Обязательно добавляем RouterLink в импорты standalone-компонента
+    RouterLink,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './reviews.html',
   styleUrl: './reviews.css',
@@ -28,6 +30,7 @@ export type EnrichedReview = ReviewDto & { productName?: string; productSlug?: s
 export class ReviewsComponent implements OnInit {
   private reviewService = inject(ReviewService);
   private productService = inject(ProductService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   reviews = signal<EnrichedReview[]>([]);
   isLoading = signal(true);
@@ -43,26 +46,28 @@ export class ReviewsComponent implements OnInit {
 
         const uniqueProductIds = [...new Set(reviewsData.map(r => r.productId))];
 
-        // 🆕 Теперь запрашиваем у productService и name, и slug товара
         const productRequests = uniqueProductIds.map(id =>
           this.productService.getProductById(id).pipe(
             map(product => ({ id, name: product.name, slug: product.slug })),
-            catchError(() => of({ id, name: `Товар #${id}`, slug: '' }))
+            catchError(() => of({
+              id,
+              // 👈 ПЕРЕВОДИМ Фоллбэк, если товар не найден
+              name: `${this.translate.instant('PROFILE.REVIEWS.PRODUCT_FALLBACK')} #${id}`,
+              slug: ''
+            }))
           )
         );
 
         forkJoin(productRequests).subscribe(products => {
-          // Переделываем кэш-словарь, чтобы он хранил и имя, и slug
           const productMap = products.reduce((acc, curr) => {
             acc[curr.id] = { name: curr.name, slug: curr.slug };
             return acc;
           }, {} as Record<number, { name: string; slug: string }>);
 
-          // Обогащаем наши отзывы именами и слагами для роутинга
           const enrichedReviews = reviewsData.map(review => ({
             ...review,
             productName: productMap[review.productId]?.name || review.title,
-            productSlug: productMap[review.productId]?.slug || '' // 🆕 Добавляем slug
+            productSlug: productMap[review.productId]?.slug || ''
           }));
 
           this.reviews.set(enrichedReviews);

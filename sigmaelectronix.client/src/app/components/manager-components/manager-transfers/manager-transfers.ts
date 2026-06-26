@@ -5,14 +5,15 @@ import { InventoryService } from '../../../services/inventory-service';
 import { ProductService } from '../../../services/product-service';
 import { StoreService } from '../../../services/store-service';
 import { StoreInventoryService } from '../../../services/store-inventory-service';
-import { CityService } from '../../../services/city-service'; // <-- Сервис городов
+import { CityService } from '../../../services/city-service';
 import { StoreDto } from '../../../models/store-models';
 import { StoreInventoryDto } from '../../../models/store-inventory-models';
-import { CityDto } from '../../../models/location-models'; // <-- Модель городов
+import { CityDto } from '../../../models/location-models';
 import {
   LucideTruck, LucideArrowDownToLine, LucideArrowRightLeft,
   LucideCheck, LucideSearch, LucideChevronDown, LucidePackage, LucideStore, LucideTrash2
 } from '@lucide/angular';
+import { ToastService } from '../../../services/toast';
 
 @Component({
   selector: 'app-manager-transfers',
@@ -31,7 +32,8 @@ export class ManagerTransfersComponent implements OnInit {
   private productService = inject(ProductService);
   private storeService = inject(StoreService);
   private storeInvService = inject(StoreInventoryService);
-  private cityService = inject(CityService); // <-- Инжектим сервис
+  private cityService = inject(CityService);
+  private toastService = inject(ToastService); // <-- Инжектим тост-сервис
   private fb = inject(FormBuilder);
 
   // Состояния UI
@@ -41,7 +43,7 @@ export class ManagerTransfersComponent implements OnInit {
   // Данные
   stores = signal<StoreDto[]>([]);
   products = signal<any[]>([]);
-  cities = signal<CityDto[]>([]); // <-- Храним города для группировки
+  cities = signal<CityDto[]>([]);
   productStocks = signal<StoreInventoryDto[]>([]);
 
   // Формы
@@ -67,17 +69,14 @@ export class ManagerTransfersComponent implements OnInit {
   storeSearch = signal('');
   activeStoreField = signal<'receiveStore' | 'fromStore' | 'toStore' | 'writeoffStore' | null>(null);
 
-  // 🚀 Умная фильтрация и группировка (Регион -> Город -> Магазин)
   filteredGroupedStores = computed(() => {
     const search = this.storeSearch().toLowerCase().trim();
     const allStores = this.stores();
     const allCities = this.cities();
 
-    // Быстрый доступ к городу по ID
     const cityMap = new Map<number, CityDto>();
     allCities.forEach(c => cityMap.set(c.id, c));
 
-    // Фильтруем магазины по запросу (по имени магазина, коду, городу или региону)
     const matchedStores = allStores.filter(s => {
       const city = cityMap.get(s.cityId);
       const regionName = city?.regionName || 'Другие регионы';
@@ -87,7 +86,6 @@ export class ManagerTransfersComponent implements OnInit {
         s.code.toLowerCase().includes(search);
     });
 
-    // Группируем отфильтрованные магазины
     const regionMap = new Map<string, Map<string, StoreDto[]>>();
 
     matchedStores.forEach(s => {
@@ -106,7 +104,6 @@ export class ManagerTransfersComponent implements OnInit {
       cityMapGroup.get(cityName)!.push(s);
     });
 
-    // Превращаем в массив для удобного рендеринга
     return Array.from(regionMap.entries()).map(([regionName, cityMapGroup]) => ({
       regionName,
       cities: Array.from(cityMapGroup.entries()).map(([cityName, storeList]) => ({
@@ -149,24 +146,33 @@ export class ManagerTransfersComponent implements OnInit {
   loadData(): void {
     this.productService.getAdminProducts({ pageNumber: 1, pageSize: 500 }).subscribe({
       next: (res: any) => this.products.set(res.items || res),
-      error: (err) => console.error('Ошибка загрузки товаров', err)
+      error: (err) => {
+        console.error('Ошибка загрузки товаров', err);
+        this.toastService.error('Не удалось загрузить список товаров');
+      }
     });
 
     this.storeService.getAllStores(true).subscribe({
       next: (res) => this.stores.set(res),
-      error: (err) => console.error('Ошибка загрузки магазинов', err)
+      error: (err) => {
+        console.error('Ошибка загрузки магазинов', err);
+        this.toastService.error('Не удалось загрузить список магазинов');
+      }
     });
 
     this.cityService.getAll().subscribe({
       next: (res) => this.cities.set(res),
-      error: (err) => console.error('Ошибка загрузки городов', err)
+      error: (err) => {
+        console.error('Ошибка загрузки городов', err);
+        this.toastService.error('Не удалось загрузить города');
+      }
     });
   }
 
   setTab(tab: 'receive' | 'transfer' | 'writeoff'): void {
     this.activeTab.set(tab);
     this.selectedProductDisplay.set('');
-    this.productStocks.set([]); // Сбрасываем остатки при смене вкладки
+    this.productStocks.set([]);
     this.receiveForm.reset({ quantity: 1 });
     this.transferForm.reset({ quantity: 1 });
     this.writeoffForm.reset({ quantity: 1 });
@@ -200,7 +206,10 @@ export class ManagerTransfersComponent implements OnInit {
 
     this.storeInvService.getInventoryByProduct(id).subscribe({
       next: (stocks) => this.productStocks.set(stocks),
-      error: () => this.productStocks.set([])
+      error: () => {
+        this.productStocks.set([]);
+        this.toastService.error('Не удалось загрузить остатки по товару');
+      }
     });
   }
 
@@ -232,7 +241,6 @@ export class ManagerTransfersComponent implements OnInit {
     this.activeStoreField.set(null);
   }
 
-  // Получаем красивое имя магазина для инпута
   getStoreName(storeId: number | null | undefined): string {
     if (!storeId) return '';
     const store = this.stores().find(s => s.id === storeId);
@@ -255,11 +263,15 @@ export class ManagerTransfersComponent implements OnInit {
     this.loading.set(true);
     this.inventoryService.receiveStock(this.receiveForm.value).subscribe({
       next: () => {
-        alert('Поступление успешно оформлено!');
+        this.toastService.success('Поступление успешно оформлено!');
         this.setTab('receive');
         this.loading.set(false);
       },
-      error: () => { alert('Ошибка'); this.loading.set(false); }
+      error: (err) => {
+        console.error('Ошибка при поступлении', err);
+        this.toastService.error('Ошибка при оформлении поступления');
+        this.loading.set(false);
+      }
     });
   }
 
@@ -270,17 +282,21 @@ export class ManagerTransfersComponent implements OnInit {
     }
     const val = this.transferForm.value;
     if (val.fromStoreId === val.toStoreId) {
-      alert('Магазин-отправитель и получатель не могут совпадать!');
+      this.toastService.error('Магазин-отправитель и получатель не могут совпадать!');
       return;
     }
     this.loading.set(true);
     this.inventoryService.transferStock(val).subscribe({
       next: () => {
-        alert('Перемещение успешно оформлено!');
+        this.toastService.success('Перемещение успешно оформлено!');
         this.setTab('transfer');
         this.loading.set(false);
       },
-      error: () => { alert('Ошибка'); this.loading.set(false); }
+      error: (err) => {
+        console.error('Ошибка при перемещении', err);
+        this.toastService.error('Ошибка при оформлении перемещения');
+        this.loading.set(false);
+      }
     });
   }
 
@@ -292,11 +308,15 @@ export class ManagerTransfersComponent implements OnInit {
     this.loading.set(true);
     this.inventoryService.writeOffStock(this.writeoffForm.value).subscribe({
       next: () => {
-        alert('Списание успешно оформлено!');
+        this.toastService.success('Списание успешно оформлено!');
         this.setTab('writeoff');
         this.loading.set(false);
       },
-      error: () => { alert('Ошибка при списании'); this.loading.set(false); }
+      error: (err) => {
+        console.error('Ошибка при списании', err);
+        this.toastService.error('Ошибка при списании');
+        this.loading.set(false);
+      }
     });
   }
 }

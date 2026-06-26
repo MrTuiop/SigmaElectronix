@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { LucideGlobe, LucideCheck, LucideChevronDown } from '@lucide/angular';
 import { LanguageService } from '../../../services/language-service';
 import { LanguageDto } from '../../../models/language-models';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-language-selector',
   standalone: true,
-  imports: [CommonModule, LucideGlobe, LucideCheck, LucideChevronDown],
+  imports: [CommonModule, LucideGlobe, LucideCheck, LucideChevronDown, TranslateDirective],
   templateUrl: './language-selector.html',
   styleUrl: './language-selector.css'
 })

@@ -49,6 +49,7 @@ export interface ProductListDto {
   readonly isPublished: boolean;
   readonly isNew: boolean;
   readonly createdAt: string;
+  readonly quantity?: number;
 }
 
 export interface ProductDetailDto {

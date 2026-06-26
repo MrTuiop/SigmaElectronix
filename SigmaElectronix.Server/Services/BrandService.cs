@@ -152,15 +152,16 @@ namespace SigmaElectronix.Server.Services
         {
             var currentLang = GetCurrentLanguage();
 
+            // 🔥 ИЗМЕНЕНИЕ: Ищем бренд, у которого ЕСТЬ такой слаг в ЛЮБОМ переводе.
+            // Убрали жесткую проверку (t.LanguageCode == currentLang || t.LanguageCode == DefaultLanguage)
             var brand = await _context.Brands
                 .Include(b => b.Images)
                 .Include(b => b.Translations)
-                // Ищем либо по текущему языку, либо по дефолтному
-                .FirstOrDefaultAsync(b => b.Translations.Any(t => t.Slug == slug && (t.LanguageCode == currentLang || t.LanguageCode == DefaultLanguage)) && b.IsActive);
+                .FirstOrDefaultAsync(b => b.Translations.Any(t => t.Slug == slug) && b.IsActive);
 
             if (brand == null) return null;
 
-            // Выбираем перевод
+            // А вот здесь мы уже выбираем перевод именно для ТЕКУЩЕГО языка клиента
             var brandTranslation = brand.Translations.FirstOrDefault(t => t.LanguageCode == currentLang)
                                 ?? brand.Translations.FirstOrDefault(t => t.LanguageCode == DefaultLanguage)
                                 ?? brand.Translations.FirstOrDefault();

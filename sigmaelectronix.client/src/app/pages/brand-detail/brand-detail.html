@@ -1,24 +1,24 @@
 <div class="brand-page-wrapper">
 
-  @if (loading) {
+  @if (loading()) {
   <div class="loading-state">
     <div class="spinner"></div>
-    <p>Загрузка витрины...</p>
+    <p [translate]="'BRAND_DETAIL.LOADING'">Загрузка витрины...</p>
   </div>
   }
 
-  @if (error) {
+  @if (error()) {
   <div class="error-state">
-    <p>{{ error }}</p>
-    <a routerLink="/brands" class="back-btn">Вернуться к списку брендов</a>
+    <p>{{ error() }}</p>
+    <a routerLink="/brands" class="back-btn" [translate]="'BRAND_DETAIL.BACK_TO_LIST'">Вернуться к списку брендов</a>
   </div>
   }
 
-  @if (!loading && brand) {
+  @if (!loading() && brand(); as brand) {
 
   <a routerLink="/brands" class="back-btn">
     <svg lucideArrowLeft size="20"></svg>
-    Все бренды
+    <span [translate]="'BRAND_DETAIL.ALL_BRANDS'">Все бренды</span>
   </a>
 
   <section class="brand-hero"
@@ -43,14 +43,14 @@
         }
       </div>
       <div class="brand-text">
-        <h2>О бренде {{ brand.name }}</h2>
+        <h2>{{ 'BRAND_DETAIL.ABOUT_BRAND' | translate:{name: brand.name} }}</h2>
         <p>{{ brand.description }}</p>
       </div>
     </div>
 
     @if (brand.categories?.length) {
     <section class="brand-categories">
-      <h3 class="section-title">Категории {{ brand.name }}</h3>
+      <h3 class="section-title">{{ 'BRAND_DETAIL.CATEGORIES' | translate:{name: brand.name} }}</h3>
       <div class="categories-grid">
         @for (cat of brand.categories; track cat.categoryId) {
         <a [routerLink]="['/catalog', cat.categorySlug]"
@@ -61,7 +61,7 @@
           </div>
           <div class="cat-info">
             <span class="cat-name">{{ cat.categoryName }}</span>
-            <span class="cat-count">{{ cat.productsCount }} товаров</span>
+            <span class="cat-count">{{ cat.productsCount }} {{ 'BRAND_DETAIL.PRODUCTS' | translate }}</span>
           </div>
           <svg lucideChevronRight size="18" class="cat-arrow"></svg>
         </a>
@@ -72,7 +72,7 @@
 
     @if (brand.images?.length) {
     <section class="brand-gallery">
-      <h3 class="section-title">Галерея</h3>
+      <h3 class="section-title" [translate]="'BRAND_DETAIL.GALLERY'">Галерея</h3>
       <div class="gallery-grid">
         @for (img of brand.images; track img.id) {
         <div class="gallery-item">
@@ -83,15 +83,15 @@
     </section>
     }
 
-    @if (uiProducts.length) {
+    @if (uiProducts().length) {
     <section class="brand-products products-section">
       <div class="section-header">
-        <h3 class="section-title">Популярные товары {{ brand.name }}</h3>
-        <span class="total-count">Показано: {{ uiProducts.length }}</span>
+        <h3 class="section-title">{{ 'BRAND_DETAIL.POPULAR_PRODUCTS' | translate:{name: brand.name} }}</h3>
+        <span class="total-count">{{ 'BRAND_DETAIL.SHOWN' | translate }}: {{ uiProducts().length }}</span>
       </div>
 
       <div class="products-grid">
-        @for (product of uiProducts; track product.id) {
+        @for (product of uiProducts(); track product.id) {
         <app-product-card [product]="product"
                           [brandName]="brand.name">
         </app-product-card>

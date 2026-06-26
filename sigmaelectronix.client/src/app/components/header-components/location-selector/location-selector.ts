@@ -9,11 +9,12 @@ import { ProfileService } from '../../../services/profile-service';
 import { CityDto } from '../../../models/location-models';
 import { CityService } from '../../../services/city-service';
 import { CurrentLocationService } from '../../../services/current-location-service';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-location-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideMapPin, LucideX, LucideCheck, LucideSearch, LucideBuilding],
+  imports: [CommonModule, FormsModule, LucideMapPin, LucideX, LucideCheck, LucideSearch, LucideBuilding, TranslateDirective, TranslatePipe],
   templateUrl: './location-selector.html',
   styleUrl: './location-selector.css'
 })
@@ -28,6 +29,7 @@ export class LocationSelectorComponent implements OnInit {
   showModal = signal(false);
   searchQuery = signal('');
 
+  // Связываем отображаемое имя напрямую с глобальным стейтом
   selectedCityName = this.currentLocationService.currentCityName;
   allCities = signal<CityDto[]>([]);
 
@@ -64,8 +66,7 @@ export class LocationSelectorComponent implements OnInit {
       const user = this.profileService.user();
 
       if (user && user.preferredCityId) {
-        // 🛑 ВТОРОЙ ПРЕДОХРАНИТЕЛЬ:
-        // Используем untracked, чтобы эффект не перезапускался при изменении currentCityId
+        // 1. АВТОРИЗОВАННЫЙ ПОЛЬЗОВАТЕЛЬ С ВЫБРАННЫМ ГОРОДОМ
         const globalCityId = untracked(this.currentLocationService.currentCityId);
 
         // Если город в профиле УЖЕ совпадает с тем, что мы отображаем — обрываем цикл
@@ -84,10 +85,18 @@ export class LocationSelectorComponent implements OnInit {
           error: () => this.fallbackToDetection()
         });
       } else if (user) {
+        // Авторизован, но город не выбран
         this.fallbackToDetection();
       } else {
+        // 2. ГОСТЬ
         const guestCityName = localStorage.getItem('guest_preferred_city_name');
-        if (guestCityName) {
+        const guestCityIdStr = localStorage.getItem('guest_preferred_city_id');
+
+        if (guestCityName && guestCityIdStr) {
+          // Восстанавливаем сохраненный город для гостя (без запросов)
+          untracked(() => {
+            this.currentLocationService.updateCity(parseInt(guestCityIdStr, 10), guestCityName);
+          });
           this.showConfirmPrompt.set(false);
           this.isDetecting.set(false);
         } else {
@@ -100,16 +109,15 @@ export class LocationSelectorComponent implements OnInit {
   ngOnInit(): void { }
 
   private fallbackToDetection(): void {
-    // 🛑 Читаем список городов через untracked, чтобы effect не перезапускался при их загрузке!
     const cities = untracked(this.allCities);
 
     if (cities.length === 0) {
       this.cityService.getAll().subscribe({
         next: (loadedCities) => {
           this.allCities.set(loadedCities);
-          this.detectCityFromIp(loadedCities); // Переходим к определению по IP
+          this.detectCityFromIp(loadedCities);
         },
-        error: () => this.applyDefaultCity() // Если бэкенд недоступен
+        error: () => this.applyDefaultCity()
       });
     } else {
       this.detectCityFromIp(cities);
@@ -125,7 +133,6 @@ export class LocationSelectorComponent implements OnInit {
         );
 
         if (detectedName && cityExistsInDb) {
-          // Не вызываем updateCity(который триггерит БД), а просто локально меняем название для плашки!
           this.selectedCityName.set(detectedName);
         } else {
           this.selectedCityName.set('Москва');
@@ -156,22 +163,41 @@ export class LocationSelectorComponent implements OnInit {
     }
   }
 
+  // Подтверждение города из плашки
   confirmDetectedCity(): void {
     this.showConfirmPrompt.set(false);
 
     this.cityService.getAll().subscribe(cities => {
       const defaultCity = cities.find(c => c.name.toLowerCase() === this.selectedCityName().toLowerCase());
       if (defaultCity) {
-        this.currentLocationService.updateCity(defaultCity.id, defaultCity.name);
+        this.saveCitySelection(defaultCity.id, defaultCity.name);
       } else {
-        this.currentLocationService.updateCity(1, this.selectedCityName());
+        this.saveCitySelection(1, this.selectedCityName());
       }
     });
   }
 
+  // Выбор города из модального окна
   selectCity(city: CityDto): void {
-    this.currentLocationService.updateCity(city.id, city.name);
+    this.saveCitySelection(city.id, city.name);
     this.showModal.set(false);
     this.searchQuery.set('');
+  }
+
+  // 🚀 ГЛАВНЫЙ МЕТОД СОХРАНЕНИЯ: обновляет глобальный стейт, БД и LocalStorage
+  private saveCitySelection(cityId: number, cityName: string): void {
+    // 1. Обновляем глобальное состояние для всего сайта
+    this.currentLocationService.updateCity(cityId, cityName);
+
+    // 2. Сохраняем в зависимости от статуса пользователя
+    if (this.profileService.user()) {
+      this.profileService.updatePreferredCity(cityId).subscribe();
+    } else {
+      localStorage.setItem('guest_preferred_city_id', cityId.toString());
+      localStorage.setItem('guest_preferred_city_name', cityName);
+    }
+
+    // 3. Выстреливаем глобальное событие (чтобы страница магазинов отреагировала мгновенно)
+    window.dispatchEvent(new Event('cityChanged'));
   }
 }

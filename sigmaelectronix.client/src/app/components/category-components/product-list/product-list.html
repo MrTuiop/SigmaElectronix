@@ -2,24 +2,24 @@
 
   <aside class="sidebar-filters">
     <div class="sidebar-header">
-      <h3>Фильтры</h3>
-      <button class="clear-all-btn" (click)="clearFilters()">Сбросить всё</button>
+      <h3 [translate]="'PRODUCT.LIST.FILTER'">Фильтры</h3>
+      <button class="clear-all-btn" (click)="clearFilters()"><span [translate]="'PRODUCT.LIST.RESET'">Сбросить всё</span></button>
     </div>
 
     <div class="filter-section">
       <div class="filter-header" (click)="toggleFilter('price')">
-        <h4>Цена, ₽</h4>
+        <h4 [translate]="'PRODUCT.LIST.PRICE'">Цена, ₽</h4>
         <svg lucideChevronDown size="18" [class.rotated]="isExpanded('price')"></svg>
       </div>
       <div class="filter-body" [class.collapsed-body]="!isExpanded('price')">
         <div class="filter-body-inner">
           <div class="price-range-inputs">
             <div class="input-field">
-              <span>от</span>
+              <span [translate]="'PRODUCT.LIST.FROM'">от</span>
               <input type="number" [(ngModel)]="priceRange().min" (change)="resetAndLoad()" placeholder="0" />
             </div>
             <div class="input-field">
-              <span>до</span>
+              <span [translate]="'PRODUCT.LIST.TO'">до</span>
               <input type="number" [(ngModel)]="priceRange().max" (change)="resetAndLoad()" placeholder="200000" />
             </div>
           </div>
@@ -29,7 +29,7 @@
 
     <div class="filter-section">
       <div class="filter-header" (click)="toggleFilter('brands')">
-        <h4>Бренды</h4>
+        <h4 [translate]="'PRODUCT.LIST.BRANDS'">Бренды</h4>
         <svg lucideChevronDown size="18" [class.rotated]="isExpanded('brands')"></svg>
       </div>
       <div class="filter-body" [class.collapsed-body]="!isExpanded('brands')">
@@ -85,12 +85,12 @@
   <main class="main-content">
     <div class="toolbar-panel">
       <div class="sort-dropdown">
-        <span>Сортировка:</span>
+        <span [translate]="'PRODUCT.LIST.SORT'">Сортировка:</span>
         <select [ngModel]="sortBy()" (ngModelChange)="onSortChange($event)">
-          <option value="popular">По популярности</option>
-          <option value="price_asc">Сначала дешевле</option>
-          <option value="price_desc">Сначала дороже</option>
-          <option value="new">По новизне</option>
+          <option value="popular" [translate]="'PRODUCT.LIST.SORT.POPULAR'">По популярности</option>
+          <option value="price_asc" [translate]="'PRODUCT.LIST.SORT.PRICEASC'">Сначала дешевле</option>
+          <option value="price_desc" [translate]="'PRODUCT.LIST.SORT.PRICEDESC'">Сначала дороже</option>
+          <option value="new" [translate]="'PRODUCT.LIST.SORT.NEW'">По новизне</option>
         </select>
       </div>
     </div>
@@ -123,10 +123,14 @@
               <svg lucideStar size="14" class="star-icon" fill="currentColor"></svg>
               <span>{{ product.averageRating }}</span>
             </div>
-            <span class="reviews-count">{{ product.reviewsCount }} отзывов</span>
+            <span class="reviews-count">{{ product.reviewsCount }} <span [translate]="'PRODUCT.LIST.REVIEW'">отзывов</span></span>
 
             <span class="stock-status" [class.out]="!product.inStock">
-              {{ product.inStock ? 'В наличии' : 'Под заказ' }}
+              @if (product.inStock) {
+              {{ 'PRODUCT.LIST.INSTOCK' | translate }}
+              } @else {
+              Под заказ (с {{ getDeliveryDate() | date:'dd.MM' }})
+              }
             </span>
           </div>
 
@@ -146,14 +150,14 @@
           <div class="action-buttons">
             <div class="buy-button"
                  [class.in-cart]="isInCart(product.id)"
-                 [class.disabled]="!product.inStock"
                  (click)="$event.preventDefault(); $event.stopPropagation(); addToCart(product)">
+
               @if (isInCart(product.id)) {
               <svg lucideCheck size="16" strokeWidth="3"></svg>
-              <span>В корзине</span>
+              <span [translate]="'PRODUCT.LIST.TOCART'">В корзине</span>
               } @else {
               <svg lucideShoppingCart size="16"></svg>
-              <span>В корзину</span>
+              <span>{{ product.inStock ? ('PRODUCT.LIST.INCART' | translate) : ('PRODUCT.LIST.PREORDER' | translate) }}</span>
               }
             </div>
 
@@ -170,21 +174,21 @@
 
     @if (isLoading()) {
     <div class="loading-state">
-      <p>Загрузка товаров...</p>
+      <p [translate]="'PRODUCT.LIST.LOADING'">Загрузка товаров...</p>
     </div>
     }
 
     @if (hasMore() && !isLoading() && displayedProducts().length > 0) {
     <div class="load-more-section">
       <button class="load-more-btn" (click)="loadMore()">
-        Показать ещё товары
+        <span [translate]="'PRODUCT.LIST.MORE'">Показать ещё товары</span>
       </button>
     </div>
     }
 
     @if (!displayedProducts().length) {
     <div class="empty-state">
-      <p>Товары, соответствующие выбранным фильтрам, не найдены.</p>
+      <p [translate]="'PRODUCT.LIST.NOTFOUND'">Товары, соответствующие выбранным фильтрам, не найдены.</p>
     </div>
     }
   </main>

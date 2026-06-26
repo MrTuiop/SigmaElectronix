@@ -1208,20 +1208,18 @@ button.login-btn-outline {
 
 /* ===== НОВЫЕ СТИЛИ ДЛЯ ШАПКИ И ИКОНКИ БРЕНДА ===== */
 .brand-logo-wrap {
-  width: 54px;
-  height: 54px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  width: 72px; /* было 54px — увеличили */
+  height: 72px; /* было 54px — увеличили */
+  background: transparent; /* убираем белый/карточный фон */
+  border: none; /* убираем границу, которая создавала ощущение "подложки" */
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
   margin-top: 4px;
-  overflow: hidden; /* Обрезает края, если картинка выходит за границы */
-  /* Добавлено для ссылки */
+  overflow: hidden;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1229,19 +1227,25 @@ button.login-btn-outline {
 
   /* Эффект при наведении на бренд */
   .brand-logo-wrap:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.15);
+    transform: translateY(-2px) scale(1.03);
+    filter: drop-shadow(0 6px 16px rgba(124, 58, 237, 0.25));
   }
 
 /* Стили самой картинки бренда */
 .brand-logo-img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Картинка всегда помещается целиком */
-  padding: 4px; /* Оставляет аккуратное пространство внутри рамки */
-  border-radius: 12px;
+  object-fit: contain;
+  padding: 0; /* убираем внутренние отступы, чтобы картинка занимала всё пространство */
+  border-radius: 0;
 }
+
+/* Фолбек-иконка, если у бренда нет логотипа */
+.brand-fallback-icon {
+  color: var(--primary-color);
+  width: 42px;
+  height: 42px;
+}}
 
 /* ===== НОВЫЕ СТИЛИ: БЛОК НАЛИЧИЯ В МАГАЗИНАХ ===== */
 .availability-block {
@@ -1463,32 +1467,6 @@ button.login-btn-outline {
 .product-title-area {
   flex: 1;
 }
-
-.brand-logo-wrap {
-  width: 54px;
-  height: 54px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-  margin-top: 4px;
-  overflow: hidden; /* Обрезает края, если картинка выходит за границы */
-}
-
-/* Стили самой картинки бренда */
-.brand-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Картинка всегда помещается целиком */
-  padding: 4px; /* Оставляет аккуратное пространство внутри рамки */
-  border-radius: 12px;
-}
-
 /* ===== НОВЫЕ СТИЛИ: БЛОК НАЛИЧИЯ В МАГАЗИНАХ ===== */
 .availability-block {
   display: flex;

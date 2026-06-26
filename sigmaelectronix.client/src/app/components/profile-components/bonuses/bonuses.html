@@ -2,25 +2,32 @@
   <div class="bonus-hero">
     <svg lucideGift size="40" strokeWidth="1.5" class="bonus-icon"></svg>
     <div class="bonus-points">
-      {{ data.user()?.bonusBalance ?? 0 }} баллов
+      {{ data.user()?.bonusBalance ?? 0 }} {{ 'PROFILE.BONUSES.POINTS' | translate }}
     </div>
-    <p class="bonus-desc">1 балл = 1 рубль. Можно оплатить до 30% стоимости заказа.</p>
+    <p class="bonus-desc" [translate]="'PROFILE.BONUSES.DESC'">1 балл = 1 рубль. Можно оплатить до 30% стоимости заказа.</p>
   </div>
 
-  <h3>История начислений</h3>
+  <h3 [translate]="'PROFILE.BONUSES.HISTORY'">История начислений</h3>
   <div class="bonus-history">
     @for (entry of data.bonusHistory(); track entry.id) {
     <div class="bonus-entry">
       <span class="entry-date">{{ entry.createdAt | date:'dd.MM.yyyy' }}</span>
       <span class="entry-desc">
         {{ entry.reason }}
-        @if (entry.orderNumber) { (заказ №{{ entry.orderNumber }}) }
+        @if (entry.orderNumber) { ({{ 'PROFILE.BONUSES.ORDER' | translate }} №{{ entry.orderNumber }}) }
       </span>
       <span class="entry-amount"
             [class.positive]="entry.amount > 0"
             [class.negative]="entry.amount < 0">
         {{ entry.amount > 0 ? '+' : '' }}{{ entry.amount }}
       </span>
+    </div>
+    }
+
+    @if (data.bonusHistory().length === 0) {
+    <div class="empty-state">
+      <svg lucideGift size="48" strokeWidth="1.5"></svg>
+      <p [translate]="'PROFILE.BONUSES.EMPTY'">История начислений и списаний пока пуста.</p>
     </div>
     }
   </div>

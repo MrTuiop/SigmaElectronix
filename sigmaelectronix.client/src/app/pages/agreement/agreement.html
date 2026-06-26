@@ -1,0 +1,97 @@
+<div class="page-container">
+  <div class="container">
+
+    <div class="breadcrumbs">
+      <a routerLink="/" [translate]="'AGREEMENT.BREADCRUMBS.HOME'">Главная</a>
+      <span class="sep">/</span>
+      <span class="current" [translate]="'AGREEMENT.BREADCRUMBS.TITLE'">Пользовательское соглашение</span>
+    </div>
+
+    <div class="doc-layout">
+      <aside class="doc-sidebar">
+        <nav class="doc-nav">
+          <a routerLink="/about" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.ABOUT'">О компании</a>
+          <a routerLink="/delivery" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.DELIVERY'">Доставка и оплата</a>
+          <a routerLink="/warranty" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.WARRANTY'">Гарантия и возврат</a>
+          <a routerLink="/stores" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.STORES'">Наши магазины</a>
+
+          <div class="nav-divider" [translate]="'AGREEMENT.SIDEBAR.LEGAL_DIVIDER'">Правовые документы</div>
+
+          <a routerLink="/privacy" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.PRIVACY'">Политика конфиденциальности</a>
+          <a routerLink="/agreement" routerLinkActive="active" class="doc-nav-link" [translate]="'AGREEMENT.SIDEBAR.AGREEMENT'">Пользовательское соглашение</a>
+        </nav>
+      </aside>
+
+      <div class="doc-content content-card">
+        <h1 class="page-title" [translate]="'AGREEMENT.TITLE'">Пользовательское соглашение</h1>
+
+        <div class="doc-text">
+          <p class="last-update">
+            <span [translate]="'AGREEMENT.LAST_UPDATE'">Последнее обновление:</span> {{ lastUpdate }}
+          </p>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S1.TITLE'">1. Общие положения</h2>
+            <p>
+              <span [translate]="'AGREEMENT.S1.P1_1'">Настоящее Пользовательское соглашение (далее — Соглашение) регулирует отношения между интернет-магазином</span>
+              <strong>SigmaElectronix</strong>
+              <span [translate]="'AGREEMENT.S1.P1_2'">(далее — Продавец) и пользователем сети Интернет (далее — Покупатель), возникающие при использовании интернет-ресурса и оформлении заказов.</span>
+            </p>
+            <p [translate]="'AGREEMENT.S1.P2'">
+              Оформляя заказ на Сайте, Покупатель безоговорочно соглашается с условиями настоящего Соглашения.
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S2.TITLE'">2. Регистрация на сайте</h2>
+            <p [translate]="'AGREEMENT.S2.P1'">Для оформления заказов и получения доступа к личному кабинету (включая бонусную систему) Покупатель может зарегистрироваться на Сайте. При этом:</p>
+            <ul>
+              <li [translate]="'AGREEMENT.S2.LI1'">Продавец не несет ответственности за точность и правильность информации, предоставляемой Покупателем при регистрации.</li>
+              <li [translate]="'AGREEMENT.S2.LI2'">Покупатель обязуется не сообщать третьим лицам логин и пароль, указанные при регистрации.</li>
+              <li [translate]="'AGREEMENT.S2.LI3'">В случае возникновения подозрений относительно безопасности логина и пароля, Покупатель обязуется незамедлительно уведомить об этом службу поддержки.</li>
+            </ul>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S3.TITLE'">3. Оформление заказа и оплата</h2>
+            <p [translate]="'AGREEMENT.S3.P1'">Оформление Заказа осуществляется Покупателем самостоятельно через интерфейс Сайта. После оформления заказа:</p>
+            <ul>
+              <li [translate]="'AGREEMENT.S3.LI1'">С Покупателем может связаться менеджер для уточнения деталей и подтверждения сроков доставки.</li>
+              <li [translate]="'AGREEMENT.S3.LI2'">Цена товара на Сайте может быть изменена Продавцом в одностороннем порядке (при этом цена на уже заказанный и подтвержденный товар изменению не подлежит).</li>
+              <li [translate]="'AGREEMENT.S3.LI3'">Оплата производится способами, указанными в разделе «Доставка и оплата» (наличными при получении, банковской картой онлайн, и т.д.).</li>
+            </ul>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S4.TITLE'">4. Доставка и передача товара</h2>
+            <p [translate]="'AGREEMENT.S4.P1'">
+              Территория доставки Товаров, представленных на Сайте, охватывает все регионы России. Риск случайной гибели или случайного повреждения Товара переходит к Покупателю с момента передачи ему Заказа и проставления подписи в документах, подтверждающих доставку Заказа.
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S5.TITLE'">5. Права и обязанности сторон</h2>
+            <p>
+              <strong [translate]="'AGREEMENT.S5.P1_STRONG'">Продавец обязуется:</strong>
+              <span [translate]="'AGREEMENT.S5.P1_TEXT'">передать Покупателю товар надлежащего качества, соответствующий описанию на сайте и условиям заказа.</span>
+            </p>
+            <p>
+              <strong [translate]="'AGREEMENT.S5.P2_STRONG'">Покупатель обязуется:</strong>
+              <span [translate]="'AGREEMENT.S5.P2_TEXT'">своевременно оплатить и забрать заказ, а также соблюдать правила использования сайта, не допуская действий, нарушающих законодательство РФ.</span>
+            </p>
+          </section>
+
+          <section class="doc-section">
+            <h2 [translate]="'AGREEMENT.S6.TITLE'">6. Прочие условия</h2>
+            <p>
+              <span [translate]="'AGREEMENT.S6.P1_1'">К отношениям между Покупателем и Продавцом применяется право Российской Федерации. В случае возникновения вопросов и претензий со стороны Покупателя он должен обратиться к Продавцу по телефону или электронной почте</span>
+              <a href="mailto:help@sigma-electronix.ru">help&#64;sigma-electronix.ru</a>.
+            </p>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

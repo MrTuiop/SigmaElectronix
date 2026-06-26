@@ -8,7 +8,7 @@
   @if (isOpen()) {
   <div class="lang-dropdown animate-fade" (click)="$event.stopPropagation()">
     <div class="dropdown-header">
-      <span>Выберите язык</span>
+      <span [translate]="'HEADER.LANGUAGE.TEXT'">Выберите язык</span>
     </div>
 
     <ul class="lang-list">
@@ -24,7 +24,7 @@
           <span class="lang-name">{{ lang.nativeName }}</span>
 
           @if (lang.isDefault) {
-          <span class="default-badge">По умолч.</span>
+          <span class="default-badge" [translate]="'HEADER.LANGUAGE.DEFAULT'">По умолч.</span>
           }
         </div>
 
@@ -35,7 +35,7 @@
       }
 
       @if (languages().length === 0) {
-      <li class="lang-item empty">Загрузка языков...</li>
+      <li class="lang-item empty" [translate]="'HEADER.LANGUAGE.LOADING'">Загрузка языков...</li>
       }
     </ul>
   </div>

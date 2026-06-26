@@ -81,4 +81,10 @@ export class LanguageService {
   setLanguageAsDefault(code: string): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/${code}/set-default`, {});
   }
+
+  deleteLanguage(code: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${code}`);
+  }
+
+
 }

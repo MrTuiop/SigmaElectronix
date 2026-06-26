@@ -2,8 +2,8 @@
   <div class="page-header-wrapper">
     <div class="container">
       <div class="page-header">
-        <h1>Доставка и оплата</h1>
-        <p>Мы заботимся о вашем комфорте на каждом этапе. Выбирайте удобный способ получения и оплаты заказа.</p>
+        <h1 [translate]="'DELIVERY.PAGE_TITLE'">Доставка и оплата</h1>
+        <p [translate]="'DELIVERY.PAGE_SUBTITLE'">Мы заботимся о вашем комфорте на каждом этапе. Выбирайте удобный способ получения и оплаты заказа.</p>
       </div>
     </div>
   </div>
@@ -12,10 +12,10 @@
 
     <section class="info-section">
       <div class="section-title-block">
-        <h2>Способы доставки</h2>
+        <h2 [translate]="'DELIVERY.DELIVERY_TITLE'">Способы доставки</h2>
         <span class="secure-badge">
           <svg lucideTruck size="18" strokeWidth="2"></svg>
-          Доставляем по всей России
+          <span [translate]="'DELIVERY.DELIVERY_BADGE'">Доставляем по всей России</span>
         </span>
       </div>
 
@@ -52,10 +52,10 @@
 
     <section class="info-section">
       <div class="section-title-block">
-        <h2>Способы оплаты</h2>
+        <h2 [translate]="'DELIVERY.PAYMENT_TITLE'">Способы оплаты</h2>
         <span class="secure-badge safe-pay">
           <svg lucideShieldCheck size="18" strokeWidth="2"></svg>
-          Безопасные платежи
+          <span [translate]="'DELIVERY.PAYMENT_BADGE'">Безопасные платежи</span>
         </span>
       </div>
 

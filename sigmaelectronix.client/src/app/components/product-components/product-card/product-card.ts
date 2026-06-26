@@ -6,12 +6,14 @@ import {
   LucideShoppingCart,
   LucideStar,
   LucidePackage,
-  LucideCheck
+  LucideCheck,
+  LucideStarOff
 } from '@lucide/angular';
 import { WishlistService } from '../../../services/wishlist-service';
 import { CartService } from '../../../services/cart-service';
 import { ProductListDto } from '../../../models/product-models';
 import { ToastService } from '../../../services/toast';
+import { TranslateDirective } from '@ngx-translate/core';
 
 // Экспортируем интерфейс отсюда, чтобы родители его использовали
 export interface UiProduct extends ProductListDto {
@@ -31,8 +33,10 @@ export interface UiProduct extends ProductListDto {
     LucideHeart,
     LucideShoppingCart,
     LucideStar,
+    LucideStarOff,
     LucidePackage,
-    LucideCheck
+    LucideCheck,
+    TranslateDirective
   ],
   templateUrl: './product-card.html',
   styleUrl: './product-card.css'

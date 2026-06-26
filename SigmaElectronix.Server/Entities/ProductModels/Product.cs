@@ -1,4 +1,5 @@
 ﻿using SigmaElectronix.Server.Entities.BrandModels;
+using SigmaElectronix.Server.Entities.StoreModels;
 using SigmaElectronix.Server.Entities.UserModels;
 
 namespace SigmaElectronix.Server.Entities.ProductModels
@@ -30,5 +31,6 @@ namespace SigmaElectronix.Server.Entities.ProductModels
 
         // 🚀 Наша коллекция переводов
         public ICollection<ProductTranslation> Translations { get; set; } = new List<ProductTranslation>();
+        public ICollection<StoreInventory> Inventories { get; set; } = new List<StoreInventory>();
     }
 }

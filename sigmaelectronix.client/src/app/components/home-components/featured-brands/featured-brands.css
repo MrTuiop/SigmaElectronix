@@ -95,9 +95,11 @@
 }
 
 .brand-card:not(.skeleton-card):hover .brand-logo-img {
-  filter: brightness(0) invert(1);
+  /* Убрали filter, теперь логотип сохраняет свои оригинальные цвета */
+  transform: scale(1.1); /* Добавляем легкое увеличение логотипа для красоты */
 }
 
+/* Этот блок оставляем как есть — он делает запасную иконку белой на фиолетовом фоне */
 .fallback-icon {
   color: var(--primary-color);
   transition: var(--transition);

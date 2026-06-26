@@ -1,9 +1,9 @@
 <section class="categories-section">
   <div class="container">
     <div class="section-header">
-      <h2 class="section-title">Категории товаров</h2>
+      <h2 class="section-title" [translate]="'HOME.CATEGORIES.TEXT'">Категории товаров</h2>
       <a routerLink="/catalog" class="section-link">
-        Все категории
+        <span [translate]="'HOME.CATEGORIES.SHOW'">Все категории</span>
         <svg lucideArrowRight size="16" strokeWidth="2.5"></svg>
       </a>
     </div>
@@ -30,7 +30,7 @@
         </div>
 
         <span class="cat-label">{{ cat.name }}</span>
-        <span class="cat-count">{{ cat.productsCount }} товаров</span>
+        <span class="cat-count">{{ cat.productsCount }} <span [translate]="'HOME.CATEGORIES.COUNT'">товаров</span></span>
       </a>
       }
       }

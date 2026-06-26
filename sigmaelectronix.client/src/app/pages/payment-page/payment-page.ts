@@ -4,12 +4,19 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../services/order-service';
 import { OrderDto } from '../../models/order-models';
 import { LucideCheckCircle, LucideShieldCheck } from '@lucide/angular';
-import { ToastService } from '../../services/toast'; // <-- Убедись, что путь до сервиса правильный
+import { ToastService } from '../../services/toast';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-payment-page',
   standalone: true,
-  imports: [CommonModule, LucideCheckCircle, LucideShieldCheck],
+  imports: [
+    CommonModule,
+    LucideCheckCircle,
+    LucideShieldCheck,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
+  ],
   templateUrl: './payment-page.html',
   styleUrl: './payment-page.css'
 })
@@ -17,15 +24,13 @@ export class PaymentPageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private orderService = inject(OrderService);
-
-  // 1. Внедряем твой сервис уведомлений
   private toastService = inject(ToastService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   order = signal<OrderDto | null>(null);
   isLoading = signal(true);
   isPaying = signal(false);
 
-  // Генерируем QR-код с твоим рикроллом через API QRServer (ссылка закодирована для надежности)
   qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https%3A%2F%2Frutube.ru%2Fvideo%2Fbe9b5aece2911aecc68fa03942e25bac%2F%3Fr%3Dplwd';
 
   ngOnInit() {
@@ -38,8 +43,7 @@ export class PaymentPageComponent implements OnInit {
           this.isLoading.set(false);
         },
         error: () => {
-          // 2. Выводим красное уведомление вместо alert
-          this.toastService.error('Заказ не найден');
+          this.toastService.error(this.translate.instant('PAYMENT.TOAST.ORDER_NOT_FOUND')); // 👈
           this.router.navigate(['/']);
         }
       });
@@ -54,19 +58,18 @@ export class PaymentPageComponent implements OnInit {
 
     this.isPaying.set(true);
 
-    // Имитируем небольшую задержку (1.5 сек) для красоты
     setTimeout(() => {
       this.orderService.payOrder(currentOrder.id).subscribe({
         next: () => {
           this.isPaying.set(false);
-          // 3. Выводим зеленое уведомление об успехе
-          this.toastService.success(`Оплата заказа №${currentOrder.orderNumber} прошла успешно!`);
-          this.router.navigate(['/profile/orders']); // Логичнее перекинуть сразу в историю заказов
+          // 👈 Склеиваем: "Оплата заказа" + " №123 " + "прошла успешно!"
+          this.toastService.success(`${this.translate.instant('PAYMENT.TOAST.SUCCESS_1')} №${currentOrder.orderNumber} ${this.translate.instant('PAYMENT.TOAST.SUCCESS_2')}`);
+          this.router.navigate(['/profile/orders']);
         },
         error: (err) => {
           this.isPaying.set(false);
-          // 4. Выводим красное уведомление с ошибкой
-          this.toastService.error('Ошибка оплаты: ' + err.message);
+          // 👈 Склеиваем: "Ошибка оплаты:" + " текст ошибки"
+          this.toastService.error(`${this.translate.instant('PAYMENT.TOAST.ERROR')} ${err.message}`);
         }
       });
     }, 1500);

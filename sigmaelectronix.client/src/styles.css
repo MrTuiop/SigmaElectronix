@@ -20,17 +20,23 @@
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
   --transition: all 0.3s ease;
+  /* Цвета для слайдов баннера (Светлая тема) */
+  --hero-gradient-2: linear-gradient(135deg, #334155 0%, #0f172a 100%); /* Сине-серый */
+  --hero-gradient-3: linear-gradient(135deg, #10b981 0%, #064e3b 100%); /* Изумрудный */
 }
 
 /* Темная тема (активируется классом .dark-theme на <body>) */
 body.dark-theme {
-  --bg-color: #0f172a; /* Очень темный сине-серый фон */
-  --card-bg: #1e293b; /* Фон карточек в темной теме */
-  --text-main: #f8fafc; /* Светлый текст */
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border-color: #334155;
   --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
   --purple-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+  --purple-gradient-hover: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 100%);
+  --hero-gradient-2: linear-gradient(135deg, #1e293b 0%, #020617 100%);
+  --hero-gradient-3: linear-gradient(135deg, #047857 0%, #022c22 100%);
 }
 
 /* Сброс базовых стилей */
@@ -221,7 +227,7 @@ a {
 
 .account-page .empty-star {
   fill: none;
-  color: #d1d5db;
+  color: var(--text-muted);
 }
 
 /* Адаптив для общих элементов */

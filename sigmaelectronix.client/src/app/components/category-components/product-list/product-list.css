@@ -1,16 +1,12 @@
 :host {
   display: block;
-  --bg-sidebar: #ffffff;
-  --bg-card: #ffffff;
-  --border-color: #e5e7eb;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-  --accent-color: #667eea;
-  --accent-gradient: linear-gradient(135deg, #667eea, #764ba2);
+  /* Привязываем локальные переменные к глобальным темам, убираем жесткие цвета */
+  --bg-sidebar: var(--card-bg);
+  --bg-card: var(--card-bg);
+  --accent-color: var(--primary-color);
+  --accent-gradient: var(--purple-gradient);
   --success-color: #10b981;
   --danger-color: #ef4444;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 10px 25px rgba(102, 126, 234, 0.08);
 }
 
 .catalog-layout {
@@ -51,7 +47,7 @@
 
 /* ===== Кнопка "Сбросить всё" ===== */
 .clear-all-btn {
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--bg-color);
   border: none;
   color: var(--accent-color);
   font-size: 12px;
@@ -68,7 +64,7 @@
     text-decoration: none;
   }
 
-/* ===== Убираем стрелочки (spinners) у input type="number" ===== */
+/* ===== Убираем стрелочки у input type="number" ===== */
 .input-field input[type="number"]::-webkit-outer-spin-button,
 .input-field input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -105,7 +101,7 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 12px;
-  background: #f9fafb;
+  background: var(--bg-color); /* ИСПРАВЛЕНО */
   flex: 1;
 }
 
@@ -154,7 +150,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  background: white;
+  background: var(--card-bg); /* ИСПРАВЛЕНО */
   transition: all 0.2s;
 }
 
@@ -185,7 +181,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 20px;
-  background: #f9fafb;
+  background: var(--card-bg); /* ИСПРАВЛЕНО */
   border: 1px solid var(--border-color);
   border-radius: 12px;
 }
@@ -209,7 +205,7 @@
 
   .sort-dropdown select {
     border: 1px solid var(--border-color);
-    background: white;
+    background: var(--bg-color); /* ИСПРАВЛЕНО */
     padding: 6px 12px;
     border-radius: 8px;
     color: var(--text-main);
@@ -240,7 +236,7 @@
   .product-long-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-color: #cbd5e1;
+    border-color: var(--primary-color); /* ИСПРАВЛЕНО */
   }
 
 /* Сторона картинки */
@@ -250,7 +246,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
+  background: var(--bg-color); /* ИСПРАВЛЕНО */
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
 }
 
 .image-placeholder {
@@ -321,7 +319,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #fef3c7;
+  background: rgba(245, 158, 11, 0.1); /* ИСПРАВЛЕНО для адаптивности */
   color: #d97706;
   padding: 2px 6px;
   border-radius: 6px;
@@ -343,33 +341,8 @@
 }
 
   .stock-status.out {
-    color: #9ca3af;
+    color: var(--text-muted); /* ИСПРАВЛЕНО */
   }
-
-/* Сетка характеристик внутри карточки */
-.specs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 16px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border-color);
-}
-
-.spec-item {
-  display: flex;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.spec-label {
-  color: var(--text-muted);
-  margin-right: 4px;
-}
-
-.spec-value {
-  color: var(--text-main);
-  font-weight: 500;
-}
 
 /* Сторона цены и покупки */
 .card-action-side {
@@ -378,7 +351,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background: #fbfbfb;
+  background: var(--bg-color); /* ИСПРАВЛЕНО */
 }
 
 .price-block {
@@ -428,8 +401,8 @@
   }
 
   .buy-button:disabled {
-    background: #e5e7eb;
-    color: #9ca3af;
+    background: var(--border-color); /* ИСПРАВЛЕНО */
+    color: var(--text-muted); /* ИСПРАВЛЕНО */
     cursor: not-allowed;
   }
 
@@ -438,7 +411,7 @@
   height: 44px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
-  background: white;
+  background: var(--card-bg); /* ИСПРАВЛЕНО */
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -449,8 +422,8 @@
 
   .wishlist-btn-circle:hover {
     color: var(--danger-color);
-    border-color: #fca5a5;
-    background: #fff5f5;
+    border-color: var(--danger-color);
+    background: var(--bg-color);
   }
 
 /* Кнопка Показать ещё */
@@ -460,7 +433,7 @@
 }
 
 .load-more-btn {
-  background: white;
+  background: var(--card-bg); /* ИСПРАВЛЕНО */
   border: 2px solid var(--accent-color);
   color: var(--accent-color);
   padding: 12px 32px;
@@ -481,14 +454,14 @@
   text-align: center;
   padding: 40px;
   color: var(--text-muted);
-  background: #f9fafb;
+  background: var(--card-bg); /* ИСПРАВЛЕНО */
   border-radius: 12px;
   border: 1px dashed var(--border-color);
 }
 
 /* ===== АНИМАЦИЯ КОРЗИНЫ ===== */
 .buy-button.in-cart {
-  background: #10b981;
+  background: var(--success-color); /* ИСПРАВЛЕНО */
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
   animation: cartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -500,10 +473,10 @@
   }
 
 div.buy-button.disabled {
-  background: #e5e7eb;
-  color: #9ca3af;
+  background: var(--border-color);
+  color: var(--text-muted);
   cursor: not-allowed;
-  pointer-events: none; /* Полностью отключаем клики */
+  pointer-events: none;
 }
 
 @keyframes cartPop {
@@ -522,8 +495,8 @@ div.buy-button.disabled {
 
 /* ===== ЗАЛИВКА ИЗБРАННОГО ===== */
 .wishlist-btn-circle .filled {
-  fill: #ef4444;
-  color: #ef4444;
+  fill: var(--danger-color);
+  color: var(--danger-color);
 }
 
 .loading-state {
@@ -577,7 +550,7 @@ div.buy-button.disabled {
 /* ===== АККОРДЕОН ФИЛЬТРОВ ===== */
 .filter-section {
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-color); /* Разделитель секций */
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 20px;
 }
 
@@ -592,7 +565,7 @@ div.buy-button.disabled {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  user-select: none; /* Запрещаем выделение текста при клике */
+  user-select: none;
   transition: opacity 0.2s;
 }
 
@@ -601,7 +574,7 @@ div.buy-button.disabled {
   }
 
   .filter-header h4 {
-    margin: 0; /* Убрали старый отступ, так как теперь он в filter-body */
+    margin: 0;
     font-size: 14px;
     font-weight: 600;
     color: var(--text-main);
@@ -609,7 +582,6 @@ div.buy-button.disabled {
     letter-spacing: 0.5px;
   }
 
-  /* Анимация иконки шеврона */
   .filter-header svg {
     color: var(--text-muted);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -619,12 +591,11 @@ div.buy-button.disabled {
       transform: rotate(180deg);
     }
 
-/* Плавная анимация высоты через CSS Grid */
 .filter-body {
   display: grid;
   grid-template-rows: 1fr;
   opacity: 1;
-  margin-top: 14px; /* Отступ от заголовка до инпутов */
+  margin-top: 14px;
   transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
 }
 
@@ -632,10 +603,9 @@ div.buy-button.disabled {
     grid-template-rows: 0fr;
     opacity: 0;
     margin-top: 0;
-    pointer-events: none; /* Чтобы нельзя было кликнуть на скрытые инпуты */
+    pointer-events: none;
   }
 
-/* Обязательный контейнер, чтобы контент обрезался плавно */
 .filter-body-inner {
   overflow: hidden;
 }

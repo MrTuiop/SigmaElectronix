@@ -619,3 +619,8 @@ input:checked + .slider {
     transform: translateY(0);
   }
 }
+
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

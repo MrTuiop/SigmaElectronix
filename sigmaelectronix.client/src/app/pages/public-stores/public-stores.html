@@ -1,9 +1,12 @@
 <div class="stores-container">
   <div class="stores-header">
     <div class="header-content">
-      <span class="badge">Наши точки</span>
-      <h1>Магазины в городе <span class="accent-city">{{ currentCityName() }}</span></h1>
-      <p class="subtitle">Приходите за покупками, забирайте интернет-заказы без очередей и получайте консультации специалистов</p>
+      <span class="badge" [translate]="'STORES.BADGE'">Наши точки</span>
+      <h1>
+        <span [translate]="'STORES.TITLE_PRE'">Магазины в городе</span>
+        <span class="accent-city">{{ currentCityName() }}</span>
+      </h1>
+      <p class="subtitle" [translate]="'STORES.SUBTITLE'">Приходите за покупками, забирайте интернет-заказы без очередей и получайте консультации специалистов</p>
     </div>
   </div>
 
@@ -13,30 +16,34 @@
       <input type="text"
              [ngModel]="searchQuery()"
              (ngModelChange)="searchQuery.set($event)"
-             placeholder="Поиск по названию или адресу..." />
+             [placeholder]="'STORES.SEARCH_PH' | translate" />
       @if (searchQuery()) {
       <button class="clear-btn" (click)="searchQuery.set('')">✕</button>
       }
     </div>
     <div class="stores-count">
-      Найдено: <strong>{{ filteredStores().length }}</strong>
+      <span [translate]="'STORES.FOUND'">Найдено:</span> <strong>{{ filteredStores().length }}</strong>
     </div>
   </div>
 
   @if (isLoading()) {
   <div class="loading-state">
-    <app-spinner message="Ищем магазины поблизости..."></app-spinner>
+    <app-spinner [message]="'STORES.LOADING_MSG' | translate"></app-spinner>
   </div>
   } @else if (error()) {
   <div class="error-state">
     <p>{{ error() }}</p>
-    <button class="btn-retry" (click)="loadStores()">Повторить запрос</button>
+    <button class="btn-retry" (click)="loadStores()" [translate]="'STORES.RETRY'">Повторить запрос</button>
   </div>
   } @else if (filteredStores().length === 0) {
   <div class="empty-state">
     <svg lucideBuilding size="48" class="empty-icon"></svg>
-    <h3>В городе {{ currentCityName() }} пока нет магазинов</h3>
-    <p>Но мы активно расширяемся! Вы можете заказать доставку в любой регион транспортной компанией.</p>
+    <h3>
+      <span [translate]="'STORES.EMPTY_TITLE_1'">В городе</span>
+      {{ currentCityName() }}
+      <span [translate]="'STORES.EMPTY_TITLE_2'">пока нет магазинов</span>
+    </h3>
+    <p [translate]="'STORES.EMPTY_DESC'">Но мы активно расширяемся! Вы можете заказать доставку в любой регион транспортной компанией.</p>
   </div>
   } @else {
   <div class="stores-grid">
@@ -56,12 +63,14 @@
 
       <div class="store-info">
         <h3 class="store-name">{{ store.name }}</h3>
-        <span class="store-code">Код точки: {{ store.code }}</span>
+        <span class="store-code">
+          <span [translate]="'STORES.CODE'">Код точки:</span> {{ store.code }}
+        </span>
 
         <div class="info-row address-row">
           <svg lucideMapPin size="16" class="info-icon"></svg>
           <div class="info-text">
-            <span class="label">Адрес:</span>
+            <span class="label" [translate]="'STORES.LABEL_ADDRESS'">Адрес:</span>
             <span class="value">{{ store.fullAddress }}</span>
           </div>
         </div>
@@ -69,7 +78,7 @@
         <div class="info-row">
           <svg lucideClock size="16" class="info-icon"></svg>
           <div class="info-text">
-            <span class="label">Режим работы:</span>
+            <span class="label" [translate]="'STORES.LABEL_HOURS'">Режим работы:</span>
             <span class="value highlight-time">{{ store.workingHours }}</span>
           </div>
         </div>
@@ -77,7 +86,7 @@
         <div class="info-row">
           <svg lucidePhone size="16" class="info-icon"></svg>
           <div class="info-text">
-            <span class="label">Телефон:</span>
+            <span class="label" [translate]="'STORES.LABEL_PHONE'">Телефон:</span>
             <a href="tel:{{ store.phone }}" class="value phone-link">{{ store.phone }}</a>
           </div>
         </div>
@@ -86,7 +95,7 @@
         <div class="info-row">
           <svg lucideMail size="16" class="info-icon"></svg>
           <div class="info-text">
-            <span class="label">Email:</span>
+            <span class="label" [translate]="'STORES.LABEL_EMAIL'">Email:</span>
             <span class="value">{{ store.email }}</span>
           </div>
         </div>
@@ -98,7 +107,7 @@
            target="_blank"
            class="btn-route">
           <svg lucideMapPin size="16" class="btn-icon"></svg>
-          Построить маршрут
+          <span [translate]="'STORES.ROUTE_BTN'">Построить маршрут</span>
         </a>
       </div>
     </div>

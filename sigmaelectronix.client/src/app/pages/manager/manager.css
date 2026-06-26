@@ -243,3 +243,34 @@
   .logout-btn:hover {
     background-color: #fef2f2;
   }
+
+/* 1. ЗАПРЕЩАЕМ ИКОНКАМ СЖИМАТЬСЯ */
+.sidebar-nav svg,
+.sidebar-footer svg,
+.logo-icon {
+  flex-shrink: 0;
+  min-width: 20px; /* Жестко фиксируем размер */
+}
+
+/* 2. ЦЕНТРИРУЕМ ИКОНКИ ПРИ СВЕРНУТОМ МЕНЮ */
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .logout-btn,
+.sidebar.collapsed .back-store-btn {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* 3. Центрируем логотип (значок Σ) при сворачивании */
+.sidebar.collapsed .logo-area {
+  justify-content: center;
+  width: 100%;
+}
+
+/* 4. Чтобы текст не переносился и не ломал верстку во время анимации */
+.nav-item span,
+.logout-btn span,
+.back-store-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+}

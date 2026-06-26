@@ -1,7 +1,8 @@
-import { Component, Input, signal, computed, OnInit, inject, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, Input, signal, computed, OnInit, inject, SimpleChanges, OnChanges, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import {
   LucideSlidersHorizontal, LucideStar, LucideHeart, LucideShoppingCart, LucideCheck,
   LucideChevronDown
@@ -11,6 +12,7 @@ import { WishlistService } from '../../../services/wishlist-service';
 import { ToastService } from '../../../services/toast';
 import { ProductService } from '../../../services/product-service';
 import { ProductListDto, ProductFilterDto, BrandSummaryDto } from '../../../models/product-models';
+import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем
 
 interface UiProduct extends ProductListDto {
   inWishlist: boolean;
@@ -24,7 +26,9 @@ interface UiProduct extends ProductListDto {
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink,
-    LucideStar, LucideHeart, LucideShoppingCart, LucideCheck, LucideChevronDown
+    LucideStar, LucideHeart, LucideShoppingCart, LucideCheck, LucideChevronDown,
+    TranslateDirective,
+    TranslatePipe // 👈 Добавили пайп для перевода в интерполяциях
   ],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
@@ -37,6 +41,9 @@ export class ProductListComponent implements OnInit, OnChanges {
   private wishlistService = inject(WishlistService);
   private toastService = inject(ToastService);
   private router = inject(Router);
+  private languageService = inject(LanguageService); // 👈 Инжектим
+
+  private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
   // === СИГНАЛЫ СОСТОЯНИЯ ===
   displayedProducts = signal<UiProduct[]>([]);
@@ -50,15 +57,22 @@ export class ProductListComponent implements OnInit, OnChanges {
   selectedBrandIds = signal<number[]>([]);
   sortBy = signal<'popular' | 'price_asc' | 'price_desc' | 'newest'>('popular');
 
-  // Доступные фильтры с бэкенда
-  availableBrands = signal<readonly BrandSummaryDto[]>([]); // ✅ Добавлен readonly
+  availableBrands = signal<readonly BrandSummaryDto[]>([]);
   availableSpecs = signal<{ key: string, values: readonly string[] }[]>([]);
   selectedSpecs = signal<Record<string, readonly string[]>>({});
 
   private gradientCache = new Map<number, string>();
 
-  // === СИГНАЛЫ ДЛЯ АККОРДЕОНА ФИЛЬТРОВ ===
   expandedFilters = signal<string[]>(['price', 'brands']);
+
+  // 👇 Магия effect: реагирует на смену языка
+  private readonly languageEffect = effect(() => {
+    const currentLang = this.languageService.currentLanguage();
+    if (this.previousLanguage() !== currentLang) {
+      this.previousLanguage.set(currentLang);
+      this.onLanguageChanged();
+    }
+  });
 
   toggleFilter(key: string) {
     this.expandedFilters.update(filters => {
@@ -68,6 +82,12 @@ export class ProductListComponent implements OnInit, OnChanges {
         return [...filters, key];
       }
     });
+  }
+
+  getDeliveryDate(): Date {
+    const date = new Date();
+    date.setDate(date.getDate() + 7); // + 7 дней от текущей даты
+    return date;
   }
 
   isExpanded(key: string): boolean {
@@ -89,6 +109,28 @@ export class ProductListComponent implements OnInit, OnChanges {
       }
       this.loadFiltersAndProducts();
     }
+  }
+
+  // 👇 Вызывается при смене языка
+  private onLanguageChanged(): void {
+    // Сбрасываем выбранные спецификации — их ключи/значения могут различаться на разных языках
+    this.selectedSpecs.set({});
+
+    // Перезагружаем фильтры и товары, сохраняя выбор брендов (они по ID — универсальны)
+    const dbCategoryId = (this.categoryId && this.categoryId > 0) ? this.categoryId : undefined;
+
+    this.productService.getFilters(dbCategoryId).subscribe({
+      next: (filters) => {
+        this.availableBrands.set(filters.brands);
+        // Диапазон цен оставляем тот, что выставил пользователь (не сбрасываем)
+
+        const specsArray = Object.entries(filters.specifications).map(([key, values]) => ({ key, values }));
+        this.availableSpecs.set(specsArray);
+
+        // Перезагружаем список товаров на новом языке с текущими фильтрами
+        this.resetAndLoad();
+      }
+    });
   }
 
   loadFiltersAndProducts(): void {
@@ -201,7 +243,7 @@ export class ProductListComponent implements OnInit, OnChanges {
             ? Math.round(((p.price - p.discountPrice) / p.price) * 100)
             : undefined,
           gradient: this.getGradient(p.id),
-          inStock: true
+          inStock: p.quantity !== undefined ? p.quantity > 0 : true
         }));
 
         this.displayedProducts.update(prev => [...prev, ...mapped]);

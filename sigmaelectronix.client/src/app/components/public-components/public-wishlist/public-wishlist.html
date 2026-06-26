@@ -2,24 +2,24 @@
   <div class="container">
 
     <div class="page-header">
-      <h1 class="page-title">Мое избранное</h1>
+      <h1 class="page-title" [translate]="'PUBLIC_WISHLIST.TITLE'">Мое избранное</h1>
       <span class="count-badge">{{ getItemsWord(items().length) }}</span>
     </div>
 
     <div class="guest-banner">
       <div class="banner-content">
-        <h3>Сохраните списки навсегда!</h3>
-        <p>Вы просматриваете избранное как гость. Войдите в аккаунт, чтобы ваши товары не потерялись после закрытия браузера.</p>
+        <h3 [translate]="'PUBLIC_WISHLIST.BANNER_TITLE'">Сохраните списки навсегда!</h3>
+        <p [translate]="'PUBLIC_WISHLIST.BANNER_DESC'">Вы просматриваете избранное как гость. Войдите в аккаунт, чтобы ваши товары не потерялись после закрытия браузера.</p>
       </div>
-      <button class="login-btn" (click)="openAuthModal()">Войти в аккаунт</button>
+      <button class="login-btn" (click)="openAuthModal()" [translate]="'PUBLIC_WISHLIST.LOGIN_BTN'">Войти в аккаунт</button>
     </div>
 
     @if (items().length === 0) {
     <div class="empty-state">
       <svg lucideHeart size="64" strokeWidth="1.5"></svg>
-      <h2>Здесь пока ничего нет</h2>
-      <p>Перейдите в каталог и добавьте товары, которые вам понравились.</p>
-      <a routerLink="/catalog" class="go-to-catalog-btn">Перейти к покупкам</a>
+      <h2 [translate]="'PUBLIC_WISHLIST.EMPTY_TITLE'">Здесь пока ничего нет</h2>
+      <p [translate]="'PUBLIC_WISHLIST.EMPTY_DESC'">Перейдите в каталог и добавьте товары, которые вам понравились.</p>
+      <a routerLink="/catalog" class="go-to-catalog-btn" [translate]="'PUBLIC_WISHLIST.GO_SHOPPING'">Перейти к покупкам</a>
     </div>
     } @else {
     <div class="wishlist-grid">
@@ -28,7 +28,7 @@
 
         <div class="product-badges">
           @if (item.isNew) {
-          <span class="new-badge">Новинка</span>
+          <span class="new-badge" [translate]="'PUBLIC_WISHLIST.NEW_BADGE'">Новинка</span>
           }
           @if (item.discount) {
           <span class="discount-badge">–{{ item.discount }}%</span>
@@ -52,7 +52,7 @@
         </div>
 
         <div class="product-info">
-          <span class="product-brand">{{ item.brandName || 'Нет бренда' }}</span>
+          <span class="product-brand">{{ item.brandName || ('PUBLIC_WISHLIST.NO_BRAND' | translate) }}</span>
           <h3 class="product-name">{{ item.productName }}</h3>
 
           <div class="rating-row">
@@ -80,10 +80,10 @@
 
             @if (isInCart(item.productId)) {
             <svg lucideCheck size="16" strokeWidth="2.5"></svg>
-            В корзине
+            <span [translate]="'PUBLIC_WISHLIST.IN_CART'">В корзине</span>
             } @else {
             <svg lucideShoppingCart size="16" strokeWidth="2.5"></svg>
-            В корзину
+            <span [translate]="'PUBLIC_WISHLIST.ADD_TO_CART'">В корзину</span>
             }
 
           </div>
@@ -96,7 +96,7 @@
     <div class="wishlist-footer">
       <button class="clear-wishlist-btn" (click)="clearWishlist()">
         <svg lucideTrash2 size="16" strokeWidth="2.5"></svg>
-        Очистить избранное
+        <span [translate]="'PUBLIC_WISHLIST.CLEAR_BTN'">Очистить избранное</span>
       </button>
     </div>
     }

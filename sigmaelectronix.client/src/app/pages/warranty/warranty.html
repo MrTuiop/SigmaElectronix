@@ -2,9 +2,9 @@
   <section class="warranty-hero">
     <div class="container">
       <div class="hero-content">
-        <div class="hero-badge">Сервис и поддержка</div>
-        <h1 class="hero-title">Гарантия на всю технику</h1>
-        <p class="hero-subtitle">Мы уверены в качестве наших товаров и предоставляем официальную гарантию, а также обеспечиваем надежную сервисную поддержку на всех этапах.</p>
+        <div class="hero-badge" [translate]="'WARRANTY.HERO.BADGE'">Сервис и поддержка</div>
+        <h1 class="hero-title" [translate]="'WARRANTY.HERO.TITLE'">Гарантия на всю технику</h1>
+        <p class="hero-subtitle" [translate]="'WARRANTY.HERO.SUBTITLE'">Мы уверены в качестве наших товаров и предоставляем официальную гарантию, а также обеспечиваем надежную сервисную поддержку на всех этапах.</p>
       </div>
     </div>
   </section>
@@ -15,50 +15,50 @@
         <div class="feature-icon bg-purple">
           <svg lucideShieldCheck size="28" strokeWidth="1.5"></svg>
         </div>
-        <h3>Официальная гарантия</h3>
-        <p>1 год гарантии от производителя на новые устройства и 3 месяца от магазина на б/у технику.</p>
+        <h3 [translate]="'WARRANTY.FEATURES.1.TITLE'">Официальная гарантия</h3>
+        <p [translate]="'WARRANTY.FEATURES.1.DESC'">1 год гарантии от производителя на новые устройства и 3 месяца от магазина на б/у технику.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon bg-green">
           <svg lucideRefreshCw size="28" strokeWidth="1.5"></svg>
         </div>
-        <h3>Легкий возврат</h3>
-        <p>Верните товар в течение 14 дней, если он не подошел вам по цвету, размеру или комплектации.</p>
+        <h3 [translate]="'WARRANTY.FEATURES.2.TITLE'">Легкий возврат</h3>
+        <p [translate]="'WARRANTY.FEATURES.2.DESC'">Верните товар в течение 14 дней, если он не подошел вам по цвету, размеру или комплектации.</p>
       </div>
 
       <div class="feature-card">
         <div class="feature-icon bg-blue">
           <svg lucidePenTool size="28" strokeWidth="1.5"></svg>
         </div>
-        <h3>Сервисный центр</h3>
-        <p>Собственный авторизованный сервисный центр для оперативного решения любых технических проблем.</p>
+        <h3 [translate]="'WARRANTY.FEATURES.3.TITLE'">Сервисный центр</h3>
+        <p [translate]="'WARRANTY.FEATURES.3.DESC'">Собственный авторизованный сервисный центр для оперативного решения любых технических проблем.</p>
       </div>
     </section>
 
     <div class="content-grid">
       <div class="main-content">
-        <h2>Порядок гарантийного обслуживания</h2>
+        <h2 [translate]="'WARRANTY.STEPS.TITLE'">Порядок гарантийного обслуживания</h2>
         <div class="steps-list">
           <div class="step-item">
             <div class="step-number">1</div>
             <div class="step-text">
-              <h4>Обращение</h4>
-              <p>Свяжитесь с нашей службой поддержки по телефону или принесите устройство в любой розничный магазин SigmaElectronix.</p>
+              <h4 [translate]="'WARRANTY.STEPS.1.TITLE'">Обращение</h4>
+              <p [translate]="'WARRANTY.STEPS.1.DESC'">Свяжитесь с нашей службой поддержки по телефону или принесите устройство в любой розничный магазин SigmaElectronix.</p>
             </div>
           </div>
           <div class="step-item">
             <div class="step-number">2</div>
             <div class="step-text">
-              <h4>Диагностика</h4>
-              <p>Наши специалисты проведут диагностику для подтверждения гарантийного случая. Срок диагностики — от 1 до 7 рабочих дней.</p>
+              <h4 [translate]="'WARRANTY.STEPS.2.TITLE'">Диагностика</h4>
+              <p [translate]="'WARRANTY.STEPS.2.DESC'">Наши специалисты проведут диагностику для подтверждения гарантийного случая. Срок диагностики — от 1 до 7 рабочих дней.</p>
             </div>
           </div>
           <div class="step-item">
             <div class="step-number">3</div>
             <div class="step-text">
-              <h4>Ремонт или замена</h4>
-              <p>В случае производственного брака мы отремонтируем устройство, заменим на новое или вернем деньги в полном объеме.</p>
+              <h4 [translate]="'WARRANTY.STEPS.3.TITLE'">Ремонт или замена</h4>
+              <p [translate]="'WARRANTY.STEPS.3.DESC'">В случае производственного брака мы отремонтируем устройство, заменим на новое или вернем деньги в полном объеме.</p>
             </div>
           </div>
         </div>
@@ -68,15 +68,16 @@
             <svg lucideAlertTriangle size="24" strokeWidth="1.5"></svg>
           </div>
           <div class="alert-text">
-            <strong>Важно!</strong> Перед обращением в сервисный центр обязательно сделайте резервную копию данных и выйдите из учетных записей (Apple ID, Google, Xiaomi и т.д.).
+            <strong [translate]="'WARRANTY.ALERT.STRONG'">Важно!</strong> <span [translate]="'WARRANTY.ALERT.TEXT'">Перед обращением в сервисный центр обязательно сделайте резервную копию данных и выйдите из учетных записей (Apple ID, Google, Xiaomi и т.д.).</span>
           </div>
         </div>
       </div>
 
       <div class="faq-sidebar">
-        <h2>Частые вопросы</h2>
+        <h2 [translate]="'WARRANTY.FAQ.TITLE'">Частые вопросы</h2>
         <div class="faq-list">
-          @for (faq of faqs; track faq.id) {
+          <!-- 👈 Добавили скобки faqs(), так как это теперь computed -->
+          @for (faq of faqs(); track faq.id) {
           <div class="faq-item" [class.active]="openFaqId() === faq.id">
             <button class="faq-question" (click)="toggleFaq(faq.id)">
               <span>{{ faq.question }}</span>

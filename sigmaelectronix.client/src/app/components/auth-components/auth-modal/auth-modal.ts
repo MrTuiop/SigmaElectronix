@@ -15,6 +15,7 @@ import {
 import { ToastService } from '../../../services/toast';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-auth-modal',
@@ -28,7 +29,9 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
     LucidePhone,
     LucideMail,
     LucideEye,
-    LucideEyeOff
+    LucideEyeOff,
+    TranslateDirective,
+    TranslatePipe
   ],
   templateUrl: './auth-modal.html',
   styleUrls: ['./auth-modal.css'],
@@ -36,27 +39,24 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 export class AuthModalComponent {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private translate = inject(TranslateService);
 
   @Output() close = new EventEmitter<void>();
   @Output() authenticated = new EventEmitter<void>();
 
   isLogin = signal(true);
 
-  // === Флаги для включения красной подсветки ===
   loginSubmitted = signal(false);
   regSubmitted = signal(false);
 
-  // === Локальные ошибки для конкретных полей ===
   loginErrorMsg = signal('');
   regLoginErrorMsg = signal('');
   regPasswordErrorMsg = signal('');
 
-  // Поля входа
   login = signal('');
   password = signal('');
   showPassword = signal(false);
 
-  // Поля регистрации
   regLogin = signal('');
   regPhone = signal('');
   regPassword = signal('');
@@ -68,30 +68,27 @@ export class AuthModalComponent {
   private usernameSubject = new Subject<string>();
 
   constructor() {
-    // Подписываемся на поток ввода логина
     this.usernameSubject.pipe(
-      debounceTime(500), // Ждем 500мс после последнего нажатия клавиши
-      distinctUntilChanged(), // Не делаем запрос, если текст не изменился
+      debounceTime(500),
+      distinctUntilChanged(),
       switchMap(username => {
-        if (!username.trim()) return of(null); // Если пусто - ничего не делаем
-        return this.authService.checkUsername(username); // Идем на сервер
+        if (!username.trim()) return of(null);
+        return this.authService.checkUsername(username);
       })
     ).subscribe(res => {
-      // res придет, когда сервер ответит
       if (res && !res.isAvailable) {
-        this.regLoginErrorMsg.set('Этот логин уже занят. Выберите другой.');
+        this.regLoginErrorMsg.set(this.translate.instant('AUTH.ALREADYUSE')); // 👈
       }
     });
   }
 
   onUsernameInput(value: string): void {
-    this.regLoginErrorMsg.set(''); // Сразу убираем ошибку, пока человек печатает
-    this.usernameSubject.next(value); // Отправляем новое значение в наш "ждущий" поток
+    this.regLoginErrorMsg.set('');
+    this.usernameSubject.next(value);
   }
 
   toggleMode(): void {
     this.isLogin.update(v => !v);
-    // Сбрасываем ошибки при переключении
     this.loginSubmitted.set(false);
     this.regSubmitted.set(false);
     this.clearErrors();
@@ -112,7 +109,7 @@ export class AuthModalComponent {
     this.clearErrors();
 
     if (!this.login().trim() || !this.password().trim()) {
-      return; // Останавливаем отправку, HTML сам подсветит пустые поля
+      return;
     }
 
     this.authService.login({
@@ -122,10 +119,10 @@ export class AuthModalComponent {
       next: () => {
         this.authenticated.emit();
         this.closeModal();
-        this.toastService.success('Успешный вход!');
+        this.toastService.success(this.translate.instant('AUTH.TOAST.LOGIN_SUCCESS')); // 👈
       },
       error: (err: Error) => {
-        this.loginErrorMsg.set('Неверный логин или пароль');
+        this.loginErrorMsg.set(this.translate.instant('AUTH.ERROR.INVALID_CREDENTIALS')); // 👈
       }
     });
   }
@@ -137,14 +134,14 @@ export class AuthModalComponent {
     const { regLogin, regPhone, regPassword, regConfirmPassword, regEmail } = this;
 
     if (!regLogin().trim() || !regPhone().trim() || !regPassword().trim() || !regConfirmPassword().trim()) {
-      return; // HTML подсветит красным
+      return;
     }
     if (regPassword() !== regConfirmPassword()) {
-      this.regPasswordErrorMsg.set('Пароли не совпадают');
+      this.regPasswordErrorMsg.set(this.translate.instant('AUTH.ERROR.PASSWORDS_MISMATCH')); // 👈
       return;
     }
     if (regPassword().length < 6) {
-      this.regPasswordErrorMsg.set('Пароль должен содержать минимум 6 символов');
+      this.regPasswordErrorMsg.set(this.translate.instant('AUTH.ERROR.PASSWORD_MIN_LENGTH')); // 👈
       return;
     }
 
@@ -155,20 +152,18 @@ export class AuthModalComponent {
       email: regEmail().trim() || null
     }).subscribe({
       next: (res) => {
-        // После успешной регистрации сразу авторизуемся
         this.authService.login({ usernameOrEmail: regLogin().trim(), password: regPassword() }).subscribe({
           next: () => {
             this.authenticated.emit();
             this.closeModal();
-            this.toastService.success('Успешная регистрация!');
+            this.toastService.success(this.translate.instant('AUTH.TOAST.REGISTER_SUCCESS')); // 👈
           }
         });
       },
       error: (err: Error) => {
         const msg = err.message.toLowerCase();
-        // Перехватываем ошибку уникальности от ASP.NET Identity
         if (msg.includes('taken') || msg.includes('существу') || msg.includes('duplicate') || msg.includes('занят')) {
-          this.regLoginErrorMsg.set('Этот логин уже занят. Выберите другой.');
+          this.regLoginErrorMsg.set(this.translate.instant('AUTH.ERROR.LOGIN_TAKEN')); // 👈
         } else {
           this.toastService.error(err.message);
         }

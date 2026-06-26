@@ -7,7 +7,7 @@ using SigmaElectronix.Server.Entities.ProductModels;
 using SigmaElectronix.Server.Services.Interfaces;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
-using SigmaElectronix.Server.DTOs.CategoryDTOs; // 👈 Добавили using
+using SigmaElectronix.Server.DTOs.CategoryDTOs;
 
 namespace SigmaElectronix.Server.Services
 {
@@ -15,7 +15,8 @@ namespace SigmaElectronix.Server.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ProductService> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor; // 👈 Добавили Accessor
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private const string DefaultLanguage = "ru";
 
         public ProductService(
             ApplicationDbContext context,
@@ -33,7 +34,6 @@ namespace SigmaElectronix.Server.Services
             var langHeader = _httpContextAccessor.HttpContext?.Request.Headers["Accept-Language"].ToString();
             if (!string.IsNullOrEmpty(langHeader))
             {
-                // Angular обычно шлет просто "ru" или "en", но если придет "ru-RU,ru;q=0.9", берем первые 2 буквы
                 var primaryLang = langHeader.Split(',')[0].Split('-')[0].Trim().ToLower();
                 if (primaryLang.Length >= 2)
                     return primaryLang.Substring(0, 2);
@@ -47,18 +47,19 @@ namespace SigmaElectronix.Server.Services
 
         public async Task<PagedResult<ProductListDto>> GetProductsAsync(ProductFilterDto filter)
         {
-            var lang = GetCurrentLanguage(); // 👈 Читаем текущий язык
+            var lang = GetCurrentLanguage();
 
             var query = _context.Products
                 .Include(p => p.Brand).ThenInclude(b => b.Translations)
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .Where(p => !p.IsDeleted && p.IsPublished)
                 .AsNoTracking();
 
-            query = ApplyFilters(query, filter, lang); // Передаем lang
-            query = ApplySorting(query, filter.SortBy, lang); // Передаем lang
+            query = ApplyFilters(query, filter, lang);
+            query = ApplySorting(query, filter.SortBy, lang);
 
             var totalCount = await query.CountAsync();
 
@@ -69,7 +70,7 @@ namespace SigmaElectronix.Server.Services
 
             return new PagedResult<ProductListDto>
             {
-                Items = items.Select(i => MapToListDto(i, lang)).ToList(), // Маппим под язык
+                Items = items.Select(i => MapToListDto(i, lang)).ToList(),
                 TotalCount = totalCount,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize
@@ -85,6 +86,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images.OrderBy(i => i.SortOrder))
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
@@ -95,24 +97,15 @@ namespace SigmaElectronix.Server.Services
         {
             var lang = GetCurrentLanguage();
 
-            var query = _context.Products
+            // 🔥 ОПТИМИЗАЦИЯ: Ищем по ЛЮБОМУ слагу одним запросом!
+            var product = await _context.Products
                 .Include(p => p.Brand).ThenInclude(b => b.Translations)
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images.OrderBy(i => i.SortOrder))
                 .Include(p => p.Translations)
-                .AsNoTracking();
-
-            // 1. Сначала ищем товар со slug-ом именно для текущего языка
-            var product = await query
-                .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug && t.LanguageCode == lang) && !p.IsDeleted && p.IsPublished);
-
-            // 2. 🚀 Fallback: если не нашли (URL не обновился при смене языка), 
-            // ищем по slug-у на ЛЮБОМ языке
-            if (product == null)
-            {
-                product = await query
-                    .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug) && !p.IsDeleted && p.IsPublished);
-            }
+                .Include(p => p.Inventories)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Translations.Any(t => t.Slug == slug) && !p.IsDeleted && p.IsPublished);
 
             return product == null ? null : MapToDetailDto(product, lang);
         }
@@ -127,6 +120,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .OrderByDescending(p => p.AverageRating)
                 .ThenByDescending(p => p.ReviewsCount)
                 .Take(count)
@@ -146,6 +140,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .OrderByDescending(p => p.DiscountPrice)
                 .Take(count)
                 .AsNoTracking()
@@ -166,6 +161,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .OrderByDescending(p => p.AverageRating)
                 .Take(count)
                 .AsNoTracking()
@@ -185,6 +181,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
                 .AsNoTracking()
@@ -222,7 +219,6 @@ namespace SigmaElectronix.Server.Services
 
             foreach (var transDto in dto.Translations)
             {
-                // Передаем transDto.LanguageCode для проверки уникальности
                 var slug = await GenerateUniqueSlugAsync(transDto.Slug, transDto.Name, transDto.LanguageCode);
 
                 var translation = new ProductTranslation
@@ -300,6 +296,10 @@ namespace SigmaElectronix.Server.Services
                 }
             }
 
+            var incomingLangCodes = dto.Translations.Select(t => t.LanguageCode).ToList();
+            var translationsToRemove = product.Translations.Where(t => !incomingLangCodes.Contains(t.LanguageCode)).ToList();
+            _context.ProductTranslations.RemoveRange(translationsToRemove);
+
             await _context.SaveChangesAsync();
             return await GetProductByIdAsync(id);
         }
@@ -334,6 +334,7 @@ namespace SigmaElectronix.Server.Services
                 .Include(p => p.Category).ThenInclude(c => c.Translations)
                 .Include(p => p.Images)
                 .Include(p => p.Translations)
+                .Include(p => p.Inventories) // 🚀 Подтягиваем остатки
                 .AsNoTracking();
 
             query = ApplyFilters(query, filter, lang);
@@ -378,7 +379,7 @@ namespace SigmaElectronix.Server.Services
             {
                 var search = filter.SearchQuery.ToLower();
                 query = query.Where(p => p.Translations.Any(t =>
-                    t.LanguageCode == lang &&
+                    (t.LanguageCode == lang || t.LanguageCode == DefaultLanguage) && // 🔥 Ищем в текущем или базовом
                     (t.Name.ToLower().Contains(search) || t.ShortDescription.ToLower().Contains(search))
                 ));
             }
@@ -407,7 +408,9 @@ namespace SigmaElectronix.Server.Services
                     var j4 = jsons.Count > 4 ? jsons[4] : dummyJson;
                     var j5 = jsons.Count > 5 ? jsons[5] : dummyJson;
 
-                    query = query.Where(p => p.Translations.Any(t => t.LanguageCode == lang && (
+                    query = query.Where(p => p.Translations.Any(t =>
+                        (t.LanguageCode == lang || t.LanguageCode == DefaultLanguage) &&
+                        (
                         EF.Functions.JsonContains(t.Specifications, j0) ||
                         EF.Functions.JsonContains(t.Specifications, j1) ||
                         EF.Functions.JsonContains(t.Specifications, j2) ||
@@ -442,13 +445,20 @@ namespace SigmaElectronix.Server.Services
                 .Select(b => new BrandSummaryDto
                 {
                     Id = b.Id,
-                    Name = b.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "Unknown",
-                    Slug = b.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Slug).FirstOrDefault() ?? ""
+                    Name = b.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Name).FirstOrDefault() ??
+                           b.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
+                           b.Translations.Select(t => t.Name).FirstOrDefault() ?? "Unknown",
+                    Slug = b.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Slug).FirstOrDefault() ??
+                           b.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Slug).FirstOrDefault() ??
+                           b.Translations.Select(t => t.Slug).FirstOrDefault() ?? "",
+                    LogoUrl = b.LogoUrl
                 })
                 .ToListAsync();
 
             var allSpecs = await query
-                .Select(p => p.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Specifications).FirstOrDefault())
+                .Select(p => p.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Specifications).FirstOrDefault() ??
+                             p.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Specifications).FirstOrDefault() ??
+                             p.Translations.Select(t => t.Specifications).FirstOrDefault()) // 🔥 Фоллбэк для JSON
                 .ToListAsync();
 
             var specDict = new Dictionary<string, HashSet<string>>();
@@ -476,14 +486,25 @@ namespace SigmaElectronix.Server.Services
 
         private IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy, string lang)
         {
+            // 🔥 Надежный фоллбэк: Текущий -> Русский -> Любой другой
             System.Linq.Expressions.Expression<Func<Product, string>> nameSelector = p =>
-                p.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "";
+                p.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Name).FirstOrDefault() ??
+                p.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
+                p.Translations.Select(t => t.Name).FirstOrDefault() ?? "";
 
             System.Linq.Expressions.Expression<Func<Product, string>> brandNameSelector = p =>
-                p.Brand != null ? p.Brand.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "" : "";
+                p.Brand != null ? (
+                    p.Brand.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Name).FirstOrDefault() ??
+                    p.Brand.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
+                    p.Brand.Translations.Select(t => t.Name).FirstOrDefault() ?? ""
+                ) : "";
 
             System.Linq.Expressions.Expression<Func<Product, string>> categoryNameSelector = p =>
-                p.Category != null ? p.Category.Translations.OrderBy(t => t.LanguageCode == lang ? 0 : 1).Select(t => t.Name).FirstOrDefault() ?? "" : "";
+                p.Category != null ? (
+                    p.Category.Translations.Where(t => t.LanguageCode == lang).Select(t => t.Name).FirstOrDefault() ??
+                    p.Category.Translations.Where(t => t.LanguageCode == DefaultLanguage).Select(t => t.Name).FirstOrDefault() ??
+                    p.Category.Translations.Select(t => t.Name).FirstOrDefault() ?? ""
+                ) : "";
 
             return sortBy?.ToLower() switch
             {
@@ -527,9 +548,17 @@ namespace SigmaElectronix.Server.Services
 
         private ProductDetailDto MapToDetailDto(Product p, string lang)
         {
-            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Translations?.FirstOrDefault();
-            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Category?.Translations?.FirstOrDefault();
-            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Brand?.Translations?.FirstOrDefault();
+            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Translations?.FirstOrDefault();
+
+            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Category?.Translations?.FirstOrDefault();
+
+            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Brand?.Translations?.FirstOrDefault();
 
             return new ProductDetailDto
             {
@@ -547,7 +576,8 @@ namespace SigmaElectronix.Server.Services
                 {
                     Id = p.Brand.Id,
                     Name = bt?.Name ?? "Unknown",
-                    Slug = bt?.Slug ?? ""
+                    Slug = bt?.Slug ?? "",
+                    LogoUrl = p.Brand.LogoUrl // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
                 } : null!,
 
                 IsPublished = p.IsPublished,
@@ -576,16 +606,24 @@ namespace SigmaElectronix.Server.Services
                     FullDescription = t.FullDescription,
                     Specifications = t.Specifications ?? new Dictionary<string, string>(),
                     Tags = t.Tags?.ToList() ?? new List<string>()
-                }).ToList() ?? new List<ProductTranslationDto>(),
+                }).ToList() ?? new List<ProductTranslationDto>()
             };
         }
 
         private ProductListDto MapToListDto(Product p, string lang)
         {
             var thresholdDate = DateTime.UtcNow.AddDays(-30);
-            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Translations?.FirstOrDefault();
-            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Category?.Translations?.FirstOrDefault();
-            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ?? p.Brand?.Translations?.FirstOrDefault();
+            var pt = p.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Translations?.FirstOrDefault();
+
+            var ct = p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Category?.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Category?.Translations?.FirstOrDefault();
+
+            var bt = p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == lang) ??
+                     p.Brand?.Translations?.FirstOrDefault(t => t.LanguageCode == DefaultLanguage) ??
+                     p.Brand?.Translations?.FirstOrDefault();
 
             return new ProductListDto
             {
@@ -601,7 +639,8 @@ namespace SigmaElectronix.Server.Services
                 {
                     Id = p.Brand.Id,
                     Name = bt?.Name ?? "Unknown",
-                    Slug = bt?.Slug ?? ""
+                    Slug = bt?.Slug ?? "",
+                    LogoUrl = p.Brand.LogoUrl // 👈 ДОБАВИТЬ ЭТУ СТРОКУ
                 } : null!,
 
                 AverageRating = p.AverageRating,
@@ -613,7 +652,10 @@ namespace SigmaElectronix.Server.Services
                 MainImageUrl = p.Images?.FirstOrDefault(i => i.IsPrimary)?.Url
                               ?? p.Images?.FirstOrDefault()?.Url ?? string.Empty,
 
-                TranslationsCount = Math.Max(0, (p.Translations?.Count() ?? 0) - 1)
+                TranslationsCount = Math.Max(0, (p.Translations?.Count() ?? 0) - 1),
+
+                // 🚀 Считаем общее количество на всех складах/магазинах
+                Quantity = p.Inventories?.Sum(i => i.Quantity) ?? 0
             };
         }
 

@@ -7,11 +7,12 @@ import { debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs/oper
 import { SearchService } from '../../../services/search-service';
 import { SearchSuggestDto } from '../../../models/search-models';
 import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-search-bar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideSearch],
+  imports: [CommonModule, RouterModule, LucideSearch, TranslateDirective, TranslatePipe],
   templateUrl: './search-bar.html',
   styleUrls: ['./search-bar.css'],
 })

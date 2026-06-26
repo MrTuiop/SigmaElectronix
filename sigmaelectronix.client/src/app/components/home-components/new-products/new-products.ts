@@ -7,6 +7,7 @@ import { ProductService } from '../../../services/product-service';
 import { WishlistService } from '../../../services/wishlist-service';
 import { ProductCardComponent, UiProduct } from '../../product-components/product-card/product-card';
 import { LanguageService } from '../../../services/language-service'; // 👈 Импортируем LanguageService
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-new-products',
@@ -15,7 +16,7 @@ import { LanguageService } from '../../../services/language-service'; // 👈 И
     CommonModule,
     RouterModule,
     LucideArrowRight,
-    ProductCardComponent
+    ProductCardComponent, TranslateDirective
   ],
   templateUrl: './new-products.html',
   styleUrl: './new-products.css',

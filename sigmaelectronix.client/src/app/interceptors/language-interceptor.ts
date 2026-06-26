@@ -14,7 +14,12 @@ export const languageInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  // Инжектим сервис ТОЛЬКО для остальных запросов (разрываем цикл зависимости)
+  // ✅ Если Accept-Language уже установлен вручную (например, 'ru' для админки) — пропускаем без изменений
+  if (req.headers.has('Accept-Language')) {
+    return next(req);
+  }
+
+  // Инжектим сервис только для остальных запросов (разрываем цикл зависимости)
   const languageService = inject(LanguageService);
   const currentLang = languageService.currentLanguage();
 

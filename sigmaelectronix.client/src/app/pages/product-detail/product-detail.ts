@@ -30,6 +30,7 @@ import { StoreInventoryDto } from '../../models/store-inventory-models';
 import { StoreDto } from '../../models/store-models';
 import { CurrentLocationService } from '../../services/current-location-service';
 import { LanguageService } from '../../services/language-service';
+import { TranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-product-detail',
@@ -42,7 +43,9 @@ import { LanguageService } from '../../services/language-service';
     LucideChevronLeft, LucideChevronRight,
     LucideThumbsUp, LucideThumbsDown, LucideMessageSquare, LucideUser, LucideSend, LucideEdit2, LucideX, LucideTrash2,
     LucideStore, LucideMapPin, LucideClock, LucideAward,
-    AuthModalComponent, ConfirmModalComponent
+    AuthModalComponent, ConfirmModalComponent,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css',
@@ -61,11 +64,10 @@ export class ProductDetailPage implements OnInit {
   private router = inject(Router);
   private location = inject(Location);
   private languageService = inject(LanguageService);
-
   private currentLocationService = inject(CurrentLocationService);
-
   private storeInventoryService = inject(StoreInventoryService);
   private storeService = inject(StoreService);
+  private translate = inject(TranslateService); // 👈 ИНЖЕКТ СЕРВИСА
 
   private previousLanguage = signal<string>(this.languageService.currentLanguage());
 
@@ -82,7 +84,6 @@ export class ProductDetailPage implements OnInit {
   quantity = signal(1);
   priceAlertRequested = signal(false);
 
-  // --- СОСТОЯНИЯ ДЛЯ ОСТАТКОВ И МАГАЗИНОВ ---
   inventory = signal<StoreInventoryDto[]>([]);
   stores = signal<StoreDto[]>([]);
   showStoresModal = signal(false);
@@ -93,55 +94,42 @@ export class ProductDetailPage implements OnInit {
     const inv = this.inventory();
     const st = this.stores();
     const city = this.currentCityName().toLowerCase().trim();
-
-    // 1. Оставляем только магазины текущего города (и активные)
     const cityStores = st.filter(s => s.cityName.toLowerCase() === city && s.isActive);
-
-    // 2. Связываем их с инвентарем
     return cityStores.map(store => {
       const inventoryItem = inv.find(i => i.storeId === store.id);
-      return {
-        storeDetails: store,
-        quantity: inventoryItem ? inventoryItem.quantity : 0
-      };
+      return { storeDetails: store, quantity: inventoryItem ? inventoryItem.quantity : 0 };
     });
   });
 
-  // 👇 Вычисляем, в скольких магазинах ТЕКУЩЕГО ГОРОДА товар есть в наличии
-  inStockStoresCount = computed(() => {
-    return this.storeAvailability().filter(item => item.quantity > 0).length;
-  });
+  inStockStoresCount = computed(() => this.storeAvailability().filter(item => item.quantity > 0).length);
 
-  // --- Состояния для отзывов ---
   newReviewRating = signal(5);
   newReviewText = signal('');
   isSubmittingReview = signal(false);
-
   replyingToReviewId = signal<number | null>(null);
   newCommentText = signal('');
   newReviewTitle = signal('');
-
   editingReviewId = signal<number | null>(null);
   editReviewRating = signal(5);
   editReviewTitle = signal('');
   editReviewText = signal('');
-
   editingCommentId = signal<number | null>(null);
   editCommentText = signal('');
-
   showAuthModal = signal(false);
+  expandedReviews = signal<Set<number>>(new Set<number>());
+
+  showConfirmModal = signal(false);
+  confirmModalConfig = signal({
+    title: '', message: '', confirmText: this.translate.instant('PRODUCT.MODALS.DELETE_BTN'), actionType: 'none' as 'review' | 'comment' | 'none', targetId: 0
+  });
 
   openAuthModal(): void { this.showAuthModal.set(true); }
   closeAuthModal(): void { this.showAuthModal.set(false); }
 
   onAuthenticated(): void {
     this.showAuthModal.set(false);
-    if (this.product()) {
-      this.loadReviews(this.product()!.id);
-    }
+    if (this.product()) this.loadReviews(this.product()!.id);
   }
-
-  expandedReviews = signal<Set<number>>(new Set<number>());
 
   toggleComments(reviewId: number): void {
     const current = new Set(this.expandedReviews());
@@ -163,16 +151,16 @@ export class ProductDetailPage implements OnInit {
     const dto = {
       productId: this.product()!.id,
       rating: this.editReviewRating(),
-      title: this.editReviewTitle() || 'Без заголовка',
+      title: this.editReviewTitle() || this.translate.instant('PRODUCT.REVIEWS.NO_TITLE'), // 👈
       comment: this.editReviewText()
     };
     this.reviewService.updateReview(reviewId, dto).subscribe({
       next: () => {
-        this.toastService.success('Отзыв обновлен и отправлен на модерацию');
+        this.toastService.success(this.translate.instant('PRODUCT.TOASTS.REVIEW_UPDATED')); // 👈
         this.editingReviewId.set(null);
         this.loadReviews(this.product()!.id);
       },
-      error: () => this.toastService.error('Ошибка при обновлении отзыва')
+      error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.REVIEW_UPDATE_ERROR')) // 👈
     });
   }
 
@@ -186,11 +174,11 @@ export class ProductDetailPage implements OnInit {
     if (!this.editCommentText().trim()) return;
     this.reviewService.updateComment(commentId, this.editCommentText()).subscribe({
       next: () => {
-        this.toastService.success('Комментарий обновлен');
+        this.toastService.success(this.translate.instant('PRODUCT.TOASTS.COMMENT_UPDATED')); // 👈
         this.editingCommentId.set(null);
         this.loadReviews(this.product()!.id);
       },
-      error: () => this.toastService.error('Ошибка при обновлении комментария')
+      error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.COMMENT_UPDATE_ERROR')) // 👈
     });
   }
 
@@ -202,22 +190,16 @@ export class ProductDetailPage implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       const slug = params['slug'];
-      if (slug) {
-        this.loadProduct(slug);
-      }
+      if (slug) this.loadProduct(slug);
     });
 
-    // Подписываемся на смену языка
     this.languageService.languageChanged$.subscribe(() => {
       const prod = this.product();
       if (!prod) return;
-
       this.productService.getProductBySlug(prod.slug).subscribe({
         next: (localized) => {
           this.product.set(localized);
           this.buildBreadcrumbs(localized);
-
-          // Обновляем URL если slug изменился
           if (localized.slug !== prod.slug) {
             const newUrl = this.router.createUrlTree(['/product', localized.slug]).toString();
             this.location.replaceState(newUrl);
@@ -241,13 +223,12 @@ export class ProductDetailPage implements OnInit {
         this.buildBreadcrumbs(data);
         this.loadReviews(data.id);
         this.loadInventory(data.id);
-
         this.productService.getRelatedProducts(data.id, 4).subscribe({
           next: (related) => this.relatedProducts.set(related)
         });
       },
       error: () => {
-        this.error.set('Товар не найден или удален');
+        this.error.set(this.translate.instant('PRODUCT.ERROR_NOT_FOUND')); // 👈
         this.isLoading.set(false);
       }
     });
@@ -258,7 +239,6 @@ export class ProductDetailPage implements OnInit {
       next: (inv) => this.inventory.set(inv),
       error: () => console.error('Не удалось загрузить остатки')
     });
-
     if (this.stores().length === 0) {
       this.storeService.getAllStores(false).subscribe({
         next: (st) => this.stores.set(st),
@@ -271,8 +251,8 @@ export class ProductDetailPage implements OnInit {
     const tree = this.categoryService.categoryTree();
     const generate = (categories: any[]) => {
       const crumbs: { label: string; slug?: string }[] = [
-        { label: 'Главная', slug: '' },
-        { label: 'Каталог', slug: 'catalog' }
+        { label: this.translate.instant('PRODUCT.BREADCRUMBS.HOME'), slug: '' }, // 👈
+        { label: this.translate.instant('PRODUCT.BREADCRUMBS.CATALOG'), slug: 'catalog' } // 👈
       ];
       const result = this.findCategoryInTree(categories, product.categoryId, product.categoryName);
       if (result) {
@@ -294,9 +274,7 @@ export class ProductDetailPage implements OnInit {
 
   private findCategoryInTree(categories: any[], id: number, name: string, path: any[] = []): { category: any, path: any[] } | null {
     for (const cat of categories) {
-      if ((id && cat.id === id) || (name && cat.name === name)) {
-        return { category: cat, path };
-      }
+      if ((id && cat.id === id) || (name && cat.name === name)) return { category: cat, path };
       if (cat.subCategories && cat.subCategories.length > 0) {
         const found = this.findCategoryInTree(cat.subCategories, id, name, [...path, cat]);
         if (found) return found;
@@ -316,52 +294,40 @@ export class ProductDetailPage implements OnInit {
 
   submitReview(): void {
     if (!this.newReviewText().trim()) {
-      this.toastService.error('Напишите текст отзыва');
+      this.toastService.error(this.translate.instant('PRODUCT.TOASTS.REVIEW_EMPTY')); // 👈
       return;
     }
     this.isSubmittingReview.set(true);
     const dto = {
       productId: this.product()!.id,
       rating: this.newReviewRating(),
-      title: this.newReviewTitle() || 'Без заголовка',
+      title: this.newReviewTitle() || this.translate.instant('PRODUCT.REVIEWS.NO_TITLE'), // 👈
       comment: this.newReviewText()
     };
     this.reviewService.createReview(dto).subscribe({
       next: () => {
-        this.toastService.success('Отзыв отправлен на модерацию');
+        this.toastService.success(this.translate.instant('PRODUCT.TOASTS.REVIEW_SENT')); // 👈
         this.newReviewText.set('');
         this.newReviewRating.set(5);
         this.isSubmittingReview.set(false);
       },
       error: () => {
-        this.toastService.error('Ошибка отправки отзыва');
+        this.toastService.error(this.translate.instant('PRODUCT.TOASTS.REVIEW_ERROR')); // 👈
         this.isSubmittingReview.set(false);
       }
     });
   }
 
   reactToReview(reviewId: number, isLike: boolean): void {
-    if (!this.authService.isAuthenticated()) {
-      this.openAuthModal();
-      return;
-    }
+    if (!this.authService.isAuthenticated()) { this.openAuthModal(); return; }
     this.reviews.update(current => current.map(r => {
       if (r.id === reviewId) {
         const isRemoving = r.userReaction === (isLike ? 'Like' : 'Dislike');
-        let newLikes = r.likesCount;
-        let newDislikes = r.dislikesCount;
+        let newLikes = r.likesCount, newDislikes = r.dislikesCount;
         if (r.userReaction === 'Like') newLikes--;
         if (r.userReaction === 'Dislike') newDislikes--;
-        if (!isRemoving) {
-          if (isLike) newLikes++;
-          else newDislikes++;
-        }
-        return {
-          ...r,
-          likesCount: newLikes,
-          dislikesCount: newDislikes,
-          userReaction: isRemoving ? null : (isLike ? 'Like' : 'Dislike')
-        };
+        if (!isRemoving) { if (isLike) newLikes++; else newDislikes++; }
+        return { ...r, likesCount: newLikes, dislikesCount: newDislikes, userReaction: isRemoving ? null : (isLike ? 'Like' : 'Dislike') };
       }
       return r;
     }));
@@ -369,50 +335,37 @@ export class ProductDetailPage implements OnInit {
   }
 
   openReplyForm(reviewId: number): void {
-    if (!this.authService.isAuthenticated()) {
-      this.openAuthModal();
-      return;
-    }
+    if (!this.authService.isAuthenticated()) { this.openAuthModal(); return; }
     this.replyingToReviewId.set(this.replyingToReviewId() === reviewId ? null : reviewId);
     this.newCommentText.set('');
   }
 
   submitComment(reviewId: number): void {
     if (!this.newCommentText().trim()) return;
-    if (!this.authService.isAuthenticated()) {
-      this.openAuthModal();
-      return;
-    }
+    if (!this.authService.isAuthenticated()) { this.openAuthModal(); return; }
     this.reviewService.addComment(reviewId, this.newCommentText()).subscribe({
       next: () => {
-        this.toastService.success('Комментарий добавлен');
+        this.toastService.success(this.translate.instant('PRODUCT.TOASTS.COMMENT_ADDED')); // 👈
         this.replyingToReviewId.set(null);
         this.newCommentText.set('');
         this.loadReviews(this.product()!.id);
       },
-      error: () => this.toastService.error('Ошибка добавления комментария')
+      error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.COMMENT_ERROR')) // 👈
     });
   }
 
   reactToComment(commentId: number, isLike: boolean): void {
-    if (!this.authService.isAuthenticated()) {
-      this.openAuthModal();
-      return;
-    }
+    if (!this.authService.isAuthenticated()) { this.openAuthModal(); return; }
     this.reviews.update(current => current.map(r => {
       return {
         ...r,
         comments: r.comments.map(c => {
           if (c.id === commentId) {
             const isRemoving = c.userReaction === (isLike ? 'Like' : 'Dislike');
-            let newLikes = c.likesCount;
-            let newDislikes = c.dislikesCount;
+            let newLikes = c.likesCount, newDislikes = c.dislikesCount;
             if (c.userReaction === 'Like') newLikes--;
             if (c.userReaction === 'Dislike') newDislikes--;
-            if (!isRemoving) {
-              if (isLike) newLikes++;
-              else newDislikes++;
-            }
+            if (!isRemoving) { if (isLike) newLikes++; else newDislikes++; }
             return { ...c, likesCount: newLikes, dislikesCount: newDislikes, userReaction: isRemoving ? null : (isLike ? 'Like' : 'Dislike') };
           }
           return c;
@@ -425,24 +378,11 @@ export class ProductDetailPage implements OnInit {
   addToCart(): void {
     const p = this.product();
     if (!p) return;
-
-    // 1. Если товар уже в корзине — не добавляем снова, а переходим в корзину
-    if (this.cartService.isInCart(p.id)) {
-      this.router.navigate(['/cart']);
-      return;
-    }
-
-    // 2. Если товара еще нет — добавляем
+    if (this.cartService.isInCart(p.id)) { this.router.navigate(['/cart']); return; }
     const price = p.discountPrice || p.price;
-    this.cartService.addItem({
-      productId: p.id,
-      quantity: this.quantity(),
-      price: price
-    }).subscribe({
-      next: () => {
-        this.toastService.success('Товар добавлен в корзину');
-      },
-      error: () => this.toastService.error('Ошибка при добавлении в корзину')
+    this.cartService.addItem({ productId: p.id, quantity: this.quantity(), price: price }).subscribe({
+      next: () => this.toastService.success(this.translate.instant('PRODUCT.TOASTS.ADD_TO_CART')), // 👈
+      error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.ADD_TO_CART_ERROR')) // 👈
     });
   }
 
@@ -451,14 +391,13 @@ export class ProductDetailPage implements OnInit {
     if (!p) return;
     this.wishlistService.toggleItem(p.id).subscribe({
       next: () => {
-        const isNowInWishlist = this.wishlistService.isInWishlist(p.id);
-        if (isNowInWishlist) {
-          this.toastService.success('Добавлено в избранное');
+        if (this.wishlistService.isInWishlist(p.id)) {
+          this.toastService.success(this.translate.instant('PRODUCT.TOASTS.WISHLIST_ADDED')); // 👈
         } else {
-          this.toastService.info('Удалено из избранного');
+          this.toastService.info(this.translate.instant('PRODUCT.TOASTS.WISHLIST_REMOVED')); // 👈
         }
       },
-      error: () => this.toastService.error('Не удалось обновить избранное')
+      error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.WISHLIST_ERROR')) // 👈
     });
   }
 
@@ -467,39 +406,30 @@ export class ProductDetailPage implements OnInit {
     if (!images || images.length === 0) return;
     this.activeImageIndex.update(i => (i + 1) % images.length);
   }
-
   prevImage(): void {
     const images = this.product()?.images;
     if (!images || images.length === 0) return;
     this.activeImageIndex.update(i => (i - 1 + images.length) % images.length);
   }
-
-  setImageIndex(index: number): void {
-    this.activeImageIndex.set(index);
-  }
-
-  requestPriceAlert(): void {
-    this.priceAlertRequested.set(true);
-  }
+  setImageIndex(index: number): void { this.activeImageIndex.set(index); }
+  requestPriceAlert(): void { this.priceAlertRequested.set(true); }
 
   deleteReview(reviewId: number): void {
     this.confirmModalConfig.set({
-      title: 'Удалить отзыв?',
-      message: 'Вы действительно хотите удалить этот отзыв? Это действие нельзя отменить.',
-      confirmText: 'Удалить',
-      actionType: 'review',
-      targetId: reviewId
+      title: this.translate.instant('PRODUCT.MODALS.DELETE_REVIEW_TITLE'), // 👈
+      message: this.translate.instant('PRODUCT.MODALS.DELETE_REVIEW_MSG'), // 👈
+      confirmText: this.translate.instant('PRODUCT.MODALS.DELETE_BTN'), // 👈
+      actionType: 'review', targetId: reviewId
     });
     this.showConfirmModal.set(true);
   }
 
   deleteComment(commentId: number): void {
     this.confirmModalConfig.set({
-      title: 'Удалить комментарий?',
-      message: 'Вы уверены, что хотите удалить свой комментарий?',
-      confirmText: 'Удалить',
-      actionType: 'comment',
-      targetId: commentId
+      title: this.translate.instant('PRODUCT.MODALS.DELETE_COMMENT_TITLE'), // 👈
+      message: this.translate.instant('PRODUCT.MODALS.DELETE_COMMENT_MSG'), // 👈
+      confirmText: this.translate.instant('PRODUCT.MODALS.DELETE_BTN'), // 👈
+      actionType: 'comment', targetId: commentId
     });
     this.showConfirmModal.set(true);
   }
@@ -510,39 +440,32 @@ export class ProductDetailPage implements OnInit {
     if (config.actionType === 'review') {
       this.reviewService.deleteReview(config.targetId).subscribe({
         next: () => {
-          this.toastService.success('Отзыв удален');
+          this.toastService.success(this.translate.instant('PRODUCT.TOASTS.REVIEW_DELETED')); // 👈
           this.loadReviews(this.product()!.id);
         },
-        error: () => this.toastService.error('Ошибка при удалении отзыва')
+        error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.REVIEW_DELETE_ERROR')) // 👈
       });
     } else if (config.actionType === 'comment') {
       this.reviewService.deleteComment(config.targetId).subscribe({
         next: () => {
-          this.toastService.success('Комментарий удален');
+          this.toastService.success(this.translate.instant('PRODUCT.TOASTS.COMMENT_DELETED')); // 👈
           this.loadReviews(this.product()!.id);
         },
-        error: () => this.toastService.error('Ошибка при удалении комментария')
+        error: () => this.toastService.error(this.translate.instant('PRODUCT.TOASTS.COMMENT_DELETE_ERROR')) // 👈
       });
     }
   }
 
-  onCancelDelete(): void {
-    this.showConfirmModal.set(false);
-  }
-
-  showConfirmModal = signal(false);
-  confirmModalConfig = signal({
-    title: '', message: '', confirmText: 'Удалить', actionType: 'none' as 'review' | 'comment' | 'none', targetId: 0
-  });
+  onCancelDelete(): void { this.showConfirmModal.set(false); }
 
   getReviewWord(count: number | undefined): string {
-    if (count === undefined) return 'отзывов';
+    if (count === undefined) return this.translate.instant('PRODUCT.REVIEWS.WORD_MANY');
     const value = Math.abs(count) % 100;
     const num = count % 10;
-    if (value > 10 && value < 20) return 'отзывов';
-    if (num > 1 && num < 5) return 'отзыва';
-    if (num === 1) return 'отзыв';
-    return 'отзывов';
+    if (value > 10 && value < 20) return this.translate.instant('PRODUCT.REVIEWS.WORD_MANY');
+    if (num > 1 && num < 5) return this.translate.instant('PRODUCT.REVIEWS.WORD_FEW');
+    if (num === 1) return this.translate.instant('PRODUCT.REVIEWS.WORD_SINGLE');
+    return this.translate.instant('PRODUCT.REVIEWS.WORD_MANY');
   }
 
   getDeliveryDate(): Date {
@@ -552,12 +475,8 @@ export class ProductDetailPage implements OnInit {
   }
 
   onQuantityChange(value: number): void {
-    if (value > 10) {
-      this.quantity.set(10);
-    } else if (value < 1 || !value) {
-      this.quantity.set(1);
-    } else {
-      this.quantity.set(value);
-    }
+    if (value > 10) this.quantity.set(10);
+    else if (value < 1 || !value) this.quantity.set(1);
+    else this.quantity.set(value);
   }
 }

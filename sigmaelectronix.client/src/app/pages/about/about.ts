@@ -8,6 +8,7 @@ import {
   LucideThumbsUp,
   LucideGlobe
 } from '@lucide/angular';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core'; // 👈 ДОБАВИЛИ
 
 @Component({
   selector: 'app-about',
@@ -19,7 +20,9 @@ import {
     LucideZap,
     LucideUsers,
     LucideThumbsUp,
-    LucideGlobe
+    LucideGlobe,
+    TranslateDirective, // 👈 ДОБАВИЛИ
+    TranslatePipe       // 👈 ДОБАВИЛИ
   ],
   templateUrl: './about.html',
   styleUrl: './about.css'
