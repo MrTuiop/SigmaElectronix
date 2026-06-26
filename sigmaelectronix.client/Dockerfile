@@ -1,16 +1,23 @@
 # Этап 1: Сборка Angular приложения
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY sigmaelectronix.client/package*.json ./
+
+# Копируем package.json и устанавливаем зависимости
+COPY package*.json ./
 RUN npm install
-COPY sigmaelectronix.client/ .
+
+# Копируем исходники и собираем
+COPY . .
 RUN npm run build -- --configuration=production
 
 # Этап 2: Запуск Nginx и копирование статики
 FROM nginx:alpine
-# Путь внутри dist зависит от angular.json (обычно dist/название-проекта/browser)
+
+# Путь сборки зависит от angular.json: обычно dist/название-проекта/browser
 COPY --from=build /app/dist/sigmaelectronix.client/browser /usr/share/nginx/html
-# Копируем наш кастомный конфиг Nginx
+
+# Копируем кастомный конфиг Nginx (файл должен лежать в этой же папке)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
