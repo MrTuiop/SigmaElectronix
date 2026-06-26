@@ -13,7 +13,7 @@
 
   <div class="quick-tags-row">
     <span class="tags-label" [translate]="'HEADER.SEARCH.POPULAR'">Популярно:</span>
-    @for (tag of quickTags(); track tag) {
+    @for (tag of quickTags(); track $index) {
     <span class="quick-tag"
           (mouseenter)="onTagHover(tag)"
           (mouseleave)="onTagLeave()"
