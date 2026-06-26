@@ -12,15 +12,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
-  LucideSmartphone,
-  LucideLaptop,
-  LucideHeadphones,
-  LucideWatch,
-  LucideTv,
-  LucideGamepad2,
-  LucideFolder,
+
   LucideChevronRight,
-  LucideMonitor, // <-- ДОБАВИЛИ
   LucideCamera,   // <-- ДОБАВИЛИ
   LucideHome,
   LucideCoffee,
@@ -35,7 +28,15 @@ import {
   LucideNetwork,
   LucideRouter,
   LucideWifi,
-  LucideCable
+  LucideCable,
+  LucideMonitor,
+  LucideGamepad2,
+  LucideWatch,
+  LucideTv,
+  LucideHeadphones,
+  LucideLaptop,
+  LucideSmartphone,
+  LucideFolder
 } from '@lucide/angular';
 import { CategoryService } from '../../../services/category-service';
 import { LanguageService } from '../../../services/language-service';
@@ -46,13 +47,8 @@ import { LanguageService } from '../../../services/language-service';
   imports: [
     CommonModule,
     RouterLink,
-    LucideSmartphone,
-    LucideLaptop,
-    LucideHeadphones,
-    LucideWatch,
     LucideTv,
     LucideGamepad2,
-    LucideFolder,
     LucideChevronRight,
     LucideMonitor, // <-- ДОБАВИЛИ СЮДА
     LucideCamera   // <-- ДОБАВИЛИ СЮДА
