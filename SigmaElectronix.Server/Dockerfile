@@ -7,7 +7,7 @@ WORKDIR /src
 COPY ["SigmaElectronix.Server.csproj", "."]
 RUN dotnet restore "SigmaElectronix.Server.csproj"
 COPY . .
-WORKDIR "/src/SigmaElectronix.Server"
+
 RUN dotnet publish "SigmaElectronix.Server.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
